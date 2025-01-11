@@ -21,8 +21,10 @@ steps:
       - '--platform'
       - 'managed'
       - '--allow-unauthenticated'
+      - '--set-secrets'
+      - 'GEMINI_API_KEY=docgent-dev-gemini-api-key:latest,GITHUB_TOKEN=docgent-dev-github-token:latest,SLACK_BOT_TOKEN=docgent-dev-slack-bot-token:latest,SLACK_SIGNING_SECRET=docgent-dev-slack-signing-secret:latest'
       - '--set-env-vars'
-      - 'GAMINI_API_KEY=${_GAMINI_API_KEY},GITHUB_TOKEN=${_GITHUB_TOKEN},SLACK_BOT_TOKEN=${_SLACK_BOT_TOKEN},SLACK_SIGNING_SECRET=${_SLACK_SIGNING_SECRET}'
+      - 'GITHUB_OWNER=kecbigmt,GITHUB_REPO=docgent,GITHUB_BASE_BRANCH=main'
 
 images:
   - 'gcr.io/$PROJECT_ID/docgent-dev'
