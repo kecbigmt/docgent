@@ -1,10 +1,15 @@
 package model
 
 type Draft struct {
+	ID      string
 	Title   string
 	Content string
 }
 
-func NewDraft(title, content string) (Draft, error) {
-	return Draft{Title: title, Content: content}, nil
+func NewDraft(id, title, content string) (Draft, error) {
+	return Draft{
+		ID:      id,
+		Title:   title,
+		Content: content,
+	}, nil
 }

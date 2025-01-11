@@ -10,11 +10,16 @@ import (
 
 type GenerateDocumentHandler struct {
 	documentationAgent infrastructure.DocumentationAgent
+	documentStore      infrastructure.DocumentStore
 }
 
-func NewGenerateDocumentHandler(agent infrastructure.DocumentationAgent) *GenerateDocumentHandler {
+func NewGenerateDocumentHandler(
+	agent infrastructure.DocumentationAgent,
+	store infrastructure.DocumentStore,
+) *GenerateDocumentHandler {
 	return &GenerateDocumentHandler{
 		documentationAgent: agent,
+		documentStore:      store,
 	}
 }
 
@@ -48,6 +53,7 @@ func (h *GenerateDocumentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	draftGenerateWorkflow := workflow.NewDraftGenerateWorkflow(workflow.DraftGenerateWorkflowParams{
 		DocumentationAgent: h.documentationAgent,
+		DocumentStore:      h.documentStore,
 	})
 	draft, err := draftGenerateWorkflow.Execute(r.Context(), req.Text)
 	if err != nil {

@@ -9,15 +9,18 @@ import (
 
 type DraftGenerateWorkflowParams struct {
 	DocumentationAgent infrastructure.DocumentationAgent
+	DocumentStore      infrastructure.DocumentStore
 }
 
 type DraftGenerateWorkflow struct {
 	documentationAgent infrastructure.DocumentationAgent
+	documentStore      infrastructure.DocumentStore
 }
 
 func NewDraftGenerateWorkflow(p DraftGenerateWorkflowParams) *DraftGenerateWorkflow {
 	return &DraftGenerateWorkflow{
 		documentationAgent: p.DocumentationAgent,
+		documentStore:      p.DocumentStore,
 	}
 }
 
@@ -27,7 +30,13 @@ func (w *DraftGenerateWorkflow) Execute(ctx context.Context, text string) (*mode
 		return nil, err
 	}
 
-	draft, err := model.NewDraft(rawDraft.Title, rawDraft.Content)
+	// Save the draft using DocumentStore
+	savedDoc, err := w.documentStore.Save(infrastructure.DocumentInput(rawDraft))
+	if err != nil {
+		return nil, err
+	}
+
+	draft, err := model.NewDraft(savedDoc.ID, savedDoc.Title, savedDoc.Content)
 	if err != nil {
 		return nil, err
 	}
