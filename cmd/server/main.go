@@ -29,6 +29,7 @@ func main() {
 			AsRoute(application.NewEchoHandler),
 			AsRoute(application.NewHelloHandler),
 			AsRoute(application.NewGenerateDocumentHandler),
+			AsRoute(application.NewSlackEventHandler),
 			fx.Annotate(
 				genkit.NewDocumentationAgent,
 				fx.As(new(infrastructure.DocumentationAgent)),
