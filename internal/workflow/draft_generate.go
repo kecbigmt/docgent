@@ -22,14 +22,14 @@ func NewDraftGenerateWorkflow(p DraftGenerateWorkflowParams) *DraftGenerateWorkf
 }
 
 func (w *DraftGenerateWorkflow) Execute(ctx context.Context, text string) (*model.Draft, error) {
-	doc, err := w.generativeModel.GenerateDocument(ctx, text)
+	rawDraft, err := w.generativeModel.GenerateDocument(ctx, text)
 	if err != nil {
-		return &model.Draft{}, err
+		return nil, err
 	}
 
-	draft, err := model.NewDraft("new draft", doc)
+	draft, err := model.NewDraft(rawDraft.Title, rawDraft.Content)
 	if err != nil {
-		return &model.Draft{}, err
+		return nil, err
 	}
 
 	return &draft, nil

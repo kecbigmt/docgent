@@ -1,7 +1,14 @@
 package infrastructure
 
-import "context"
+import (
+	"context"
+)
+
+type DocumentDraft struct {
+	Title   string
+	Content string
+}
 
 type GenerativeModel interface {
-	GenerateDocument(ctx context.Context, input string) (string, error)
+	GenerateDocument(ctx context.Context, input string) (DocumentDraft, error)
 }
