@@ -19,8 +19,20 @@ func main() {
 		}),
 		fx.Provide(
 			NewHTTPServer,
-			NewServeMux,
-			fx.Annotate(application.NewEchoHandler, fx.As(new(application.Route))),
+			fx.Annotate(
+				NewServeMux,
+				fx.ParamTags(`name:"echo"`, `name:"hello"`),
+			),
+			fx.Annotate(
+				application.NewEchoHandler,
+				fx.As(new(application.Route)),
+				fx.ResultTags(`name:"echo"`),
+			),
+			fx.Annotate(
+				application.NewHelloHandler,
+				fx.As(new(application.Route)),
+				fx.ResultTags(`name:"hello"`),
+			),
 			zap.NewExample,
 		),
 		fx.Invoke(func(*http.Server) {}),
@@ -46,8 +58,9 @@ func NewHTTPServer(lc fx.Lifecycle, mux *http.ServeMux, log *zap.Logger) *http.S
 	return srv
 }
 
-func NewServeMux(route application.Route) *http.ServeMux {
+func NewServeMux(route1 application.Route, route2 application.Route) *http.ServeMux {
 	mux := http.NewServeMux()
-	mux.Handle(route.Pattern(), route)
+	mux.Handle(route1.Pattern(), route1)
+	mux.Handle(route2.Pattern(), route2)
 	return mux
 }
