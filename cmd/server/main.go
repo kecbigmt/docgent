@@ -10,6 +10,8 @@ import (
 	"go.uber.org/zap"
 
 	"docgent-backend/internal/application"
+	"docgent-backend/internal/infrastructure/genkit"
+	"docgent-backend/internal/model/infrastructure"
 )
 
 func main() {
@@ -25,6 +27,11 @@ func main() {
 			),
 			AsRoute(application.NewEchoHandler),
 			AsRoute(application.NewHelloHandler),
+			AsRoute(application.NewGenerateDocumentHandler),
+			fx.Annotate(
+				genkit.NewClient,
+				fx.As(new(infrastructure.GenerativeModel)),
+			),
 			zap.NewExample,
 		),
 		fx.Invoke(func(*http.Server) {}),
