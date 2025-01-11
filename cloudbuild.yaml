@@ -1,0 +1,28 @@
+steps:
+  # Build the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/docgent-dev', '.']
+  
+  # Push the container image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/docgent-dev']
+  
+  # Deploy container image to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'docgent-dev'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/docgent-dev'
+      - '--region'
+      - 'asia-northeast1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--set-env-vars'
+      - 'GAMINI_API_KEY=${_GAMINI_API_KEY},GITHUB_TOKEN=${_GITHUB_TOKEN},SLACK_BOT_TOKEN=${_SLACK_BOT_TOKEN},SLACK_SIGNING_SECRET=${_SLACK_SIGNING_SECRET}'
+
+images:
+  - 'gcr.io/$PROJECT_ID/docgent-dev'
