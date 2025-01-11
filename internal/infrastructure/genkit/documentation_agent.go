@@ -12,11 +12,11 @@ import (
 	"google.golang.org/api/option"
 )
 
-type Client struct {
+type DocumentationAgent struct {
 	model *genai.GenerativeModel
 }
 
-func NewClient() (*Client, error) {
+func NewDocumentationAgent() (*DocumentationAgent, error) {
 	apiKey := os.Getenv("GEMINI_API_KEY")
 	if apiKey == "" {
 		return nil, fmt.Errorf("GEMINI_API_KEY environment variable is not set")
@@ -29,12 +29,12 @@ func NewClient() (*Client, error) {
 	}
 
 	model := client.GenerativeModel("gemini-1.5-flash-001")
-	return &Client{
+	return &DocumentationAgent{
 		model: model,
 	}, nil
 }
 
-func (c *Client) GenerateDocument(ctx context.Context, input string) (infrastructure.DocumentDraft, error) {
+func (c *DocumentationAgent) GenerateDocumentDraft(ctx context.Context, input string) (infrastructure.DocumentDraft, error) {
 	c.model.ResponseMIMEType = "application/json"
 	c.model.ResponseSchema = &genai.Schema{
 		Type: genai.TypeObject,

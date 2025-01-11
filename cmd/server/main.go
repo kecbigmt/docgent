@@ -29,8 +29,8 @@ func main() {
 			AsRoute(application.NewHelloHandler),
 			AsRoute(application.NewGenerateDocumentHandler),
 			fx.Annotate(
-				genkit.NewClient,
-				fx.As(new(infrastructure.GenerativeModel)),
+				genkit.NewDocumentationAgent,
+				fx.As(new(infrastructure.DocumentationAgent)),
 			),
 			zap.NewExample,
 		),

@@ -8,21 +8,21 @@ import (
 )
 
 type DraftGenerateWorkflowParams struct {
-	GenerativeModel infrastructure.GenerativeModel
+	DocumentationAgent infrastructure.DocumentationAgent
 }
 
 type DraftGenerateWorkflow struct {
-	generativeModel infrastructure.GenerativeModel
+	documentationAgent infrastructure.DocumentationAgent
 }
 
 func NewDraftGenerateWorkflow(p DraftGenerateWorkflowParams) *DraftGenerateWorkflow {
 	return &DraftGenerateWorkflow{
-		generativeModel: p.GenerativeModel,
+		documentationAgent: p.DocumentationAgent,
 	}
 }
 
 func (w *DraftGenerateWorkflow) Execute(ctx context.Context, text string) (*model.Draft, error) {
-	rawDraft, err := w.generativeModel.GenerateDocument(ctx, text)
+	rawDraft, err := w.documentationAgent.GenerateDocumentDraft(ctx, text)
 	if err != nil {
 		return nil, err
 	}
