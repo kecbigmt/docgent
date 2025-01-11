@@ -28,3 +28,6 @@ steps:
 
 images:
   - 'gcr.io/$PROJECT_ID/docgent-dev'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
