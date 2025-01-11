@@ -2,12 +2,14 @@ package workflow
 
 import (
 	"context"
+
 	"docgent-backend/internal/model"
+	"docgent-backend/internal/model/infrastructure"
 )
 
 type CreateWorkspaceDependencies struct {
 	WorkspaceRepository model.WorkspaceRepository
-	Crypto              model.Crypto
+	Crypto              infrastructure.Crypto
 }
 
 func CreateWorkspace(ctx context.Context, deps CreateWorkspaceDependencies, dto model.WorkspaceBodyDto) (model.Workspace, error) {
