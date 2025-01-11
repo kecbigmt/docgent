@@ -2,13 +2,14 @@ package main
 
 import (
 	"context"
-	"io"
 	"net"
 	"net/http"
 
 	"go.uber.org/fx"
 	"go.uber.org/fx/fxevent"
 	"go.uber.org/zap"
+
+	"docgent-backend/internal/application"
 )
 
 func main() {
@@ -19,7 +20,7 @@ func main() {
 		fx.Provide(
 			NewHTTPServer,
 			NewServeMux,
-			fx.Annotate(NewEchoHandler, fx.As(new(Route))),
+			fx.Annotate(application.NewEchoHandler, fx.As(new(application.Route))),
 			zap.NewExample,
 		),
 		fx.Invoke(func(*http.Server) {}),
@@ -45,32 +46,7 @@ func NewHTTPServer(lc fx.Lifecycle, mux *http.ServeMux, log *zap.Logger) *http.S
 	return srv
 }
 
-type EchoHandler struct {
-	log *zap.Logger
-}
-
-func NewEchoHandler(log *zap.Logger) *EchoHandler {
-	return &EchoHandler{log: log}
-}
-
-func (h *EchoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	h.log.Info("Handling request", zap.String("path", r.URL.Path))
-	if _, err := io.Copy(w, r.Body); err != nil {
-		h.log.Warn("Failed to handle request", zap.Error(err))
-	}
-}
-
-func (h *EchoHandler) Pattern() string {
-	return "/echo"
-}
-
-type Route interface {
-	http.Handler
-
-	Pattern() string
-}
-
-func NewServeMux(route Route) *http.ServeMux {
+func NewServeMux(route application.Route) *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.Handle(route.Pattern(), route)
 	return mux
