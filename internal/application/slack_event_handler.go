@@ -94,6 +94,15 @@ func (h *SlackEventHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// イベントの処理
 	if event.Type == slackevents.CallbackEvent {
 		innerEvent := event.InnerEvent
+
+		eventJSON, err := json.Marshal(innerEvent)
+		if err != nil {
+			h.log.Warn("Failed to marshal inner event", zap.Error(err))
+			h.log.Info("Received event", zap.Any("event", innerEvent))
+		} else {
+			h.log.Info("Received event", zap.String("event", string(eventJSON)))
+		}
+
 		switch ev := innerEvent.Data.(type) {
 		case *slackevents.ReactionAddedEvent:
 			// docgent emojiが付与された場合の処理
