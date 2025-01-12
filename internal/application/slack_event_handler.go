@@ -47,16 +47,29 @@ func (h *SlackEventHandler) Pattern() string {
 }
 
 func (h *SlackEventHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	body, err := io.ReadAll(r.Body)
+	// Slackからのリクエストを検証
+	sv, err := slack.NewSecretsVerifier(r.Header, h.signingSecret)
+	if err != nil {
+		h.log.Warn("Failed to create secrets verifier", zap.Error(err))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	bodyReader := io.TeeReader(r.Body, &sv)
+	body, err := io.ReadAll(bodyReader)
 	if err != nil {
 		h.log.Warn("Failed to read request", zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	event, err := slackevents.ParseEvent(body, slackevents.OptionVerifyToken(&slackevents.TokenComparator{
-		VerificationToken: h.signingSecret,
-	}))
+	if err := sv.Ensure(); err != nil {
+		h.log.Warn("Failed to verify request", zap.Error(err))
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	event, err := slackevents.ParseEvent(body, slackevents.OptionNoVerifyToken())
 	if err != nil {
 		h.log.Warn("Failed to parse event", zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
@@ -65,15 +78,16 @@ func (h *SlackEventHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// URLの検証チャレンジに応答
 	if event.Type == slackevents.URLVerification {
-		var challenge struct {
-			Challenge string `json:"challenge"`
-		}
-		if err := json.Unmarshal(body, &challenge); err != nil {
+		var res *slackevents.ChallengeResponse
+		if err := json.Unmarshal(body, &res); err != nil {
+			h.log.Error("Failed to unmarshal challenge", zap.Error(err))
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		w.Header().Set("Content-Type", "text/plain")
-		w.Write([]byte(challenge.Challenge))
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{
+			"challenge": res.Challenge,
+		})
 		return
 	}
 
