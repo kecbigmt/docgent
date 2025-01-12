@@ -97,7 +97,7 @@ func (h *SlackEventHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		switch ev := innerEvent.Data.(type) {
 		case *slackevents.ReactionAddedEvent:
 			// docgent emojiが付与された場合の処理
-			if ev.Reaction == "docgent" {
+			if ev.Reaction == "doc_it" {
 				go h.handleReactionEvent(ev)
 			}
 		}
