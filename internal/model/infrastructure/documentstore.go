@@ -12,5 +12,5 @@ type Document struct {
 }
 
 type DocumentStore interface {
-	Save(documentInput DocumentInput) (*Document, error)
+	Save(documentInput DocumentInput) (Document, error)
 }
