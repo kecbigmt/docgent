@@ -138,10 +138,10 @@ func (h *SlackEventHandler) handleReactionEvent(ev *slackevents.ReactionAddedEve
 
 	// ドキュメントを生成
 	ctx := context.Background()
-	draftGenerateWorkflow := workflow.NewDraftGenerateWorkflow(workflow.DraftGenerateWorkflowParams{
-		DocumentationAgent: h.documentationAgent,
-		DocumentStore:      h.documentStore,
-	})
+	draftGenerateWorkflow := workflow.NewDraftGenerateWorkflow(
+		h.documentationAgent,
+		h.documentStore,
+	)
 	draft, err := draftGenerateWorkflow.Execute(ctx, text)
 	if err != nil {
 		h.postErrorMessage(ev.Item.Channel, threadTimestamp, "ドキュメントの生成に失敗しました")

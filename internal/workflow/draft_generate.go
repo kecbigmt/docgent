@@ -7,20 +7,18 @@ import (
 	"docgent-backend/internal/model/infrastructure"
 )
 
-type DraftGenerateWorkflowParams struct {
-	DocumentationAgent infrastructure.DocumentationAgent
-	DocumentStore      infrastructure.DocumentStore
-}
-
 type DraftGenerateWorkflow struct {
 	documentationAgent infrastructure.DocumentationAgent
 	documentStore      infrastructure.DocumentStore
 }
 
-func NewDraftGenerateWorkflow(p DraftGenerateWorkflowParams) *DraftGenerateWorkflow {
+func NewDraftGenerateWorkflow(
+	documentationAgent infrastructure.DocumentationAgent,
+	documentStore infrastructure.DocumentStore,
+) *DraftGenerateWorkflow {
 	return &DraftGenerateWorkflow{
-		documentationAgent: p.DocumentationAgent,
-		documentStore:      p.DocumentStore,
+		documentationAgent: documentationAgent,
+		documentStore:      documentStore,
 	}
 }
 

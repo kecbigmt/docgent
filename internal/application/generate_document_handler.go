@@ -51,10 +51,10 @@ func (h *GenerateDocumentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	draftGenerateWorkflow := workflow.NewDraftGenerateWorkflow(workflow.DraftGenerateWorkflowParams{
-		DocumentationAgent: h.documentationAgent,
-		DocumentStore:      h.documentStore,
-	})
+	draftGenerateWorkflow := workflow.NewDraftGenerateWorkflow(
+		h.documentationAgent,
+		h.documentStore,
+	)
 	draft, err := draftGenerateWorkflow.Execute(r.Context(), req.Text)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
