@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
 
 	"docgent-backend/internal/model/infrastructure"
 
@@ -12,23 +11,23 @@ import (
 	"google.golang.org/api/option"
 )
 
+type DocumentationAgentConfig struct {
+	GenerativeModelName string
+	APIKey              string
+}
+
 type DocumentationAgent struct {
 	model *genai.GenerativeModel
 }
 
-func NewDocumentationAgent() (*DocumentationAgent, error) {
-	apiKey := os.Getenv("GEMINI_API_KEY")
-	if apiKey == "" {
-		return nil, fmt.Errorf("GEMINI_API_KEY environment variable is not set")
-	}
-
+func NewDocumentationAgent(config DocumentationAgentConfig) (*DocumentationAgent, error) {
 	ctx := context.Background()
-	client, err := genai.NewClient(ctx, option.WithAPIKey(apiKey))
+	client, err := genai.NewClient(ctx, option.WithAPIKey(config.APIKey))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create genai client: %w", err)
 	}
 
-	model := client.GenerativeModel("gemini-1.5-flash-001")
+	model := client.GenerativeModel(config.GenerativeModelName)
 	return &DocumentationAgent{
 		model: model,
 	}, nil

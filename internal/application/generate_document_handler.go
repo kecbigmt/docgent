@@ -4,22 +4,28 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"go.uber.org/fx"
+
 	"docgent-backend/internal/model/infrastructure"
 	"docgent-backend/internal/workflow"
 )
+
+type GenerateDocumentHandlerParams struct {
+	fx.In
+
+	DocumentationAgent infrastructure.DocumentationAgent
+	DocumentStore      infrastructure.DocumentStore
+}
 
 type GenerateDocumentHandler struct {
 	documentationAgent infrastructure.DocumentationAgent
 	documentStore      infrastructure.DocumentStore
 }
 
-func NewGenerateDocumentHandler(
-	agent infrastructure.DocumentationAgent,
-	store infrastructure.DocumentStore,
-) *GenerateDocumentHandler {
+func NewGenerateDocumentHandler(params GenerateDocumentHandlerParams) *GenerateDocumentHandler {
 	return &GenerateDocumentHandler{
-		documentationAgent: agent,
-		documentStore:      store,
+		documentationAgent: params.DocumentationAgent,
+		documentStore:      params.DocumentStore,
 	}
 }
 

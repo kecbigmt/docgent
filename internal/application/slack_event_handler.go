@@ -6,15 +6,29 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 
 	"docgent-backend/internal/model/infrastructure"
 	"docgent-backend/internal/workflow"
 )
+
+type SlackAPIConfig struct {
+	Token         string
+	SigningSecret string
+}
+
+type SlackEventHandlerParams struct {
+	fx.In
+
+	Logger             *zap.Logger
+	DocumentationAgent infrastructure.DocumentationAgent
+	DocumentStore      infrastructure.DocumentStore
+	SlackAPIConfig     SlackAPIConfig
+}
 
 type SlackEventHandler struct {
 	log                *zap.Logger
@@ -24,21 +38,13 @@ type SlackEventHandler struct {
 	signingSecret      string
 }
 
-func NewSlackEventHandler(
-	log *zap.Logger,
-	agent infrastructure.DocumentationAgent,
-	store infrastructure.DocumentStore,
-) *SlackEventHandler {
-	// 環境変数からSlackの認証情報を取得
-	token := os.Getenv("SLACK_BOT_TOKEN")
-	signingSecret := os.Getenv("SLACK_SIGNING_SECRET")
-
+func NewSlackEventHandler(params SlackEventHandlerParams) *SlackEventHandler {
 	return &SlackEventHandler{
-		log:                log,
-		documentationAgent: agent,
-		documentStore:      store,
-		slackClient:        slack.New(token),
-		signingSecret:      signingSecret,
+		log:                params.Logger,
+		documentationAgent: params.DocumentationAgent,
+		documentStore:      params.DocumentStore,
+		slackClient:        slack.New(params.SlackAPIConfig.Token),
+		signingSecret:      params.SlackAPIConfig.SigningSecret,
 	}
 }
 

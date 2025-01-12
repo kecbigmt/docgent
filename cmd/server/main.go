@@ -21,6 +21,9 @@ func main() {
 			return &fxevent.ZapLogger{Logger: log}
 		}),
 		fx.Provide(
+			NewSlackAPIConfig,
+			NewGitHubAPIConfig,
+			NewGenkitDocumentationAgentConfig,
 			NewHTTPServer,
 			fx.Annotate(
 				NewServeMux,

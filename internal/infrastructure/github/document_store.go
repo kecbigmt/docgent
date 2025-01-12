@@ -3,7 +3,6 @@ package github
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/google/go-github/v68/github"
@@ -19,38 +18,19 @@ type DocumentStore struct {
 	baseBranch string
 }
 
-func NewDocumentStore() (*DocumentStore, error) {
-	token := os.Getenv("GITHUB_TOKEN")
-	if token == "" {
-		return nil, fmt.Errorf("GITHUB_TOKEN is not set")
-	}
-
-	owner := os.Getenv("GITHUB_OWNER")
-	if owner == "" {
-		return nil, fmt.Errorf("GITHUB_OWNER is not set")
-	}
-
-	repo := os.Getenv("GITHUB_REPO")
-	if repo == "" {
-		return nil, fmt.Errorf("GITHUB_REPO is not set")
-	}
-
-	baseBranch := os.Getenv("GITHUB_BASE_BRANCH")
-	if baseBranch == "" {
-		baseBranch = "main" // デフォルト値
-	}
+func NewDocumentStore(config APIConfig) (*DocumentStore, error) {
 
 	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: token},
+		&oauth2.Token{AccessToken: config.Token},
 	)
 	tc := oauth2.NewClient(context.Background(), ts)
 	client := github.NewClient(tc)
 
 	return &DocumentStore{
 		client:     client,
-		owner:      owner,
-		repo:       repo,
-		baseBranch: baseBranch,
+		owner:      config.Owner,
+		repo:       config.Repo,
+		baseBranch: config.BaseBranch,
 	}, nil
 }
 
