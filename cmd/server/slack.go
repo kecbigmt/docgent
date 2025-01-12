@@ -4,9 +4,10 @@ import (
 	"os"
 
 	"docgent-backend/internal/application"
+	"docgent-backend/internal/infrastructure/slack"
 )
 
-func NewSlackAPIConfig() application.SlackAPIConfig {
+func NewSlackAPI() application.SlackAPI {
 	token := os.Getenv("SLACK_BOT_TOKEN")
 	if token == "" {
 		panic("SLACK_BOT_TOKEN is not set")
@@ -17,8 +18,5 @@ func NewSlackAPIConfig() application.SlackAPIConfig {
 		panic("SLACK_SIGNING_SECRET is not set")
 	}
 
-	return application.SlackAPIConfig{
-		Token:         token,
-		SigningSecret: signingSecret,
-	}
+	return slack.NewAPI(token, signingSecret)
 }

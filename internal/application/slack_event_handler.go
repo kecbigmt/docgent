@@ -1,50 +1,34 @@
 package application
 
 import (
-	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 
-	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
-
-	"docgent-backend/internal/model/infrastructure"
-	"docgent-backend/internal/workflow"
 )
-
-type SlackAPIConfig struct {
-	Token         string
-	SigningSecret string
-}
 
 type SlackEventHandlerParams struct {
 	fx.In
 
-	Logger             *zap.Logger
-	DocumentationAgent infrastructure.DocumentationAgent
-	DocumentStore      infrastructure.DocumentStore
-	SlackAPIConfig     SlackAPIConfig
+	Logger      *zap.Logger
+	EventRoutes []SlackEventRoute `group:"slack_event_routes"`
+	SlackAPI    SlackAPI
 }
 
 type SlackEventHandler struct {
-	log                *zap.Logger
-	documentationAgent infrastructure.DocumentationAgent
-	documentStore      infrastructure.DocumentStore
-	slackClient        *slack.Client
-	signingSecret      string
+	log         *zap.Logger
+	eventRoutes []SlackEventRoute
+	slackAPI    SlackAPI
 }
 
 func NewSlackEventHandler(params SlackEventHandlerParams) *SlackEventHandler {
 	return &SlackEventHandler{
-		log:                params.Logger,
-		documentationAgent: params.DocumentationAgent,
-		documentStore:      params.DocumentStore,
-		slackClient:        slack.New(params.SlackAPIConfig.Token),
-		signingSecret:      params.SlackAPIConfig.SigningSecret,
+		log:         params.Logger,
+		eventRoutes: params.EventRoutes,
+		slackAPI:    params.SlackAPI,
 	}
 }
 
@@ -54,7 +38,7 @@ func (h *SlackEventHandler) Pattern() string {
 
 func (h *SlackEventHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Slackからのリクエストを検証
-	sv, err := slack.NewSecretsVerifier(r.Header, h.signingSecret)
+	sv, err := h.slackAPI.NewSecretsVerifier(r.Header)
 	if err != nil {
 		h.log.Warn("Failed to create secrets verifier", zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)
@@ -90,6 +74,11 @@ func (h *SlackEventHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
+		if res == nil {
+			h.log.Error("Challenge response is nil")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]string{
 			"challenge": res.Challenge,
@@ -109,61 +98,14 @@ func (h *SlackEventHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			h.log.Info("Received event", zap.String("event", string(eventJSON)))
 		}
 
-		switch ev := innerEvent.Data.(type) {
-		case *slackevents.ReactionAddedEvent:
-			// docgent emojiが付与された場合の処理
-			if ev.Reaction == "doc_it" {
-				go h.handleReactionEvent(ev)
+		for _, route := range h.eventRoutes {
+			if innerEvent.Type == route.EventType() {
+				go route.ConsumeEvent(innerEvent)
+				return
 			}
 		}
 	}
 
 	// Slackイベントには即座に200 OKを返す
 	w.WriteHeader(http.StatusOK)
-}
-
-func (h *SlackEventHandler) handleReactionEvent(ev *slackevents.ReactionAddedEvent) {
-	// スレッドの内容を取得
-	threadTimestamp := ev.Item.Timestamp
-
-	// スレッドのメッセージを取得
-	messages, _, _, err := h.slackClient.GetConversationReplies(&slack.GetConversationRepliesParameters{
-		ChannelID: ev.Item.Channel,
-		Timestamp: threadTimestamp,
-	})
-	if err != nil {
-		h.postErrorMessage(ev.Item.Channel, threadTimestamp, "スレッドの取得に失敗しました")
-		return
-	}
-
-	// スレッドの内容を結合
-	var text string
-	for _, msg := range messages {
-		text += msg.Text + "\n"
-	}
-
-	// ドキュメントを生成
-	ctx := context.Background()
-	draftGenerateWorkflow := workflow.NewDraftGenerateWorkflow(
-		h.documentationAgent,
-		h.documentStore,
-	)
-	draft, err := draftGenerateWorkflow.Execute(ctx, text)
-	if err != nil {
-		h.postErrorMessage(ev.Item.Channel, threadTimestamp, "ドキュメントの生成に失敗しました")
-		return
-	}
-
-	// 成功メッセージを投稿
-	h.slackClient.PostMessage(ev.Item.Channel,
-		slack.MsgOptionText(fmt.Sprintf("ドキュメントを生成しました！\nタイトル: %s", draft.Title), false),
-		slack.MsgOptionTS(threadTimestamp),
-	)
-}
-
-func (h *SlackEventHandler) postErrorMessage(channel, threadTs, message string) {
-	h.slackClient.PostMessage(channel,
-		slack.MsgOptionText(fmt.Sprintf(":warning: エラー: %s", message), false),
-		slack.MsgOptionTS(threadTs),
-	)
 }

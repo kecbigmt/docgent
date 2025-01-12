@@ -21,7 +21,7 @@ func main() {
 			return &fxevent.ZapLogger{Logger: log}
 		}),
 		fx.Provide(
-			NewSlackAPIConfig,
+			NewSlackAPI,
 			NewGitHubAPIConfig,
 			NewGenkitDocumentationAgentConfig,
 			NewHTTPServer,
@@ -33,6 +33,7 @@ func main() {
 			AsRoute(application.NewHelloHandler),
 			AsRoute(application.NewGenerateDocumentHandler),
 			AsRoute(application.NewSlackEventHandler),
+			AsSlackEventRoute(application.NewSlackReactionAddedEventConsumer),
 			fx.Annotate(
 				genkit.NewDocumentationAgent,
 				fx.As(new(infrastructure.DocumentationAgent)),
@@ -74,6 +75,12 @@ func NewServeMux(routes []application.Route) *http.ServeMux {
 	return mux
 }
 
-func AsRoute(f any) any {
-	return fx.Annotate(f, fx.As(new(application.Route)), fx.ResultTags(`group:"routes"`))
+func AsRoute(f any, anns ...fx.Annotation) any {
+	anns = append([]fx.Annotation{fx.As(new(application.Route)), fx.ResultTags(`group:"routes"`)}, anns...)
+	return fx.Annotate(f, anns...)
+}
+
+func AsSlackEventRoute(f any, anns ...fx.Annotation) any {
+	anns = append([]fx.Annotation{fx.As(new(application.SlackEventRoute)), fx.ResultTags(`group:"slack_event_routes"`)}, anns...)
+	return fx.Annotate(f, anns...)
 }
