@@ -7,6 +7,7 @@ import (
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
 	"go.uber.org/fx"
+	"go.uber.org/zap"
 
 	"docgent-backend/internal/model/infrastructure"
 	"docgent-backend/internal/workflow"
@@ -15,12 +16,14 @@ import (
 type SlackReactionAddedEventConsumerParams struct {
 	fx.In
 
+	Logger             *zap.Logger
 	SlackAPI           SlackAPI
 	DocumentationAgent infrastructure.DocumentationAgent
 	DocumentStore      infrastructure.DocumentStore
 }
 
 type SlackReactionAddedEventConsumer struct {
+	logger             *zap.Logger
 	slackAPI           SlackAPI
 	documentationAgent infrastructure.DocumentationAgent
 	documentStore      infrastructure.DocumentStore
@@ -28,6 +31,7 @@ type SlackReactionAddedEventConsumer struct {
 
 func NewSlackReactionAddedEventConsumer(params SlackReactionAddedEventConsumerParams) *SlackReactionAddedEventConsumer {
 	return &SlackReactionAddedEventConsumer{
+		logger:             params.Logger,
 		slackAPI:           params.SlackAPI,
 		documentationAgent: params.DocumentationAgent,
 		documentStore:      params.DocumentStore,
@@ -41,6 +45,7 @@ func (h *SlackReactionAddedEventConsumer) EventType() string {
 func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsAPIInnerEvent) {
 	ev, ok := event.Data.(*slackevents.ReactionAddedEvent)
 	if !ok {
+		h.logger.Error("Failed to convert event data to ReactionAddedEvent")
 		return
 	}
 
@@ -54,6 +59,7 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 		Timestamp: threadTimestamp,
 	})
 	if err != nil {
+		h.logger.Error("Failed to get thread messages", zap.Error(err))
 		slackClient.PostMessage(ev.Item.Channel,
 			slack.MsgOptionText(":warning: エラー: スレッドの取得に失敗しました", false),
 			slack.MsgOptionTS(threadTimestamp),
@@ -75,6 +81,7 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 	})
 	draft, err := draftGenerateWorkflow.Execute(ctx, text)
 	if err != nil {
+		h.logger.Error("Failed to generate document", zap.Error(err))
 		slackClient.PostMessage(ev.Item.Channel,
 			slack.MsgOptionText(":warning: エラー: スレッドの取得に失敗しました", false),
 			slack.MsgOptionTS(threadTimestamp),
