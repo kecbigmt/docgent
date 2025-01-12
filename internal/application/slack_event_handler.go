@@ -10,12 +10,14 @@ import (
 
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
+	"go.uber.org/zap"
 
 	"docgent-backend/internal/model/infrastructure"
 	"docgent-backend/internal/workflow"
 )
 
 type SlackEventHandler struct {
+	log                *zap.Logger
 	documentationAgent infrastructure.DocumentationAgent
 	documentStore      infrastructure.DocumentStore
 	slackClient        *slack.Client
@@ -23,6 +25,7 @@ type SlackEventHandler struct {
 }
 
 func NewSlackEventHandler(
+	log *zap.Logger,
 	agent infrastructure.DocumentationAgent,
 	store infrastructure.DocumentStore,
 ) *SlackEventHandler {
@@ -31,6 +34,7 @@ func NewSlackEventHandler(
 	signingSecret := os.Getenv("SLACK_SIGNING_SECRET")
 
 	return &SlackEventHandler{
+		log:                log,
 		documentationAgent: agent,
 		documentStore:      store,
 		slackClient:        slack.New(token),
@@ -45,6 +49,7 @@ func (h *SlackEventHandler) Pattern() string {
 func (h *SlackEventHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		h.log.Warn("Failed to read request", zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -53,6 +58,7 @@ func (h *SlackEventHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		VerificationToken: h.signingSecret,
 	}))
 	if err != nil {
+		h.log.Warn("Failed to parse event", zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
