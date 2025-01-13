@@ -21,7 +21,6 @@ type SlackReactionAddedEventConsumerParams struct {
 	SlackAPI           SlackAPI
 	GitHubAPI          github.API
 	DocumentationAgent infrastructure.DocumentationAgent
-	DocumentStore      infrastructure.DocumentStore
 }
 
 type SlackReactionAddedEventConsumer struct {
@@ -29,7 +28,6 @@ type SlackReactionAddedEventConsumer struct {
 	slackAPI           SlackAPI
 	githubAPI          github.API
 	documentationAgent infrastructure.DocumentationAgent
-	documentStore      infrastructure.DocumentStore
 }
 
 func NewSlackReactionAddedEventConsumer(params SlackReactionAddedEventConsumerParams) *SlackReactionAddedEventConsumer {
@@ -38,7 +36,6 @@ func NewSlackReactionAddedEventConsumer(params SlackReactionAddedEventConsumerPa
 		slackAPI:           params.SlackAPI,
 		githubAPI:          params.GitHubAPI,
 		documentationAgent: params.DocumentationAgent,
-		documentStore:      params.DocumentStore,
 	}
 }
 
