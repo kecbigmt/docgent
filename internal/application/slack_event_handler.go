@@ -58,14 +58,14 @@ func (h *SlackEventHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ghInstallationIDStr := queryParams.Get("gh_installation_id")
 	ghOwner := queryParams.Get("gh_owner")
 	ghRepo := queryParams.Get("gh_repo")
-	ghBaseBranch := queryParams.Get("gh_base_branch")
+	ghDefaultBranch := queryParams.Get("gh_default_branch")
 	if ghInstallationIDStr == "" || ghOwner == "" || ghRepo == "" {
 		h.log.Warn("GitHub installation ID, owner, or repo is missing")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	if ghBaseBranch == "" {
-		ghBaseBranch = "main"
+	if ghDefaultBranch == "" {
+		ghDefaultBranch = "main"
 	}
 	ghInstallationID, err := strconv.ParseInt(ghInstallationIDStr, 10, 64)
 	if err != nil {
@@ -77,7 +77,7 @@ func (h *SlackEventHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		InstallationID: ghInstallationID,
 		Owner:          ghOwner,
 		Repo:           ghRepo,
-		BaseBranch:     ghBaseBranch,
+		DefaultBranch:  ghDefaultBranch,
 	}
 
 	if err := sv.Ensure(); err != nil {

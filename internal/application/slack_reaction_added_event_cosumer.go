@@ -16,25 +16,25 @@ import (
 type SlackReactionAddedEventConsumerParams struct {
 	fx.In
 
-	Logger                          *zap.Logger
-	SlackAPI                        SlackAPI
-	GitHubDocumentRepositoryFactory GitHubDocumentRepositoryFactory
-	DocumentAgent                   domain.DocumentAgent
+	Logger                 *zap.Logger
+	SlackAPI               SlackAPI
+	GitHubBranchAPIFactory GitHubBranchAPIFactory
+	DocumentAgent          domain.DocumentAgent
 }
 
 type SlackReactionAddedEventConsumer struct {
-	logger                          *zap.Logger
-	slackAPI                        SlackAPI
-	githubDocumentRepositoryFactory GitHubDocumentRepositoryFactory
-	documentAgent                   domain.DocumentAgent
+	logger                     *zap.Logger
+	slackAPI                   SlackAPI
+	githubAPIRepositoryFactory GitHubBranchAPIFactory
+	documentAgent              domain.DocumentAgent
 }
 
 func NewSlackReactionAddedEventConsumer(params SlackReactionAddedEventConsumerParams) *SlackReactionAddedEventConsumer {
 	return &SlackReactionAddedEventConsumer{
-		logger:                          params.Logger,
-		slackAPI:                        params.SlackAPI,
-		githubDocumentRepositoryFactory: params.GitHubDocumentRepositoryFactory,
-		documentAgent:                   params.DocumentAgent,
+		logger:                     params.Logger,
+		slackAPI:                   params.SlackAPI,
+		githubAPIRepositoryFactory: params.GitHubBranchAPIFactory,
+		documentAgent:              params.DocumentAgent,
 	}
 }
 
@@ -53,7 +53,8 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 
 	slackClient := h.slackAPI.GetClient()
 
-	documentRepository := h.githubDocumentRepositoryFactory.New(githubAppParams)
+	branchAPI := h.githubAPIRepositoryFactory.New(githubAppParams)
+	previousIncrementHandle := branchAPI.NewIncrementHandle(githubAppParams.DefaultBranch)
 
 	// スレッドのメッセージを取得
 	messages, _, _, err := slackClient.GetConversationReplies(&slack.GetConversationRepliesParameters{
@@ -77,10 +78,10 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 
 	// ドキュメントを生成
 	ctx := context.Background()
-	documentGenerateWorkflow := workflow.NewDocumentGenerateWorkflow(h.documentAgent, documentRepository)
-	document, err := documentGenerateWorkflow.Execute(ctx, text)
+	incrementGenerateWorkflow := workflow.NewIncrementGenerateWorkflow(h.documentAgent, branchAPI)
+	increment, err := incrementGenerateWorkflow.Execute(ctx, text, previousIncrementHandle)
 	if err != nil {
-		h.logger.Error("Failed to generate document", zap.Error(err))
+		h.logger.Error("Failed to generate increment", zap.Error(err))
 		slackClient.PostMessage(ev.Item.Channel,
 			slack.MsgOptionText(":warning: エラー: スレッドの取得に失敗しました", false),
 			slack.MsgOptionTS(threadTimestamp),
@@ -90,7 +91,7 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 
 	// 成功メッセージを投稿
 	slackClient.PostMessage(ev.Item.Channel,
-		slack.MsgOptionText(fmt.Sprintf("ドキュメントを生成しました！\nタイトル: %s", document.Title), false),
+		slack.MsgOptionText(fmt.Sprintf("ドキュメントを生成しました！\nブランチ名: %s", increment.Handle.Value), false),
 		slack.MsgOptionTS(threadTimestamp),
 	)
 }

@@ -2,6 +2,6 @@ package application
 
 import "docgent-backend/internal/domain"
 
-type GitHubDocumentRepositoryFactory interface {
-	New(params GitHubAppParams) domain.DocumentRepository
+type GitHubBranchAPIFactory interface {
+	New(params GitHubAppParams) domain.IncrementRepository
 }

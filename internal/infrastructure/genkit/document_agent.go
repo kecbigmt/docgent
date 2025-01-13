@@ -32,7 +32,7 @@ func NewDocumentAgent(config DocumentAgentConfig) (*DocumentAgent, error) {
 	}, nil
 }
 
-func (c *DocumentAgent) Generate(ctx context.Context, input string) (domain.Document, error) {
+func (c *DocumentAgent) GenerateContent(ctx context.Context, input string) (domain.DocumentContent, error) {
 	c.model.ResponseMIMEType = "application/json"
 	c.model.ResponseSchema = &genai.Schema{
 		Type: genai.TypeObject,
@@ -56,11 +56,11 @@ func (c *DocumentAgent) Generate(ctx context.Context, input string) (domain.Docu
 
 	resp, err := c.model.GenerateContent(ctx, genai.Text(prompt))
 	if err != nil {
-		return domain.Document{}, fmt.Errorf("failed to generate content: %w", err)
+		return domain.DocumentContent{}, fmt.Errorf("failed to generate content: %w", err)
 	}
 
 	if len(resp.Candidates) == 0 {
-		return domain.Document{}, fmt.Errorf("no response from the model")
+		return domain.DocumentContent{}, fmt.Errorf("no response from the model")
 	}
 
 	var result struct {
@@ -73,14 +73,14 @@ func (c *DocumentAgent) Generate(ctx context.Context, input string) (domain.Docu
 			for _, part := range cand.Content.Parts {
 				if text, ok := part.(genai.Text); ok {
 					if err := json.Unmarshal([]byte(text), &result); err != nil {
-						return domain.Document{}, fmt.Errorf("failed to parse model response: %w", err)
+						return domain.DocumentContent{}, fmt.Errorf("failed to parse model response: %w", err)
 					}
-					draft := domain.Document{Title: result.Title, Content: result.Content}
+					draft := domain.NewDocumentContent(result.Title, result.Content)
 					return draft, nil
 				}
 			}
 		}
 	}
 
-	return domain.Document{}, fmt.Errorf("no valid response from the model")
+	return domain.DocumentContent{}, fmt.Errorf("no valid response from the model")
 }
