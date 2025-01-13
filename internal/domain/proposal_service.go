@@ -8,6 +8,7 @@ type ProposalService struct {
 type ProposalRepository interface {
 	CreateProposal(proposalContent ProposalContent, increment Increment) (Proposal, error)
 	NewProposalHandle(value string) ProposalHandle
+	CreateComment(handle ProposalHandle, commentBody string) (Comment, error)
 }
 
 type ProposalAgent interface {
@@ -24,4 +25,8 @@ func (s *ProposalService) Create(content ProposalContent, increment Increment) (
 
 func (s *ProposalService) GenerateContent(increment Increment) (ProposalContent, error) {
 	return s.agent.Generate(increment)
+}
+
+func (s *ProposalService) CreateComment(proposalHandle ProposalHandle, commentBody string) (Comment, error) {
+	return s.repository.CreateComment(proposalHandle, commentBody)
 }

@@ -8,6 +8,7 @@ type Proposal struct {
 	Handle ProposalHandle
 	ProposalContent
 	Increment Increment
+	Comments  []Comment
 }
 
 func NewProposal(handle ProposalHandle, content ProposalContent, increment Increment) Proposal {
@@ -47,5 +48,35 @@ func NewProposalContent(title, body string) ProposalContent {
 	return ProposalContent{
 		Title: title,
 		Body:  body,
+	}
+}
+
+/**
+ * Comment
+ */
+
+type Comment struct {
+	Handle CommentHandle
+	Author string
+	Body   string
+}
+
+func NewComment(handle CommentHandle, author, body string) Comment {
+	return Comment{
+		Handle: handle,
+		Author: author,
+		Body:   body,
+	}
+}
+
+type CommentHandle struct {
+	Source string
+	Value  string
+}
+
+func NewCommentHandle(source, value string) CommentHandle {
+	return CommentHandle{
+		Source: source,
+		Value:  value,
 	}
 }

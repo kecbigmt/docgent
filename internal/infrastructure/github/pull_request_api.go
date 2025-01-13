@@ -4,6 +4,7 @@ import (
 	"context"
 	"docgent-backend/internal/domain"
 	"fmt"
+	"strconv"
 
 	"github.com/google/go-github/v68/github"
 )
@@ -26,6 +27,10 @@ func (s *PullRequestAPI) NewProposalHandle(value string) domain.ProposalHandle {
 	return domain.NewProposalHandle("github-pull-request", value)
 }
 
+func (s *PullRequestAPI) NewCommentHandle(issueCommentID string) domain.CommentHandle {
+	return domain.NewCommentHandle("github-issue-comment", issueCommentID)
+}
+
 func (s *PullRequestAPI) CreateProposal(content domain.ProposalContent, increment domain.Increment) (domain.Proposal, error) {
 	ctx := context.Background()
 
@@ -44,4 +49,28 @@ func (s *PullRequestAPI) CreateProposal(content domain.ProposalContent, incremen
 
 	handle := s.NewProposalHandle(fmt.Sprintf("%d", pr.GetNumber()))
 	return domain.NewProposal(handle, content, increment), nil
+}
+
+func (s *PullRequestAPI) CreateComment(proposalHandle domain.ProposalHandle, commentBody string) (domain.Comment, error) {
+	ctx := context.Background()
+
+	newComment := &github.IssueComment{
+		Body: github.Ptr(commentBody),
+	}
+
+	number, err := strconv.Atoi(proposalHandle.Value)
+	if err != nil {
+		return domain.Comment{}, fmt.Errorf("failed to convert pull request number: %w", err)
+	}
+
+	issueComment, _, err := s.client.Issues.CreateComment(ctx, s.owner, s.repo, number, newComment)
+	if err != nil {
+		return domain.Comment{}, fmt.Errorf("failed to add comment: %w", err)
+	}
+
+	author := issueComment.GetUser().GetLogin()
+	handle := s.NewCommentHandle(strconv.FormatInt(issueComment.GetID(), 10))
+	comment := domain.NewComment(handle, author, commentBody)
+
+	return comment, nil
 }

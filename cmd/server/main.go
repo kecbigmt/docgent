@@ -23,6 +23,7 @@ func main() {
 		fx.Provide(
 			NewSlackAPI,
 			NewGitHubAPI,
+			NewGitHubWebhookRequestParser,
 			NewGenkitConfig,
 			NewHTTPServer,
 			fx.Annotate(
@@ -32,7 +33,9 @@ func main() {
 			AsRoute(application.NewEchoHandler),
 			AsRoute(application.NewHelloHandler),
 			AsRoute(application.NewSlackEventHandler),
+			AsRoute(application.NewGitHubWebhookHandler),
 			AsSlackEventRoute(application.NewSlackReactionAddedEventConsumer),
+			AsGitHubEventRoute(application.NewGitHubIssueCommentEventConsumer),
 			AsDocumentAgent(genkit.NewDocumentAgent),
 			AsPoposalAgent(genkit.NewProposalAgent),
 			AsGitHubBranchAPIFactory(github.NewBranchAPIFactory),
@@ -77,6 +80,11 @@ func AsRoute(f any, anns ...fx.Annotation) any {
 
 func AsSlackEventRoute(f any, anns ...fx.Annotation) any {
 	anns = append([]fx.Annotation{fx.As(new(application.SlackEventRoute)), fx.ResultTags(`group:"slack_event_routes"`)}, anns...)
+	return fx.Annotate(f, anns...)
+}
+
+func AsGitHubEventRoute(f any, anns ...fx.Annotation) any {
+	anns = append([]fx.Annotation{fx.As(new(application.GitHubEventRoute)), fx.ResultTags(`group:"github_event_routes"`)}, anns...)
 	return fx.Annotate(f, anns...)
 }
 
