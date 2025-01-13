@@ -3,22 +3,22 @@ package slack
 import (
 	"net/http"
 
-	slacklib "github.com/slack-go/slack"
+	"github.com/slack-go/slack"
 )
 
 type API struct {
-	client        *slacklib.Client
+	client        *slack.Client
 	signingSecret string
 }
 
 func NewAPI(token, signingSecret string) *API {
-	return &API{client: slacklib.New(token), signingSecret: signingSecret}
+	return &API{client: slack.New(token), signingSecret: signingSecret}
 }
 
-func (a *API) GetClient() *slacklib.Client {
+func (a *API) GetClient() *slack.Client {
 	return a.client
 }
 
-func (a *API) NewSecretsVerifier(header http.Header) (slacklib.SecretsVerifier, error) {
-	return slacklib.NewSecretsVerifier(header, a.signingSecret)
+func (a *API) NewSecretsVerifier(header http.Header) (slack.SecretsVerifier, error) {
+	return slack.NewSecretsVerifier(header, a.signingSecret)
 }
