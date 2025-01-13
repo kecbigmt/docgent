@@ -1,7 +1,7 @@
 package application
 
-import "docgent-backend/internal/model/infrastructure"
+import "docgent-backend/internal/domain"
 
 type GitHubDocumentStoreFactory interface {
-	New(params GitHubAppParams) infrastructure.DocumentStore
+	New(params GitHubAppParams) domain.DocumentStore
 }

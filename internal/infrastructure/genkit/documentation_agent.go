@@ -2,10 +2,9 @@ package genkit
 
 import (
 	"context"
+	"docgent-backend/internal/domain"
 	"encoding/json"
 	"fmt"
-
-	"docgent-backend/internal/model/infrastructure"
 
 	"github.com/google/generative-ai-go/genai"
 	"google.golang.org/api/option"
@@ -33,7 +32,7 @@ func NewDocumentationAgent(config DocumentationAgentConfig) (*DocumentationAgent
 	}, nil
 }
 
-func (c *DocumentationAgent) GenerateDocumentDraft(ctx context.Context, input string) (infrastructure.DocumentDraft, error) {
+func (c *DocumentationAgent) GenerateDocumentDraft(ctx context.Context, input string) (domain.DocumentDraft, error) {
 	c.model.ResponseMIMEType = "application/json"
 	c.model.ResponseSchema = &genai.Schema{
 		Type: genai.TypeObject,
@@ -57,11 +56,11 @@ func (c *DocumentationAgent) GenerateDocumentDraft(ctx context.Context, input st
 
 	resp, err := c.model.GenerateContent(ctx, genai.Text(prompt))
 	if err != nil {
-		return infrastructure.DocumentDraft{}, fmt.Errorf("failed to generate content: %w", err)
+		return domain.DocumentDraft{}, fmt.Errorf("failed to generate content: %w", err)
 	}
 
 	if len(resp.Candidates) == 0 {
-		return infrastructure.DocumentDraft{}, fmt.Errorf("no response from the model")
+		return domain.DocumentDraft{}, fmt.Errorf("no response from the model")
 	}
 
 	var result struct {
@@ -74,14 +73,14 @@ func (c *DocumentationAgent) GenerateDocumentDraft(ctx context.Context, input st
 			for _, part := range cand.Content.Parts {
 				if text, ok := part.(genai.Text); ok {
 					if err := json.Unmarshal([]byte(text), &result); err != nil {
-						return infrastructure.DocumentDraft{}, fmt.Errorf("failed to parse model response: %w", err)
+						return domain.DocumentDraft{}, fmt.Errorf("failed to parse model response: %w", err)
 					}
-					draft := infrastructure.DocumentDraft{Title: result.Title, Content: result.Content}
+					draft := domain.DocumentDraft{Title: result.Title, Content: result.Content}
 					return draft, nil
 				}
 			}
 		}
 	}
 
-	return infrastructure.DocumentDraft{}, fmt.Errorf("no valid response from the model")
+	return domain.DocumentDraft{}, fmt.Errorf("no valid response from the model")
 }

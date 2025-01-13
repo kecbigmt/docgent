@@ -10,9 +10,9 @@ import (
 	"go.uber.org/zap"
 
 	"docgent-backend/internal/application"
+	"docgent-backend/internal/domain"
 	"docgent-backend/internal/infrastructure/genkit"
 	"docgent-backend/internal/infrastructure/github"
-	"docgent-backend/internal/model/infrastructure"
 )
 
 func main() {
@@ -36,7 +36,7 @@ func main() {
 			AsSlackEventRoute(application.NewSlackReactionAddedEventConsumer),
 			fx.Annotate(
 				genkit.NewDocumentationAgent,
-				fx.As(new(infrastructure.DocumentationAgent)),
+				fx.As(new(domain.DocumentationAgent)),
 			),
 			AsGitHubDocumentStoreFactory(github.NewDocumentStoreFactory),
 			zap.NewExample,

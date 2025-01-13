@@ -1,9 +1,7 @@
-package model
+package domain
 
 import (
 	"context"
-
-	"docgent-backend/internal/model/infrastructure"
 )
 
 func ParseWorkspaceBody(dto WorkspaceBodyDto) (WorkspaceBody, error) {
@@ -21,7 +19,7 @@ func ParseWorkspaceBody(dto WorkspaceBodyDto) (WorkspaceBody, error) {
 
 type CreateWorkspaceDependencies struct {
 	Repository WorkspaceRepository
-	Crypto     infrastructure.Crypto
+	Crypto     Crypto
 }
 
 func CreateWorkspace(ctx context.Context, deps CreateWorkspaceDependencies, body WorkspaceBody) (Workspace, error) {

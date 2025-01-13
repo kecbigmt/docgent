@@ -3,26 +3,25 @@ package workflow
 import (
 	"context"
 
-	"docgent-backend/internal/model"
-	"docgent-backend/internal/model/infrastructure"
+	"docgent-backend/internal/domain"
 )
 
 type CreateWorkspaceDependencies struct {
-	WorkspaceRepository model.WorkspaceRepository
-	Crypto              infrastructure.Crypto
+	WorkspaceRepository domain.WorkspaceRepository
+	Crypto              domain.Crypto
 }
 
-func CreateWorkspace(ctx context.Context, deps CreateWorkspaceDependencies, dto model.WorkspaceBodyDto) (model.Workspace, error) {
-	validatedBody, err := model.ParseWorkspaceBody(dto)
+func CreateWorkspace(ctx context.Context, deps CreateWorkspaceDependencies, dto domain.WorkspaceBodyDto) (domain.Workspace, error) {
+	validatedBody, err := domain.ParseWorkspaceBody(dto)
 	if err != nil {
-		return model.Workspace{}, err
+		return domain.Workspace{}, err
 	}
 
-	createWorkspaceDeps := model.CreateWorkspaceDependencies{
+	createWorkspaceDeps := domain.CreateWorkspaceDependencies{
 		Repository: deps.WorkspaceRepository,
 		Crypto:     deps.Crypto,
 	}
-	model.CreateWorkspace(ctx, createWorkspaceDeps, validatedBody)
+	domain.CreateWorkspace(ctx, createWorkspaceDeps, validatedBody)
 
-	return model.Workspace{}, nil
+	return domain.Workspace{}, nil
 }

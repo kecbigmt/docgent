@@ -1,4 +1,4 @@
-package infrastructure
+package domain
 
 type DocumentInput struct {
 	Title   string

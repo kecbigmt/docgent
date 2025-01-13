@@ -2,7 +2,7 @@ package github
 
 import (
 	"docgent-backend/internal/application"
-	"docgent-backend/internal/model/infrastructure"
+	"docgent-backend/internal/domain"
 )
 
 type DocumentStoreFactory struct {
@@ -15,7 +15,7 @@ func NewDocumentStoreFactory(api *API) *DocumentStoreFactory {
 	}
 }
 
-func (f *DocumentStoreFactory) New(params application.GitHubAppParams) infrastructure.DocumentStore {
+func (f *DocumentStoreFactory) New(params application.GitHubAppParams) domain.DocumentStore {
 	client := f.api.NewClient(params.InstallationID)
 	return NewDocumentStore(client, params.Owner, params.Repo, params.BaseBranch)
 }

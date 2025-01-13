@@ -1,4 +1,4 @@
-package infrastructure
+package domain
 
 import (
 	"context"

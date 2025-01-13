@@ -3,18 +3,17 @@ package workflow
 import (
 	"context"
 
-	"docgent-backend/internal/model"
-	"docgent-backend/internal/model/infrastructure"
+	"docgent-backend/internal/domain"
 )
 
 type DraftGenerateWorkflowParams struct {
-	DocumentationAgent infrastructure.DocumentationAgent
-	DocumentStore      infrastructure.DocumentStore
+	DocumentationAgent domain.DocumentationAgent
+	DocumentStore      domain.DocumentStore
 }
 
 type DraftGenerateWorkflow struct {
-	documentationAgent infrastructure.DocumentationAgent
-	documentStore      infrastructure.DocumentStore
+	documentationAgent domain.DocumentationAgent
+	documentStore      domain.DocumentStore
 }
 
 func NewDraftGenerateWorkflow(params DraftGenerateWorkflowParams) *DraftGenerateWorkflow {
@@ -24,21 +23,21 @@ func NewDraftGenerateWorkflow(params DraftGenerateWorkflowParams) *DraftGenerate
 	}
 }
 
-func (w *DraftGenerateWorkflow) Execute(ctx context.Context, text string) (model.Draft, error) {
+func (w *DraftGenerateWorkflow) Execute(ctx context.Context, text string) (domain.Draft, error) {
 	rawDraft, err := w.documentationAgent.GenerateDocumentDraft(ctx, text)
 	if err != nil {
-		return model.Draft{}, err
+		return domain.Draft{}, err
 	}
 
 	// Save the draft using DocumentStore
-	savedDoc, err := w.documentStore.Save(infrastructure.DocumentInput(rawDraft))
+	savedDoc, err := w.documentStore.Save(domain.DocumentInput(rawDraft))
 	if err != nil {
-		return model.Draft{}, err
+		return domain.Draft{}, err
 	}
 
-	draft, err := model.NewDraft(savedDoc.ID, savedDoc.Title, savedDoc.Content)
+	draft, err := domain.NewDraft(savedDoc.ID, savedDoc.Title, savedDoc.Content)
 	if err != nil {
-		return model.Draft{}, err
+		return domain.Draft{}, err
 	}
 
 	return draft, nil

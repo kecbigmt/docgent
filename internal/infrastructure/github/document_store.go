@@ -2,12 +2,11 @@ package github
 
 import (
 	"context"
+	"docgent-backend/internal/domain"
 	"fmt"
 	"time"
 
 	"github.com/google/go-github/v68/github"
-
-	"docgent-backend/internal/model/infrastructure"
 )
 
 type DocumentStore struct {
@@ -26,13 +25,13 @@ func NewDocumentStore(client *github.Client, owner, repo, baseBranch string) *Do
 	}
 }
 
-func (s *DocumentStore) Save(documentInput infrastructure.DocumentInput) (infrastructure.Document, error) {
+func (s *DocumentStore) Save(documentInput domain.DocumentInput) (domain.Document, error) {
 	ctx := context.Background()
 
 	// 1. Get the SHA of the base branch
 	ref, _, err := s.client.Git.GetRef(ctx, s.owner, s.repo, "refs/heads/"+s.baseBranch)
 	if err != nil {
-		return infrastructure.Document{}, fmt.Errorf("failed to get ref: %w", err)
+		return domain.Document{}, fmt.Errorf("failed to get ref: %w", err)
 	}
 
 	// 2. Create a new branch
@@ -45,7 +44,7 @@ func (s *DocumentStore) Save(documentInput infrastructure.DocumentInput) (infras
 	}
 	_, _, err = s.client.Git.CreateRef(ctx, s.owner, s.repo, newRef)
 	if err != nil {
-		return infrastructure.Document{}, fmt.Errorf("failed to create branch: %w", err)
+		return domain.Document{}, fmt.Errorf("failed to create branch: %w", err)
 	}
 
 	// 3. Create or update file
@@ -58,10 +57,10 @@ func (s *DocumentStore) Save(documentInput infrastructure.DocumentInput) (infras
 
 	_, _, err = s.client.Repositories.CreateFile(ctx, s.owner, s.repo, path, opts)
 	if err != nil {
-		return infrastructure.Document{}, fmt.Errorf("failed to create file: %w", err)
+		return domain.Document{}, fmt.Errorf("failed to create file: %w", err)
 	}
 
-	document := infrastructure.Document{
+	document := domain.Document{
 		ID:      path,
 		Title:   documentInput.Title,
 		Content: documentInput.Content,

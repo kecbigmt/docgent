@@ -9,7 +9,7 @@ import (
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 
-	"docgent-backend/internal/model/infrastructure"
+	"docgent-backend/internal/domain"
 	"docgent-backend/internal/workflow"
 )
 
@@ -19,14 +19,14 @@ type SlackReactionAddedEventConsumerParams struct {
 	Logger                     *zap.Logger
 	SlackAPI                   SlackAPI
 	GitHubDocumentStoreFactory GitHubDocumentStoreFactory
-	DocumentationAgent         infrastructure.DocumentationAgent
+	DocumentationAgent         domain.DocumentationAgent
 }
 
 type SlackReactionAddedEventConsumer struct {
 	logger                     *zap.Logger
 	slackAPI                   SlackAPI
 	githubDocumentStoreFactory GitHubDocumentStoreFactory
-	documentationAgent         infrastructure.DocumentationAgent
+	documentationAgent         domain.DocumentationAgent
 }
 
 func NewSlackReactionAddedEventConsumer(params SlackReactionAddedEventConsumerParams) *SlackReactionAddedEventConsumer {

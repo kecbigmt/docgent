@@ -2,21 +2,22 @@ package workflow
 
 import (
 	"context"
-	"docgent-backend/internal/model"
+
+	"docgent-backend/internal/domain"
 )
 
 type UpdateWorkspaceDependencies struct {
-	WorkspaceRepository model.WorkspaceRepository
+	WorkspaceRepository domain.WorkspaceRepository
 }
 
-func UpdateWorkspace(ctx context.Context, deps UpdateWorkspaceDependencies, id model.WorkspaceID, dto model.WorkspaceBodyDto) error {
-	validatedBody, err := model.ParseWorkspaceBody(dto)
+func UpdateWorkspace(ctx context.Context, deps UpdateWorkspaceDependencies, id domain.WorkspaceID, dto domain.WorkspaceBodyDto) error {
+	validatedBody, err := domain.ParseWorkspaceBody(dto)
 	if err != nil {
 		return err
 	}
 
-	updateWorkspaceDeps := model.UpdateWorkspaceDependencies{
+	updateWorkspaceDeps := domain.UpdateWorkspaceDependencies{
 		Repository: deps.WorkspaceRepository,
 	}
-	return model.UpdateWorkspace(ctx, updateWorkspaceDeps, id, validatedBody)
+	return domain.UpdateWorkspace(ctx, updateWorkspaceDeps, id, validatedBody)
 }
