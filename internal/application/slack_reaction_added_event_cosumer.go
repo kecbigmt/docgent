@@ -55,7 +55,7 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 	slackClient := h.slackAPI.GetClient()
 
 	githubClient := h.githubAPI.NewClient(githubAppParams.InstallationID)
-	documentStore := github.NewDocumentStoreWithClient(githubClient, githubAppParams.Owner, githubAppParams.Repo, githubAppParams.BaseBranch)
+	documentStore := github.NewDocumentStore(githubClient, githubAppParams.Owner, githubAppParams.Repo, githubAppParams.BaseBranch)
 
 	// スレッドのメッセージを取得
 	messages, _, _, err := slackClient.GetConversationReplies(&slack.GetConversationRepliesParameters{

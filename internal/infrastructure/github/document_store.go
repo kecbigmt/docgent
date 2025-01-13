@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/google/go-github/v68/github"
-	"golang.org/x/oauth2"
 
 	"docgent-backend/internal/model/infrastructure"
 )
@@ -18,22 +17,7 @@ type DocumentStore struct {
 	baseBranch string
 }
 
-func NewDocumentStore(config APIConfig) (*DocumentStore, error) {
-	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: config.Token},
-	)
-	tc := oauth2.NewClient(context.Background(), ts)
-	client := github.NewClient(tc)
-
-	return &DocumentStore{
-		client:     client,
-		owner:      config.Owner,
-		repo:       config.Repo,
-		baseBranch: config.BaseBranch,
-	}, nil
-}
-
-func NewDocumentStoreWithClient(client *github.Client, owner, repo, baseBranch string) *DocumentStore {
+func NewDocumentStore(client *github.Client, owner, repo, baseBranch string) *DocumentStore {
 	return &DocumentStore{
 		client:     client,
 		owner:      owner,
