@@ -32,7 +32,6 @@ func main() {
 			),
 			AsRoute(application.NewEchoHandler),
 			AsRoute(application.NewHelloHandler),
-			AsRoute(application.NewGenerateDocumentHandler),
 			AsRoute(application.NewSlackEventHandler),
 			AsSlackEventRoute(application.NewSlackReactionAddedEventConsumer),
 			fx.Annotate(
