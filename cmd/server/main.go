@@ -23,6 +23,7 @@ func main() {
 		fx.Provide(
 			NewSlackAPI,
 			NewGitHubAPIConfig,
+			NewGitHubAPI,
 			NewGenkitDocumentationAgentConfig,
 			NewHTTPServer,
 			fx.Annotate(

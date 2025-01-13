@@ -19,7 +19,6 @@ type DocumentStore struct {
 }
 
 func NewDocumentStore(config APIConfig) (*DocumentStore, error) {
-
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: config.Token},
 	)
@@ -32,6 +31,15 @@ func NewDocumentStore(config APIConfig) (*DocumentStore, error) {
 		repo:       config.Repo,
 		baseBranch: config.BaseBranch,
 	}, nil
+}
+
+func NewDocumentStoreWithClient(client *github.Client, owner, repo, baseBranch string) *DocumentStore {
+	return &DocumentStore{
+		client:     client,
+		owner:      owner,
+		repo:       repo,
+		baseBranch: baseBranch,
+	}
 }
 
 func (s *DocumentStore) Save(documentInput infrastructure.DocumentInput) (infrastructure.Document, error) {

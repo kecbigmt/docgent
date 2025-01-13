@@ -1,7 +1,9 @@
 package main
 
 import (
+	"log"
 	"os"
+	"strconv"
 
 	"docgent-backend/internal/infrastructure/github"
 )
@@ -33,4 +35,22 @@ func NewGitHubAPIConfig() github.APIConfig {
 		Repo:       repo,
 		BaseBranch: baseBranch,
 	}
+}
+
+func NewGitHubAPI() github.API {
+	appIDStr := os.Getenv("GITHUB_APP_ID")
+	if appIDStr == "" {
+		log.Fatal("GITHUB_APP_PRIVATE_KEY is not set")
+	}
+	appID, err := strconv.ParseInt(appIDStr, 10, 64)
+	if err != nil {
+		log.Fatalf("GITHUB_APP_ID is invalid: %v", err)
+	}
+
+	privateKey := os.Getenv("GITHUB_APP_PRIVATE_KEY")
+	if privateKey == "" {
+		log.Fatal("GITHUB_APP_PRIVATE_KEY is not set")
+	}
+
+	return *github.NewAPI(appID, []byte(privateKey))
 }

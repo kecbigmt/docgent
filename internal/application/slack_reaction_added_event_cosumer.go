@@ -9,6 +9,7 @@ import (
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 
+	"docgent-backend/internal/infrastructure/github"
 	"docgent-backend/internal/model/infrastructure"
 	"docgent-backend/internal/workflow"
 )
@@ -18,6 +19,7 @@ type SlackReactionAddedEventConsumerParams struct {
 
 	Logger             *zap.Logger
 	SlackAPI           SlackAPI
+	GitHubAPI          github.API
 	DocumentationAgent infrastructure.DocumentationAgent
 	DocumentStore      infrastructure.DocumentStore
 }
@@ -25,6 +27,7 @@ type SlackReactionAddedEventConsumerParams struct {
 type SlackReactionAddedEventConsumer struct {
 	logger             *zap.Logger
 	slackAPI           SlackAPI
+	githubAPI          github.API
 	documentationAgent infrastructure.DocumentationAgent
 	documentStore      infrastructure.DocumentStore
 }
@@ -33,6 +36,7 @@ func NewSlackReactionAddedEventConsumer(params SlackReactionAddedEventConsumerPa
 	return &SlackReactionAddedEventConsumer{
 		logger:             params.Logger,
 		slackAPI:           params.SlackAPI,
+		githubAPI:          params.GitHubAPI,
 		documentationAgent: params.DocumentationAgent,
 		documentStore:      params.DocumentStore,
 	}
@@ -42,7 +46,7 @@ func (h *SlackReactionAddedEventConsumer) EventType() string {
 	return "reaction_added"
 }
 
-func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsAPIInnerEvent) {
+func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsAPIInnerEvent, githubAppParams GitHubAppParams) {
 	ev, ok := event.Data.(*slackevents.ReactionAddedEvent)
 	if !ok {
 		h.logger.Error("Failed to convert event data to ReactionAddedEvent")
@@ -52,6 +56,9 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 	threadTimestamp := ev.Item.Timestamp
 
 	slackClient := h.slackAPI.GetClient()
+
+	githubClient := h.githubAPI.NewClient(githubAppParams.InstallationID)
+	documentStore := github.NewDocumentStoreWithClient(githubClient, githubAppParams.Owner, githubAppParams.Repo, githubAppParams.BaseBranch)
 
 	// スレッドのメッセージを取得
 	messages, _, _, err := slackClient.GetConversationReplies(&slack.GetConversationRepliesParameters{
@@ -77,7 +84,7 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 	ctx := context.Background()
 	draftGenerateWorkflow := workflow.NewDraftGenerateWorkflow(workflow.DraftGenerateWorkflowParams{
 		DocumentationAgent: h.documentationAgent,
-		DocumentStore:      h.documentStore,
+		DocumentStore:      documentStore,
 	})
 	draft, err := draftGenerateWorkflow.Execute(ctx, text)
 	if err != nil {

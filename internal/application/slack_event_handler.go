@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strconv"
 
 	"github.com/slack-go/slack/slackevents"
 	"go.uber.org/fx"
@@ -53,6 +54,32 @@ func (h *SlackEventHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	queryParams := r.URL.Query()
+	ghInstallationIDStr := queryParams.Get("gh_installation_id")
+	ghOwner := queryParams.Get("gh_owner")
+	ghRepo := queryParams.Get("gh_repo")
+	ghBaseBranch := queryParams.Get("gh_base_branch")
+	if ghInstallationIDStr == "" || ghOwner == "" || ghRepo == "" {
+		h.log.Warn("GitHub installation ID, owner, or repo is missing")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	if ghBaseBranch == "" {
+		ghBaseBranch = "main"
+	}
+	ghInstallationID, err := strconv.ParseInt(ghInstallationIDStr, 10, 64)
+	if err != nil {
+		h.log.Warn("Failed to parse GitHub installation ID", zap.Error(err))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	gitHubAppParams := GitHubAppParams{
+		InstallationID: ghInstallationID,
+		Owner:          ghOwner,
+		Repo:           ghRepo,
+		BaseBranch:     ghBaseBranch,
+	}
+
 	if err := sv.Ensure(); err != nil {
 		h.log.Warn("Failed to verify request", zap.Error(err))
 		w.WriteHeader(http.StatusUnauthorized)
@@ -100,7 +127,7 @@ func (h *SlackEventHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		for _, route := range h.eventRoutes {
 			if innerEvent.Type == route.EventType() {
-				go route.ConsumeEvent(innerEvent)
+				go route.ConsumeEvent(innerEvent, gitHubAppParams)
 				return
 			}
 		}
