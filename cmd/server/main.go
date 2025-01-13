@@ -11,7 +11,6 @@ import (
 
 	"docgent-backend/internal/application"
 	"docgent-backend/internal/infrastructure/genkit"
-	"docgent-backend/internal/infrastructure/github"
 	"docgent-backend/internal/model/infrastructure"
 )
 
@@ -22,7 +21,6 @@ func main() {
 		}),
 		fx.Provide(
 			NewSlackAPI,
-			NewGitHubAPIConfig,
 			NewGitHubAPI,
 			NewGenkitDocumentationAgentConfig,
 			NewHTTPServer,
@@ -37,10 +35,6 @@ func main() {
 			fx.Annotate(
 				genkit.NewDocumentationAgent,
 				fx.As(new(infrastructure.DocumentationAgent)),
-			),
-			fx.Annotate(
-				github.NewDocumentStore,
-				fx.As(new(infrastructure.DocumentStore)),
 			),
 			zap.NewExample,
 		),
