@@ -8,7 +8,7 @@ import (
 	"docgent-backend/internal/infrastructure/github"
 )
 
-func NewGitHubAPI() github.API {
+func NewGitHubAPI() *github.API {
 	appIDStr := os.Getenv("GITHUB_APP_ID")
 	if appIDStr == "" {
 		log.Fatal("GITHUB_APP_PRIVATE_KEY is not set")
@@ -23,5 +23,5 @@ func NewGitHubAPI() github.API {
 		log.Fatal("GITHUB_APP_PRIVATE_KEY is not set")
 	}
 
-	return *github.NewAPI(appID, []byte(privateKey))
+	return github.NewAPI(appID, []byte(privateKey))
 }

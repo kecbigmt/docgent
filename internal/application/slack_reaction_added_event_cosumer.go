@@ -9,7 +9,6 @@ import (
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 
-	"docgent-backend/internal/infrastructure/github"
 	"docgent-backend/internal/model/infrastructure"
 	"docgent-backend/internal/workflow"
 )
@@ -17,25 +16,25 @@ import (
 type SlackReactionAddedEventConsumerParams struct {
 	fx.In
 
-	Logger             *zap.Logger
-	SlackAPI           SlackAPI
-	GitHubAPI          github.API
-	DocumentationAgent infrastructure.DocumentationAgent
+	Logger                     *zap.Logger
+	SlackAPI                   SlackAPI
+	GitHubDocumentStoreFactory GitHubDocumentStoreFactory
+	DocumentationAgent         infrastructure.DocumentationAgent
 }
 
 type SlackReactionAddedEventConsumer struct {
-	logger             *zap.Logger
-	slackAPI           SlackAPI
-	githubAPI          github.API
-	documentationAgent infrastructure.DocumentationAgent
+	logger                     *zap.Logger
+	slackAPI                   SlackAPI
+	githubDocumentStoreFactory GitHubDocumentStoreFactory
+	documentationAgent         infrastructure.DocumentationAgent
 }
 
 func NewSlackReactionAddedEventConsumer(params SlackReactionAddedEventConsumerParams) *SlackReactionAddedEventConsumer {
 	return &SlackReactionAddedEventConsumer{
-		logger:             params.Logger,
-		slackAPI:           params.SlackAPI,
-		githubAPI:          params.GitHubAPI,
-		documentationAgent: params.DocumentationAgent,
+		logger:                     params.Logger,
+		slackAPI:                   params.SlackAPI,
+		githubDocumentStoreFactory: params.GitHubDocumentStoreFactory,
+		documentationAgent:         params.DocumentationAgent,
 	}
 }
 
@@ -54,8 +53,7 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 
 	slackClient := h.slackAPI.GetClient()
 
-	githubClient := h.githubAPI.NewClient(githubAppParams.InstallationID)
-	documentStore := github.NewDocumentStore(githubClient, githubAppParams.Owner, githubAppParams.Repo, githubAppParams.BaseBranch)
+	documentStore := h.githubDocumentStoreFactory.New(githubAppParams)
 
 	// スレッドのメッセージを取得
 	messages, _, _, err := slackClient.GetConversationReplies(&slack.GetConversationRepliesParameters{

@@ -11,6 +11,7 @@ import (
 
 	"docgent-backend/internal/application"
 	"docgent-backend/internal/infrastructure/genkit"
+	"docgent-backend/internal/infrastructure/github"
 	"docgent-backend/internal/model/infrastructure"
 )
 
@@ -22,6 +23,7 @@ func main() {
 		fx.Provide(
 			NewSlackAPI,
 			NewGitHubAPI,
+			github.NewDocumentStoreFactory,
 			NewGenkitDocumentationAgentConfig,
 			NewHTTPServer,
 			fx.Annotate(
@@ -36,6 +38,7 @@ func main() {
 				genkit.NewDocumentationAgent,
 				fx.As(new(infrastructure.DocumentationAgent)),
 			),
+			AsGitHubDocumentStoreFactory(github.NewDocumentStoreFactory),
 			zap.NewExample,
 		),
 		fx.Invoke(func(*http.Server) {}),
@@ -76,5 +79,10 @@ func AsRoute(f any, anns ...fx.Annotation) any {
 
 func AsSlackEventRoute(f any, anns ...fx.Annotation) any {
 	anns = append([]fx.Annotation{fx.As(new(application.SlackEventRoute)), fx.ResultTags(`group:"slack_event_routes"`)}, anns...)
+	return fx.Annotate(f, anns...)
+}
+
+func AsGitHubDocumentStoreFactory(f any, anns ...fx.Annotation) any {
+	anns = append([]fx.Annotation{fx.As(new(application.GitHubDocumentStoreFactory))}, anns...)
 	return fx.Annotate(f, anns...)
 }
