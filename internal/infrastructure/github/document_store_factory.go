@@ -5,17 +5,17 @@ import (
 	"docgent-backend/internal/domain"
 )
 
-type DocumentStoreFactory struct {
+type DocumentRepositoryFactory struct {
 	api *API
 }
 
-func NewDocumentStoreFactory(api *API) *DocumentStoreFactory {
-	return &DocumentStoreFactory{
+func NewDocumentRepositoryFactory(api *API) *DocumentRepositoryFactory {
+	return &DocumentRepositoryFactory{
 		api: api,
 	}
 }
 
-func (f *DocumentStoreFactory) New(params application.GitHubAppParams) domain.DocumentStore {
+func (f *DocumentRepositoryFactory) New(params application.GitHubAppParams) domain.DocumentRepository {
 	client := f.api.NewClient(params.InstallationID)
-	return NewDocumentStore(client, params.Owner, params.Repo, params.BaseBranch)
+	return NewDocumentRepository(client, params.Owner, params.Repo, params.BaseBranch)
 }

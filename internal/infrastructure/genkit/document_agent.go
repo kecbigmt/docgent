@@ -10,16 +10,16 @@ import (
 	"google.golang.org/api/option"
 )
 
-type DocumentationAgentConfig struct {
+type DocumentAgentConfig struct {
 	GenerativeModelName string
 	APIKey              string
 }
 
-type DocumentationAgent struct {
+type DocumentAgent struct {
 	model *genai.GenerativeModel
 }
 
-func NewDocumentationAgent(config DocumentationAgentConfig) (*DocumentationAgent, error) {
+func NewDocumentAgent(config DocumentAgentConfig) (*DocumentAgent, error) {
 	ctx := context.Background()
 	client, err := genai.NewClient(ctx, option.WithAPIKey(config.APIKey))
 	if err != nil {
@@ -27,12 +27,12 @@ func NewDocumentationAgent(config DocumentationAgentConfig) (*DocumentationAgent
 	}
 
 	model := client.GenerativeModel(config.GenerativeModelName)
-	return &DocumentationAgent{
+	return &DocumentAgent{
 		model: model,
 	}, nil
 }
 
-func (c *DocumentationAgent) GenerateDocumentDraft(ctx context.Context, input string) (domain.DocumentDraft, error) {
+func (c *DocumentAgent) Generate(ctx context.Context, input string) (domain.Document, error) {
 	c.model.ResponseMIMEType = "application/json"
 	c.model.ResponseSchema = &genai.Schema{
 		Type: genai.TypeObject,
@@ -56,11 +56,11 @@ func (c *DocumentationAgent) GenerateDocumentDraft(ctx context.Context, input st
 
 	resp, err := c.model.GenerateContent(ctx, genai.Text(prompt))
 	if err != nil {
-		return domain.DocumentDraft{}, fmt.Errorf("failed to generate content: %w", err)
+		return domain.Document{}, fmt.Errorf("failed to generate content: %w", err)
 	}
 
 	if len(resp.Candidates) == 0 {
-		return domain.DocumentDraft{}, fmt.Errorf("no response from the model")
+		return domain.Document{}, fmt.Errorf("no response from the model")
 	}
 
 	var result struct {
@@ -73,14 +73,14 @@ func (c *DocumentationAgent) GenerateDocumentDraft(ctx context.Context, input st
 			for _, part := range cand.Content.Parts {
 				if text, ok := part.(genai.Text); ok {
 					if err := json.Unmarshal([]byte(text), &result); err != nil {
-						return domain.DocumentDraft{}, fmt.Errorf("failed to parse model response: %w", err)
+						return domain.Document{}, fmt.Errorf("failed to parse model response: %w", err)
 					}
-					draft := domain.DocumentDraft{Title: result.Title, Content: result.Content}
+					draft := domain.Document{Title: result.Title, Content: result.Content}
 					return draft, nil
 				}
 			}
 		}
 	}
 
-	return domain.DocumentDraft{}, fmt.Errorf("no valid response from the model")
+	return domain.Document{}, fmt.Errorf("no valid response from the model")
 }

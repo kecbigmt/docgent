@@ -23,8 +23,8 @@ func main() {
 		fx.Provide(
 			NewSlackAPI,
 			NewGitHubAPI,
-			github.NewDocumentStoreFactory,
-			NewGenkitDocumentationAgentConfig,
+			github.NewDocumentRepositoryFactory,
+			NewGenkitDocumentAgentConfig,
 			NewHTTPServer,
 			fx.Annotate(
 				NewServeMux,
@@ -34,11 +34,8 @@ func main() {
 			AsRoute(application.NewHelloHandler),
 			AsRoute(application.NewSlackEventHandler),
 			AsSlackEventRoute(application.NewSlackReactionAddedEventConsumer),
-			fx.Annotate(
-				genkit.NewDocumentationAgent,
-				fx.As(new(domain.DocumentationAgent)),
-			),
-			AsGitHubDocumentStoreFactory(github.NewDocumentStoreFactory),
+			AsDocumentAgent(genkit.NewDocumentAgent),
+			AsGitHubDocumentRepositoryFactory(github.NewDocumentRepositoryFactory),
 			zap.NewExample,
 		),
 		fx.Invoke(func(*http.Server) {}),
@@ -82,7 +79,12 @@ func AsSlackEventRoute(f any, anns ...fx.Annotation) any {
 	return fx.Annotate(f, anns...)
 }
 
-func AsGitHubDocumentStoreFactory(f any, anns ...fx.Annotation) any {
-	anns = append([]fx.Annotation{fx.As(new(application.GitHubDocumentStoreFactory))}, anns...)
+func AsDocumentAgent(f any, anns ...fx.Annotation) any {
+	anns = append([]fx.Annotation{fx.As(new(domain.DocumentAgent))}, anns...)
+	return fx.Annotate(f, anns...)
+}
+
+func AsGitHubDocumentRepositoryFactory(f any, anns ...fx.Annotation) any {
+	anns = append([]fx.Annotation{fx.As(new(application.GitHubDocumentRepositoryFactory))}, anns...)
 	return fx.Annotate(f, anns...)
 }

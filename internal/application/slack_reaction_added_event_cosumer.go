@@ -16,25 +16,25 @@ import (
 type SlackReactionAddedEventConsumerParams struct {
 	fx.In
 
-	Logger                     *zap.Logger
-	SlackAPI                   SlackAPI
-	GitHubDocumentStoreFactory GitHubDocumentStoreFactory
-	DocumentationAgent         domain.DocumentationAgent
+	Logger                          *zap.Logger
+	SlackAPI                        SlackAPI
+	GitHubDocumentRepositoryFactory GitHubDocumentRepositoryFactory
+	DocumentAgent                   domain.DocumentAgent
 }
 
 type SlackReactionAddedEventConsumer struct {
-	logger                     *zap.Logger
-	slackAPI                   SlackAPI
-	githubDocumentStoreFactory GitHubDocumentStoreFactory
-	documentationAgent         domain.DocumentationAgent
+	logger                          *zap.Logger
+	slackAPI                        SlackAPI
+	githubDocumentRepositoryFactory GitHubDocumentRepositoryFactory
+	documentAgent                   domain.DocumentAgent
 }
 
 func NewSlackReactionAddedEventConsumer(params SlackReactionAddedEventConsumerParams) *SlackReactionAddedEventConsumer {
 	return &SlackReactionAddedEventConsumer{
-		logger:                     params.Logger,
-		slackAPI:                   params.SlackAPI,
-		githubDocumentStoreFactory: params.GitHubDocumentStoreFactory,
-		documentationAgent:         params.DocumentationAgent,
+		logger:                          params.Logger,
+		slackAPI:                        params.SlackAPI,
+		githubDocumentRepositoryFactory: params.GitHubDocumentRepositoryFactory,
+		documentAgent:                   params.DocumentAgent,
 	}
 }
 
@@ -53,7 +53,7 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 
 	slackClient := h.slackAPI.GetClient()
 
-	documentStore := h.githubDocumentStoreFactory.New(githubAppParams)
+	documentRepository := h.githubDocumentRepositoryFactory.New(githubAppParams)
 
 	// スレッドのメッセージを取得
 	messages, _, _, err := slackClient.GetConversationReplies(&slack.GetConversationRepliesParameters{
@@ -77,11 +77,8 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 
 	// ドキュメントを生成
 	ctx := context.Background()
-	draftGenerateWorkflow := workflow.NewDraftGenerateWorkflow(workflow.DraftGenerateWorkflowParams{
-		DocumentationAgent: h.documentationAgent,
-		DocumentStore:      documentStore,
-	})
-	draft, err := draftGenerateWorkflow.Execute(ctx, text)
+	documentGenerateWorkflow := workflow.NewDocumentGenerateWorkflow(h.documentAgent, documentRepository)
+	document, err := documentGenerateWorkflow.Execute(ctx, text)
 	if err != nil {
 		h.logger.Error("Failed to generate document", zap.Error(err))
 		slackClient.PostMessage(ev.Item.Channel,
@@ -93,7 +90,7 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 
 	// 成功メッセージを投稿
 	slackClient.PostMessage(ev.Item.Channel,
-		slack.MsgOptionText(fmt.Sprintf("ドキュメントを生成しました！\nタイトル: %s", draft.Title), false),
+		slack.MsgOptionText(fmt.Sprintf("ドキュメントを生成しました！\nタイトル: %s", document.Title), false),
 		slack.MsgOptionTS(threadTimestamp),
 	)
 }

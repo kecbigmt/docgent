@@ -9,15 +9,15 @@ import (
 	"github.com/google/go-github/v68/github"
 )
 
-type DocumentStore struct {
+type DocumentRepository struct {
 	client     *github.Client
 	owner      string
 	repo       string
 	baseBranch string
 }
 
-func NewDocumentStore(client *github.Client, owner, repo, baseBranch string) *DocumentStore {
-	return &DocumentStore{
+func NewDocumentRepository(client *github.Client, owner, repo, baseBranch string) *DocumentRepository {
+	return &DocumentRepository{
 		client:     client,
 		owner:      owner,
 		repo:       repo,
@@ -25,7 +25,7 @@ func NewDocumentStore(client *github.Client, owner, repo, baseBranch string) *Do
 	}
 }
 
-func (s *DocumentStore) Save(documentInput domain.DocumentInput) (domain.Document, error) {
+func (s *DocumentRepository) Save(documentInput domain.Document) (domain.Document, error) {
 	ctx := context.Background()
 
 	// 1. Get the SHA of the base branch
@@ -61,7 +61,6 @@ func (s *DocumentStore) Save(documentInput domain.DocumentInput) (domain.Documen
 	}
 
 	document := domain.Document{
-		ID:      path,
 		Title:   documentInput.Title,
 		Content: documentInput.Content,
 	}
