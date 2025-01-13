@@ -6,13 +6,13 @@ import (
 	"docgent-backend/internal/infrastructure/genkit"
 )
 
-func NewGenkitDocumentAgentConfig() genkit.DocumentAgentConfig {
+func NewGenkitConfig() genkit.Config {
 	apiKey := os.Getenv("GEMINI_API_KEY")
 	if apiKey == "" {
 		panic("GEMINI_API_KEY environment variable is not set")
 	}
 
-	return genkit.DocumentAgentConfig{
+	return genkit.Config{
 		GenerativeModelName: "gemini-1.5-flash-001",
 		APIKey:              apiKey,
 	}

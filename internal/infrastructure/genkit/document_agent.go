@@ -10,16 +10,11 @@ import (
 	"google.golang.org/api/option"
 )
 
-type DocumentAgentConfig struct {
-	GenerativeModelName string
-	APIKey              string
-}
-
 type DocumentAgent struct {
 	model *genai.GenerativeModel
 }
 
-func NewDocumentAgent(config DocumentAgentConfig) (*DocumentAgent, error) {
+func NewDocumentAgent(config Config) (*DocumentAgent, error) {
 	ctx := context.Background()
 	client, err := genai.NewClient(ctx, option.WithAPIKey(config.APIKey))
 	if err != nil {

@@ -16,25 +16,31 @@ import (
 type SlackReactionAddedEventConsumerParams struct {
 	fx.In
 
-	Logger                 *zap.Logger
-	SlackAPI               SlackAPI
-	GitHubBranchAPIFactory GitHubBranchAPIFactory
-	DocumentAgent          domain.DocumentAgent
+	Logger                      *zap.Logger
+	SlackAPI                    SlackAPI
+	GitHubBranchAPIFactory      GitHubBranchAPIFactory
+	GitHubPullRequestAPIFactory GitHubPullRequestAPIFactory
+	DocumentAgent               domain.DocumentAgent
+	ProposalAgent               domain.ProposalAgent
 }
 
 type SlackReactionAddedEventConsumer struct {
-	logger                     *zap.Logger
-	slackAPI                   SlackAPI
-	githubAPIRepositoryFactory GitHubBranchAPIFactory
-	documentAgent              domain.DocumentAgent
+	logger                      *zap.Logger
+	slackAPI                    SlackAPI
+	githubBranchAPIFactory      GitHubBranchAPIFactory
+	githubPullRequestAPIFactory GitHubPullRequestAPIFactory
+	documentAgent               domain.DocumentAgent
+	proposalAgent               domain.ProposalAgent
 }
 
 func NewSlackReactionAddedEventConsumer(params SlackReactionAddedEventConsumerParams) *SlackReactionAddedEventConsumer {
 	return &SlackReactionAddedEventConsumer{
-		logger:                     params.Logger,
-		slackAPI:                   params.SlackAPI,
-		githubAPIRepositoryFactory: params.GitHubBranchAPIFactory,
-		documentAgent:              params.DocumentAgent,
+		logger:                      params.Logger,
+		slackAPI:                    params.SlackAPI,
+		githubBranchAPIFactory:      params.GitHubBranchAPIFactory,
+		githubPullRequestAPIFactory: params.GitHubPullRequestAPIFactory,
+		documentAgent:               params.DocumentAgent,
+		proposalAgent:               params.ProposalAgent,
 	}
 }
 
@@ -53,8 +59,9 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 
 	slackClient := h.slackAPI.GetClient()
 
-	branchAPI := h.githubAPIRepositoryFactory.New(githubAppParams)
-	previousIncrementHandle := branchAPI.NewIncrementHandle(githubAppParams.DefaultBranch)
+	githubBranchAPI := h.githubBranchAPIFactory.New(githubAppParams)
+	githubPullRequestAPI := h.githubPullRequestAPIFactory.New(githubAppParams)
+	previousIncrementHandle := githubBranchAPI.NewIncrementHandle(githubAppParams.DefaultBranch)
 
 	// スレッドのメッセージを取得
 	messages, _, _, err := slackClient.GetConversationReplies(&slack.GetConversationRepliesParameters{
@@ -78,8 +85,13 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 
 	// ドキュメントを生成
 	ctx := context.Background()
-	incrementGenerateWorkflow := workflow.NewIncrementGenerateWorkflow(h.documentAgent, branchAPI)
-	increment, err := incrementGenerateWorkflow.Execute(ctx, text, previousIncrementHandle)
+	proposalGenerateWorkflow := workflow.NewProposalGenerateWorkflow(
+		h.documentAgent,
+		githubBranchAPI,
+		h.proposalAgent,
+		githubPullRequestAPI,
+	)
+	proposal, err := proposalGenerateWorkflow.Execute(ctx, text, previousIncrementHandle)
 	if err != nil {
 		h.logger.Error("Failed to generate increment", zap.Error(err))
 		slackClient.PostMessage(ev.Item.Channel,
@@ -91,7 +103,12 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 
 	// 成功メッセージを投稿
 	slackClient.PostMessage(ev.Item.Channel,
-		slack.MsgOptionText(fmt.Sprintf("ドキュメントを生成しました！\nブランチ名: %s", increment.Handle.Value), false),
+		slack.MsgOptionText(fmt.Sprintf(
+			"ドキュメントを生成しました！\nPR: https://github.com/%s/%s/pull/%s",
+			githubAppParams.Owner,
+			githubAppParams.Repo,
+			proposal.Handle.Value,
+		), false),
 		slack.MsgOptionTS(threadTimestamp),
 	)
 }
