@@ -24,15 +24,15 @@ func (p *Parser) Execute(diff string) []domain.Diff {
 			}
 			parts := strings.Split(line, " ")
 			currentChange = &domain.Diff{
-				OldPath:   strings.TrimPrefix(parts[2], "a/"),
-				NewPath:   strings.TrimPrefix(parts[3], "b/"),
+				OldName:   strings.TrimPrefix(parts[2], "a/"),
+				NewName:   strings.TrimPrefix(parts[3], "b/"),
 				Body:      line + "\n",
 				IsNewFile: false,
 			}
 		} else if currentChange != nil {
 			if strings.HasPrefix(line, "new file mode") {
 				currentChange.IsNewFile = true
-				currentChange.OldPath = ""
+				currentChange.OldName = ""
 			}
 			currentChange.Body += line + "\n"
 		}

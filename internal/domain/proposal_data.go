@@ -57,25 +57,25 @@ func (ds Diffs) ToXMLString() string {
 }
 
 type Diff struct {
-	OldPath   string
-	NewPath   string
+	OldName   string
+	NewName   string
 	Body      string
 	IsNewFile bool
 }
 
-func NewUpdateDiff(oldPath, newPath, body string) Diff {
+func NewUpdateDiff(oldName, newName, body string) Diff {
 	return Diff{
-		OldPath:   oldPath,
-		NewPath:   newPath,
+		OldName:   oldName,
+		NewName:   newName,
 		Body:      body,
 		IsNewFile: false,
 	}
 }
 
-func NewCreateDiff(newPath, body string) Diff {
+func NewCreateDiff(newName, body string) Diff {
 	return Diff{
-		OldPath:   "",
-		NewPath:   newPath,
+		OldName:   "",
+		NewName:   newName,
 		Body:      body,
 		IsNewFile: true,
 	}
@@ -83,8 +83,8 @@ func NewCreateDiff(newPath, body string) Diff {
 
 func (d Diff) ToXMLString() string {
 	str := "<diff>"
-	str += "<old_path>" + d.OldPath + "</old_path>"
-	str += "<new_path>" + d.NewPath + "</new_path>"
+	str += "<old_name>" + d.OldName + "</old_name>"
+	str += "<new_name>" + d.NewName + "</new_name>"
 	str += "<body>" + d.Body + "</body>"
 	str += "</diff>"
 	return str
