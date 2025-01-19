@@ -10,10 +10,10 @@ type Message struct {
 type MessageHistory []Message
 
 func (h MessageHistory) ToXMLString() string {
-	str := "<history>"
+	str := "<message_history>"
 	for _, message := range h {
 		str += fmt.Sprintf("<item><role>%s</role><content>%s</content></item>", message.Role, message.Content)
 	}
-	str += "</history>"
+	str += "</message_history>"
 	return str
 }
