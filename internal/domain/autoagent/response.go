@@ -10,7 +10,28 @@ type Response struct {
 	Type       ResponseType
 	Message    string
 	ToolType   string
-	ToolParams []ToolParam
+	ToolParams ToolParams
+}
+
+type ToolParams []ToolParam
+
+func (t ToolParams) GetOne(key string) (string, bool) {
+	for _, param := range t {
+		if param.Key == key {
+			return param.Value, true
+		}
+	}
+	return "", false
+}
+
+func (t ToolParams) GetAll(key string) []string {
+	var values []string
+	for _, param := range t {
+		if param.Key == key {
+			values = append(values, param.Value)
+		}
+	}
+	return values
 }
 
 type ToolParam struct {
