@@ -29,7 +29,6 @@ func NewProposalGenerateWorkflow(
 func (w *ProposalGenerateWorkflow) Execute(
 	ctx context.Context,
 	text string,
-	previousIncrementHandle domain.IncrementHandle,
 ) (domain.ProposalHandle, error) {
 	documentService := domain.NewDocumentService(w.documentAgent)
 

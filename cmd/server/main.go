@@ -38,7 +38,6 @@ func main() {
 			AsGitHubEventRoute(application.NewGitHubIssueCommentEventConsumer),
 			AsDocumentAgent(genkit.NewDocumentAgent),
 			AsPoposalAgent(genkit.NewProposalAgent),
-			AsGitHubBranchAPIFactory(github.NewBranchAPIFactory),
 			AsGitHubPullRequestAPIFactory(github.NewPullRequestAPIFactory),
 			zap.NewExample,
 		),
@@ -95,11 +94,6 @@ func AsDocumentAgent(f any, anns ...fx.Annotation) any {
 
 func AsPoposalAgent(f any, anns ...fx.Annotation) any {
 	anns = append([]fx.Annotation{fx.As(new(domain.ProposalAgent))}, anns...)
-	return fx.Annotate(f, anns...)
-}
-
-func AsGitHubBranchAPIFactory(f any, anns ...fx.Annotation) any {
-	anns = append([]fx.Annotation{fx.As(new(application.GitHubBranchAPIFactory))}, anns...)
 	return fx.Annotate(f, anns...)
 }
 

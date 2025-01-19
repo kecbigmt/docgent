@@ -18,7 +18,6 @@ type SlackReactionAddedEventConsumerParams struct {
 
 	Logger                      *zap.Logger
 	SlackAPI                    SlackAPI
-	GitHubBranchAPIFactory      GitHubBranchAPIFactory
 	GitHubPullRequestAPIFactory GitHubPullRequestAPIFactory
 	DocumentAgent               domain.DocumentAgent
 	ProposalAgent               domain.ProposalAgent
@@ -27,7 +26,6 @@ type SlackReactionAddedEventConsumerParams struct {
 type SlackReactionAddedEventConsumer struct {
 	logger                      *zap.Logger
 	slackAPI                    SlackAPI
-	githubBranchAPIFactory      GitHubBranchAPIFactory
 	githubPullRequestAPIFactory GitHubPullRequestAPIFactory
 	documentAgent               domain.DocumentAgent
 	proposalAgent               domain.ProposalAgent
@@ -37,7 +35,6 @@ func NewSlackReactionAddedEventConsumer(params SlackReactionAddedEventConsumerPa
 	return &SlackReactionAddedEventConsumer{
 		logger:                      params.Logger,
 		slackAPI:                    params.SlackAPI,
-		githubBranchAPIFactory:      params.GitHubBranchAPIFactory,
 		githubPullRequestAPIFactory: params.GitHubPullRequestAPIFactory,
 		documentAgent:               params.DocumentAgent,
 		proposalAgent:               params.ProposalAgent,
@@ -59,9 +56,7 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 
 	slackClient := h.slackAPI.GetClient()
 
-	githubBranchAPI := h.githubBranchAPIFactory.New(githubAppParams)
 	githubPullRequestAPI := h.githubPullRequestAPIFactory.New(githubAppParams)
-	previousIncrementHandle := githubBranchAPI.NewIncrementHandle(githubAppParams.DefaultBranch)
 
 	// スレッドのメッセージを取得
 	messages, _, _, err := slackClient.GetConversationReplies(&slack.GetConversationRepliesParameters{
@@ -90,7 +85,7 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 		h.proposalAgent,
 		githubPullRequestAPI,
 	)
-	proposalHandle, err := proposalGenerateWorkflow.Execute(ctx, text, previousIncrementHandle)
+	proposalHandle, err := proposalGenerateWorkflow.Execute(ctx, text)
 	if err != nil {
 		h.logger.Error("Failed to generate increment", zap.Error(err))
 		slackClient.PostMessage(ev.Item.Channel,
