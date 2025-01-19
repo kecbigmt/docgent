@@ -7,6 +7,7 @@ type ProposalService struct {
 
 type ProposalRepository interface {
 	CreateProposal(diffs Diffs, content ProposalContent) (ProposalHandle, error)
+	GetProposal(handle ProposalHandle) (Proposal, error)
 	NewProposalHandle(value string) ProposalHandle
 	CreateComment(handle ProposalHandle, commentBody string) (Comment, error)
 	UpdateProposal(handle ProposalHandle, content ProposalContent) error
@@ -22,6 +23,10 @@ func NewProposalService(agent ProposalAgent, repository ProposalRepository) *Pro
 
 func (s *ProposalService) Create(diffs Diffs, content ProposalContent) (ProposalHandle, error) {
 	return s.repository.CreateProposal(diffs, content)
+}
+
+func (s *ProposalService) GetProposal(handle ProposalHandle) (Proposal, error) {
+	return s.repository.GetProposal(handle)
 }
 
 func (s *ProposalService) GenerateContent(diffs Diffs, contextDescription string) (ProposalContent, error) {

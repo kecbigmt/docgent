@@ -83,6 +83,50 @@ func (s *PullRequestAPI) CreateProposal(diffs domain.Diffs, content domain.Propo
 	return handle, nil
 }
 
+func (s *PullRequestAPI) GetProposal(handle domain.ProposalHandle) (domain.Proposal, error) {
+	ctx := context.Background()
+
+	number, err := strconv.Atoi(handle.Value)
+	if err != nil {
+		return domain.Proposal{}, fmt.Errorf("failed to convert pull request number: %w", err)
+	}
+
+	pr, _, err := s.client.PullRequests.Get(ctx, s.owner, s.repo, number)
+	if err != nil {
+		return domain.Proposal{}, fmt.Errorf("failed to get pull request: %w", err)
+	}
+
+	// Get PR diff
+	diff, _, err := s.client.PullRequests.GetRaw(ctx, s.owner, s.repo, number, github.RawOptions{Type: github.Diff})
+	if err != nil {
+		return domain.Proposal{}, fmt.Errorf("failed to get pull request diff: %w", err)
+	}
+
+	// Parse diff using util.ParseGitHubPRDiff
+	parser := diffutil.NewParser()
+	diffs := parser.Execute(diff)
+
+	// Get PR comments
+	comments, _, err := s.client.Issues.ListComments(ctx, s.owner, s.repo, number, nil)
+	if err != nil {
+		return domain.Proposal{}, fmt.Errorf("failed to get pull request comments: %w", err)
+	}
+
+	// Convert comments to domain model
+	domainComments := make([]domain.Comment, len(comments))
+	for i, comment := range comments {
+		handle := s.NewCommentHandle(strconv.FormatInt(comment.GetID(), 10))
+		domainComments[i] = domain.NewComment(handle, comment.GetUser().GetLogin(), comment.GetBody())
+	}
+
+	content := domain.ProposalContent{
+		Title: pr.GetTitle(),
+		Body:  pr.GetBody(),
+	}
+
+	return domain.NewProposal(handle, diffs, content, domainComments), nil
+}
+
 func (s *PullRequestAPI) CreateComment(proposalHandle domain.ProposalHandle, commentBody string) (domain.Comment, error) {
 	ctx := context.Background()
 
