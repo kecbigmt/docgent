@@ -42,7 +42,9 @@ func (s SystemPrompt) String() string {
 
 RESPONSE FORMAT
 
-You have to respond in the following XML-like format. You can use 3 response types:
+You have to respond in the following XML-like format. You can use 3 response types.
+
+[xxx]: Dynamic values
 
 # Complete response
 
@@ -61,11 +63,13 @@ If something goes wrong, respond with the following message:
 If you want to use a tool, respond with the following message:
 
 <tool_use:[tool_name]>
-<[parameter_1_name]>[value1]</[parameter_1_name]>
-<[parameter_2_name]>[value2]</[parameter_2_name]>
+<message>[message]</message>
+<param:[parameter_1_name]>[value1]</param:[parameter_1_name]>
+<param:[parameter_2_name]>[value2]</param:[parameter_2_name]>
+</params>
 </tool_use:[tool_name]>
 
-[xxx]: Dynamic values
+Let user know what you are doing with the tool in the <message> field.
 
 ====
 
