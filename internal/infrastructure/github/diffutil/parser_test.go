@@ -35,8 +35,8 @@ index 0000000..e69de29
 
 	expected := []domain.Diff{
 		{
-			OldFilename: "file1.txt",
-			NewFilename: "file1.txt",
+			OldPath: "file1.txt",
+			NewPath: "file1.txt",
 			Body: `diff --git a/file1.txt b/file1.txt
 index 1234567..89abcde 100644
 --- a/file1.txt
@@ -49,8 +49,8 @@ index 1234567..89abcde 100644
 			IsNewFile: false,
 		},
 		{
-			OldFilename: "file2.txt",
-			NewFilename: "file2.txt",
+			OldPath: "file2.txt",
+			NewPath: "file2.txt",
 			Body: `diff --git a/file2.txt b/file2.txt
 index 1234567..89abcde 100644
 --- a/file2.txt
@@ -63,8 +63,8 @@ index 1234567..89abcde 100644
 			IsNewFile: false,
 		},
 		{
-			OldFilename: "",
-			NewFilename: "newfile.txt",
+			OldPath: "",
+			NewPath: "newfile.txt",
 			Body: `diff --git a/newfile.txt b/newfile.txt
 new file mode 100644
 index 0000000..e69de29

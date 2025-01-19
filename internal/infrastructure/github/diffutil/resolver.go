@@ -31,7 +31,7 @@ func (r *Resolver) Execute(diff domain.Diff) error {
 		return r.resolveCreateDiff(diff)
 	}
 
-	if diff.OldFilename != diff.NewFilename {
+	if diff.OldPath != diff.NewPath {
 		return r.resolveUpdateDiffWithRename(diff)
 	}
 
@@ -48,12 +48,12 @@ func (r *Resolver) resolveCreateDiff(diff domain.Diff) error {
 
 	newText, _ := dmp.PatchApply(patches, "")
 	opts := &github.RepositoryContentFileOptions{
-		Message: github.Ptr(fmt.Sprintf("Create file %s", diff.NewFilename)),
+		Message: github.Ptr(fmt.Sprintf("Create file %s", diff.NewPath)),
 		Content: []byte(newText),
 		Branch:  github.Ptr(r.branchName),
 	}
 
-	_, _, err = r.client.Repositories.CreateFile(ctx, r.owner, r.repo, "docs/"+diff.NewFilename, opts)
+	_, _, err = r.client.Repositories.CreateFile(ctx, r.owner, r.repo, "docs/"+diff.NewPath, opts)
 	if err != nil {
 		return fmt.Errorf("failed to create file: %w", err)
 	}
@@ -69,7 +69,7 @@ func (r *Resolver) resolveUpdateDiffWithoutRename(diff domain.Diff) error {
 		return fmt.Errorf("failed to parse diff: %w", err)
 	}
 
-	fileContent, _, _, err := r.client.Repositories.GetContents(ctx, r.owner, r.repo, "docs/"+diff.NewFilename, nil)
+	fileContent, _, _, err := r.client.Repositories.GetContents(ctx, r.owner, r.repo, "docs/"+diff.NewPath, nil)
 	if err != nil {
 		return fmt.Errorf("failed to get file content: %w", err)
 	}
@@ -80,12 +80,12 @@ func (r *Resolver) resolveUpdateDiffWithoutRename(diff domain.Diff) error {
 
 	patchedText, _ := dmp.PatchApply(patches, content)
 	opts := &github.RepositoryContentFileOptions{
-		Message: github.Ptr(fmt.Sprintf("Update file %s", diff.NewFilename)),
+		Message: github.Ptr(fmt.Sprintf("Update file %s", diff.NewPath)),
 		Content: []byte(patchedText),
 		Branch:  github.Ptr(r.branchName),
 	}
 
-	_, _, err = r.client.Repositories.UpdateFile(ctx, r.owner, r.repo, "docs/"+diff.NewFilename, opts)
+	_, _, err = r.client.Repositories.UpdateFile(ctx, r.owner, r.repo, "docs/"+diff.NewPath, opts)
 	if err != nil {
 		return fmt.Errorf("failed to update file: %w", err)
 	}
@@ -101,7 +101,7 @@ func (r *Resolver) resolveUpdateDiffWithRename(diff domain.Diff) error {
 		return fmt.Errorf("failed to parse diff: %w", err)
 	}
 
-	fileContent, _, _, err := r.client.Repositories.GetContents(ctx, r.owner, r.repo, "docs/"+diff.NewFilename, nil)
+	fileContent, _, _, err := r.client.Repositories.GetContents(ctx, r.owner, r.repo, "docs/"+diff.NewPath, nil)
 	if err != nil {
 		return fmt.Errorf("failed to get file content: %w", err)
 	}
@@ -114,22 +114,22 @@ func (r *Resolver) resolveUpdateDiffWithRename(diff domain.Diff) error {
 
 	// Delete the old file
 	deleteOpts := &github.RepositoryContentFileOptions{
-		Message: github.Ptr(fmt.Sprintf("Delete file %s", diff.OldFilename)),
+		Message: github.Ptr(fmt.Sprintf("Delete file %s", diff.OldPath)),
 		Branch:  github.Ptr(r.branchName),
 	}
-	_, _, err = r.client.Repositories.DeleteFile(ctx, r.owner, r.repo, "docs/"+diff.OldFilename, deleteOpts)
+	_, _, err = r.client.Repositories.DeleteFile(ctx, r.owner, r.repo, "docs/"+diff.OldPath, deleteOpts)
 	if err != nil {
 		return fmt.Errorf("failed to delete file: %w", err)
 	}
 
 	// Create the new file
 	createOpts := &github.RepositoryContentFileOptions{
-		Message: github.Ptr(fmt.Sprintf("Create file %s", diff.NewFilename)),
+		Message: github.Ptr(fmt.Sprintf("Create file %s", diff.NewPath)),
 		Content: []byte(patchedText),
 		Branch:  github.Ptr(r.branchName),
 	}
 
-	_, _, err = r.client.Repositories.CreateFile(ctx, r.owner, r.repo, "docs/"+diff.NewFilename, createOpts)
+	_, _, err = r.client.Repositories.CreateFile(ctx, r.owner, r.repo, "docs/"+diff.NewPath, createOpts)
 	if err != nil {
 		return fmt.Errorf("failed to create file: %w", err)
 	}

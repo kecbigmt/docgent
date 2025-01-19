@@ -1,7 +1,5 @@
 package domain
 
-import "strconv"
-
 /**
  * Proposal
  */
@@ -59,36 +57,35 @@ func (ds Diffs) ToXMLString() string {
 }
 
 type Diff struct {
-	OldFilename string
-	NewFilename string
-	Body        string
-	IsNewFile   bool
+	OldPath   string
+	NewPath   string
+	Body      string
+	IsNewFile bool
 }
 
-func NewUpdateDiff(oldFilename, newFilename, body string) Diff {
+func NewUpdateDiff(oldPath, newPath, body string) Diff {
 	return Diff{
-		OldFilename: oldFilename,
-		NewFilename: newFilename,
-		Body:        body,
-		IsNewFile:   false,
+		OldPath:   oldPath,
+		NewPath:   newPath,
+		Body:      body,
+		IsNewFile: false,
 	}
 }
 
-func NewCreateDiff(newFilename, body string) Diff {
+func NewCreateDiff(newPath, body string) Diff {
 	return Diff{
-		OldFilename: "",
-		NewFilename: newFilename,
-		Body:        body,
-		IsNewFile:   true,
+		OldPath:   "",
+		NewPath:   newPath,
+		Body:      body,
+		IsNewFile: true,
 	}
 }
 
 func (d Diff) ToXMLString() string {
 	str := "<diff>"
-	str += "<oldFilename>" + d.OldFilename + "</oldFilename>"
-	str += "<newFilename>" + d.NewFilename + "</newFilename>"
+	str += "<old_path>" + d.OldPath + "</old_path>"
+	str += "<new_path>" + d.NewPath + "</new_path>"
 	str += "<body>" + d.Body + "</body>"
-	str += "<isNewFile>" + strconv.FormatBool(d.IsNewFile) + "</isNewFile>"
 	str += "</diff>"
 	return str
 }
