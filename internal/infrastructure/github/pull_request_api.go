@@ -2,13 +2,14 @@ package github
 
 import (
 	"context"
-	"docgent-backend/internal/domain"
 	"fmt"
 	"strconv"
 	"time"
 
 	"github.com/google/go-github/v68/github"
-	"github.com/sergi/go-diff/diffmatchpatch"
+
+	"docgent-backend/internal/domain"
+	"docgent-backend/internal/infrastructure/github/diffutil"
 )
 
 type PullRequestAPI struct {
@@ -59,73 +60,9 @@ func (s *PullRequestAPI) CreateProposal(diffs domain.Diffs, content domain.Propo
 	}
 
 	for _, diff := range diffs {
-		// 3. Parse the unified diff
-		dmp := diffmatchpatch.New()
-		patches, err := dmp.PatchFromText(string(diff.Body))
-		if err != nil {
-			return domain.ProposalHandle{}, fmt.Errorf("failed to parse diff: %w", err)
-		}
-
-		if diff.IsNewFile {
-			newText, _ := dmp.PatchApply(patches, "")
-			opts := &github.RepositoryContentFileOptions{
-				Message: github.Ptr(fmt.Sprintf("Create file %s", diff.NewFilename)),
-				Content: []byte(newText),
-				Branch:  github.Ptr(branchName),
-			}
-
-			_, _, err = s.client.Repositories.CreateFile(ctx, s.owner, s.repo, "docs/"+diff.NewFilename, opts)
-			if err != nil {
-				return domain.ProposalHandle{}, fmt.Errorf("failed to create file: %w", err)
-			}
-		} else {
-			// Update the file
-			fileContent, _, _, err := s.client.Repositories.GetContents(ctx, s.owner, s.repo, "docs/"+diff.NewFilename, nil)
-			if err != nil {
-				return domain.ProposalHandle{}, fmt.Errorf("failed to get file content: %w", err)
-			}
-			content, err := fileContent.GetContent()
-			if err != nil {
-				return domain.ProposalHandle{}, fmt.Errorf("failed to get file content: %w", err)
-			}
-
-			// Apply the patch
-			patchedText, _ := dmp.PatchApply(patches, content)
-
-			if diff.OldFilename != diff.NewFilename {
-				// Delete the old file
-				opts := &github.RepositoryContentFileOptions{
-					Message: github.Ptr(fmt.Sprintf("Delete file %s", diff.OldFilename)),
-					Branch:  github.Ptr(branchName),
-				}
-				_, _, err = s.client.Repositories.DeleteFile(ctx, s.owner, s.repo, "docs/"+diff.OldFilename, opts)
-				if err != nil {
-					return domain.ProposalHandle{}, fmt.Errorf("failed to delete file: %w", err)
-				}
-
-				// Create the new file
-				opts = &github.RepositoryContentFileOptions{
-					Message: github.Ptr(fmt.Sprintf("Create file %s", diff.NewFilename)),
-					Content: []byte(patchedText),
-					Branch:  github.Ptr(branchName),
-				}
-
-				_, _, err = s.client.Repositories.CreateFile(ctx, s.owner, s.repo, "docs/"+diff.NewFilename, opts)
-				if err != nil {
-					return domain.ProposalHandle{}, fmt.Errorf("failed to create file: %w", err)
-				}
-			} else {
-				opts := &github.RepositoryContentFileOptions{
-					Message: github.Ptr(fmt.Sprintf("Update file %s", diff.NewFilename)),
-					Content: []byte(patchedText),
-					Branch:  github.Ptr(branchName),
-				}
-
-				_, _, err = s.client.Repositories.UpdateFile(ctx, s.owner, s.repo, "docs/"+diff.NewFilename, opts)
-				if err != nil {
-					return domain.ProposalHandle{}, fmt.Errorf("failed to update file: %w", err)
-				}
-			}
+		resolver := diffutil.NewResolver(s.client, s.owner, s.repo, branchName)
+		if err := resolver.Execute(diff); err != nil {
+			return domain.ProposalHandle{}, fmt.Errorf("failed to resolve diff: %w", err)
 		}
 	}
 
