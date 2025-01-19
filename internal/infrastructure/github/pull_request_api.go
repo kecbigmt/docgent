@@ -151,7 +151,7 @@ func (s *PullRequestAPI) CreateComment(proposalHandle domain.ProposalHandle, com
 	return comment, nil
 }
 
-func (s *PullRequestAPI) UpdateProposal(proposalHandle domain.ProposalHandle, content domain.ProposalContent) error {
+func (s *PullRequestAPI) UpdateProposalContent(proposalHandle domain.ProposalHandle, content domain.ProposalContent) error {
 	ctx := context.Background()
 
 	number, err := strconv.Atoi(proposalHandle.Value)

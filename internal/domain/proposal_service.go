@@ -10,7 +10,7 @@ type ProposalRepository interface {
 	GetProposal(handle ProposalHandle) (Proposal, error)
 	NewProposalHandle(value string) ProposalHandle
 	CreateComment(handle ProposalHandle, commentBody string) (Comment, error)
-	UpdateProposal(handle ProposalHandle, content ProposalContent) error
+	UpdateProposalContent(handle ProposalHandle, content ProposalContent) error
 }
 
 type ProposalAgent interface {
