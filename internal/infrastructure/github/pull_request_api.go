@@ -151,6 +151,33 @@ func (s *PullRequestAPI) CreateComment(proposalHandle domain.ProposalHandle, com
 	return comment, nil
 }
 
+func (s *PullRequestAPI) ApplyProposalDiffs(handle domain.ProposalHandle, diffs domain.Diffs) error {
+	ctx := context.Background()
+
+	number, err := s.parseHandle(handle)
+	if err != nil {
+		return err
+	}
+
+	// Get current PR to get the branch name
+	pr, _, err := s.client.PullRequests.Get(ctx, s.owner, s.repo, number)
+	if err != nil {
+		return fmt.Errorf("failed to get pull request: %w", err)
+	}
+
+	branchName := pr.Head.GetRef()
+
+	// Apply each diff using the resolver
+	for _, diff := range diffs {
+		resolver := diffutil.NewResolver(s.client, s.owner, s.repo, branchName)
+		if err := resolver.Execute(diff); err != nil {
+			return fmt.Errorf("failed to resolve diff: %w", err)
+		}
+	}
+
+	return nil
+}
+
 func (s *PullRequestAPI) UpdateProposalContent(proposalHandle domain.ProposalHandle, content domain.ProposalContent) error {
 	ctx := context.Background()
 
