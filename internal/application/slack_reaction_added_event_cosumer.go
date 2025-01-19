@@ -87,15 +87,14 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 	ctx := context.Background()
 	proposalGenerateWorkflow := workflow.NewProposalGenerateWorkflow(
 		h.documentAgent,
-		githubBranchAPI,
 		h.proposalAgent,
 		githubPullRequestAPI,
 	)
-	proposal, err := proposalGenerateWorkflow.Execute(ctx, text, previousIncrementHandle)
+	proposalHandle, err := proposalGenerateWorkflow.Execute(ctx, text, previousIncrementHandle)
 	if err != nil {
 		h.logger.Error("Failed to generate increment", zap.Error(err))
 		slackClient.PostMessage(ev.Item.Channel,
-			slack.MsgOptionText(":warning: エラー: スレッドの取得に失敗しました", false),
+			slack.MsgOptionText(":warning: エラー: ドキュメントの生成に失敗しました", false),
 			slack.MsgOptionTS(threadTimestamp),
 		)
 		return
@@ -107,7 +106,7 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 			"ドキュメントを生成しました！\nPR: https://github.com/%s/%s/pull/%s",
 			githubAppParams.Owner,
 			githubAppParams.Repo,
-			proposal.Handle.Value,
+			proposalHandle.Value,
 		), false),
 		slack.MsgOptionTS(threadTimestamp),
 	)

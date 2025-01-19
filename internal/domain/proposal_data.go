@@ -1,21 +1,29 @@
 package domain
 
+import "strconv"
+
 /**
  * Proposal
  */
 
 type Proposal struct {
 	Handle ProposalHandle
+	Diffs  []Diff
 	ProposalContent
-	Increment Increment
-	Comments  []Comment
+	Comments []Comment
 }
 
-func NewProposal(handle ProposalHandle, content ProposalContent, increment Increment) Proposal {
+func NewProposal(
+	handle ProposalHandle,
+	diffs []Diff,
+	content ProposalContent,
+	comments []Comment,
+) Proposal {
 	return Proposal{
 		Handle:          handle,
+		Diffs:           diffs,
 		ProposalContent: content,
-		Increment:       increment,
+		Comments:        comments,
 	}
 }
 
@@ -33,6 +41,56 @@ func NewProposalHandle(source, value string) ProposalHandle {
 		Source: source,
 		Value:  value,
 	}
+}
+
+/**
+ * Diff
+ */
+
+type Diffs []Diff
+
+func (ds Diffs) ToXMLString() string {
+	str := "<diffs>"
+	for _, d := range ds {
+		str += d.ToXMLString()
+	}
+	str += "</diffs>"
+	return str
+}
+
+type Diff struct {
+	OldFilename string
+	NewFilename string
+	Body        string
+	IsNewFile   bool
+}
+
+func NewUpdateDiff(oldFilename, newFilename, body string) Diff {
+	return Diff{
+		OldFilename: oldFilename,
+		NewFilename: newFilename,
+		Body:        body,
+		IsNewFile:   false,
+	}
+}
+
+func NewCreateDiff(newFilename, body string) Diff {
+	return Diff{
+		OldFilename: "",
+		NewFilename: newFilename,
+		Body:        body,
+		IsNewFile:   true,
+	}
+}
+
+func (d Diff) ToXMLString() string {
+	str := "<diff>"
+	str += "<oldFilename>" + d.OldFilename + "</oldFilename>"
+	str += "<newFilename>" + d.NewFilename + "</newFilename>"
+	str += "<body>" + d.Body + "</body>"
+	str += "<isNewFile>" + strconv.FormatBool(d.IsNewFile) + "</isNewFile>"
+	str += "</diff>"
+	return str
 }
 
 /**

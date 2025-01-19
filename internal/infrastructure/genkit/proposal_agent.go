@@ -28,14 +28,8 @@ func NewProposalAgent(config Config) (*ProposalAgent, error) {
 	}, nil
 }
 
-func (a *ProposalAgent) Generate(increment domain.Increment) (domain.ProposalContent, error) {
+func (a *ProposalAgent) Generate(diffs domain.Diffs, contextDescription string) (domain.ProposalContent, error) {
 	ctx := context.Background()
-
-	// Get the document content from the increment
-	if len(increment.DocumentChanges) == 0 {
-		return domain.ProposalContent{}, fmt.Errorf("no document changes found in increment")
-	}
-	documentContent := increment.DocumentChanges[0].DocumentContent
 
 	// Set response schema
 	a.model.ResponseMIMEType = "application/json"
@@ -55,10 +49,12 @@ func (a *ProposalAgent) Generate(increment domain.Increment) (domain.ProposalCon
 タイトル（title）は変更内容を簡潔に表現し、説明文（body）は変更の目的と影響を説明してください。
 説明文はMarkdownフォーマットで記述してください。
 
-ドキュメントタイトル: %s
-ドキュメント内容:
+# コンテキスト
 %s
-`, documentContent.Title, documentContent.Body)
+
+# Diff
+%s
+`, contextDescription, diffs.ToXMLString())
 
 	resp, err := a.model.GenerateContent(ctx, genai.Text(prompt))
 	if err != nil {

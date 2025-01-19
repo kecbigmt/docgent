@@ -15,5 +15,5 @@ func NewPullRequestAPIFactory(api *API) *PullRequestAPIFactory {
 
 func (f *PullRequestAPIFactory) New(params application.GitHubAppParams) domain.ProposalRepository {
 	client := f.api.NewClient(params.InstallationID)
-	return NewPullRequestAPI(client, params.Owner, params.Repo)
+	return NewPullRequestAPI(client, params.Owner, params.Repo, params.DefaultBranch)
 }

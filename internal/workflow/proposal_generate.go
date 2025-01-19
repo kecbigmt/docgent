@@ -3,28 +3,26 @@ package workflow
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"docgent-backend/internal/domain"
 )
 
 type ProposalGenerateWorkflow struct {
-	documentAgent       domain.DocumentAgent
-	incrementRepository domain.IncrementRepository
-	proposalAgent       domain.ProposalAgent
-	proposalRepository  domain.ProposalRepository
+	documentAgent      domain.DocumentAgent
+	proposalAgent      domain.ProposalAgent
+	proposalRepository domain.ProposalRepository
 }
 
 func NewProposalGenerateWorkflow(
 	documentAgent domain.DocumentAgent,
-	incrementRepository domain.IncrementRepository,
 	proposalAgent domain.ProposalAgent,
 	proposalRepository domain.ProposalRepository,
 ) *ProposalGenerateWorkflow {
 	return &ProposalGenerateWorkflow{
-		documentAgent:       documentAgent,
-		incrementRepository: incrementRepository,
-		proposalAgent:       proposalAgent,
-		proposalRepository:  proposalRepository,
+		documentAgent:      documentAgent,
+		proposalAgent:      proposalAgent,
+		proposalRepository: proposalRepository,
 	}
 }
 
@@ -32,42 +30,34 @@ func (w *ProposalGenerateWorkflow) Execute(
 	ctx context.Context,
 	text string,
 	previousIncrementHandle domain.IncrementHandle,
-) (domain.Proposal, error) {
+) (domain.ProposalHandle, error) {
 	documentService := domain.NewDocumentService(w.documentAgent)
-	incrementService := domain.NewIncrementService(w.incrementRepository)
 
 	documentContent, err := documentService.GenerateContent(ctx, text)
 	if err != nil {
-		return domain.Proposal{}, err
+		return domain.ProposalHandle{}, err
 	}
 
-	incrementHandle, err := incrementService.IssueHandle()
-	if err != nil {
-		return domain.Proposal{}, err
+	diffBody := fmt.Sprintf("@@ -0,0 +1,%d @@\n", strings.Count(documentContent.Body, "\n"))
+	for _, line := range strings.Split(documentContent.Body, "\n") {
+		diffBody += "+" + line + "\n"
 	}
 
-	increment := domain.NewIncrement(incrementHandle, previousIncrementHandle, []domain.DocumentChange{})
-	_, err = incrementService.Create(increment)
-	if err != nil {
-		return domain.Proposal{}, err
-	}
+	diff := domain.NewCreateDiff(documentContent.Title+".md", diffBody)
+	diffs := domain.Diffs([]domain.Diff{diff})
 
-	documentChange := domain.NewDocumentCreateChange(documentContent)
-	increment, err = incrementService.AddDocumentChange(increment, documentChange)
-	if err != nil {
-		return domain.Proposal{}, err
-	}
+	contextDescription := fmt.Sprintf("以下の指示に従ってドキュメントを生成しました。\n\n%s", text)
 
 	// Create proposal using the increment
 	proposalService := domain.NewProposalService(w.proposalAgent, w.proposalRepository)
-	proposalContent, err := proposalService.GenerateContent(increment)
+	proposalContent, err := proposalService.GenerateContent(diffs, contextDescription)
 	if err != nil {
-		return domain.Proposal{}, fmt.Errorf("failed to generate proposal content: %w", err)
+		return domain.ProposalHandle{}, fmt.Errorf("failed to generate proposal content: %w", err)
 	}
 
-	proposal, err := proposalService.Create(proposalContent, increment)
+	proposal, err := proposalService.Create(diffs, proposalContent)
 	if err != nil {
-		return domain.Proposal{}, fmt.Errorf("failed to create proposal: %w", err)
+		return domain.ProposalHandle{}, fmt.Errorf("failed to create proposal: %w", err)
 	}
 
 	return proposal, nil
