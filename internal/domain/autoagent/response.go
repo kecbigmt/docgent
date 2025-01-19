@@ -39,6 +39,29 @@ func (t ResponseType) String() string {
 	}
 }
 
+func (r Response) String() string {
+	switch r.Type {
+	case CompleteResponse:
+		return fmt.Sprintf("<complete>%s</complete>", r.Message)
+	case ErrorResponse:
+		return fmt.Sprintf("<error>%s</error>", r.Message)
+	case ToolUseResponse:
+		var params []string
+		for _, p := range r.ToolParams {
+			params = append(params, fmt.Sprintf("<param:%s>%s</param:%s>", p.Key, p.Value, p.Key))
+		}
+		paramsStr := ""
+		if len(params) > 0 {
+			paramsStr = "\n" + strings.Join(params, "\n")
+		}
+		return fmt.Sprintf(`<tool_use:%s>
+<message>%s</message>%s
+</tool_use:%s>`, r.ToolType, r.Message, paramsStr, r.ToolType)
+	default:
+		return ""
+	}
+}
+
 func ParseResponse(raw string) (Response, error) {
 	raw = strings.TrimSpace(raw)
 	if raw == "" {

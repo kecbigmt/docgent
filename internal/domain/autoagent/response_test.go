@@ -120,6 +120,74 @@ func TestParseResponse(t *testing.T) {
 	}
 }
 
+func TestString(t *testing.T) {
+	tests := []struct {
+		name string
+		resp Response
+		want string
+	}{
+		{
+			name: "complete response",
+			resp: Response{
+				Type:    CompleteResponse,
+				Message: "Task completed successfully",
+			},
+			want: "<complete>Task completed successfully</complete>",
+		},
+		{
+			name: "error response",
+			resp: Response{
+				Type:    ErrorResponse,
+				Message: "Something went wrong",
+			},
+			want: "<error>Something went wrong</error>",
+		},
+		{
+			name: "tool use response with params",
+			resp: Response{
+				Type:     ToolUseResponse,
+				Message:  "Writing content to file",
+				ToolType: "write_file",
+				ToolParams: []ToolParam{
+					{
+						Key:   "path",
+						Value: "test.txt",
+					},
+					{
+						Key:   "content",
+						Value: "Hello, World!",
+					},
+				},
+			},
+			want: `<tool_use:write_file>
+<message>Writing content to file</message>
+<param:path>test.txt</param:path>
+<param:content>Hello, World!</param:content>
+</tool_use:write_file>`,
+		},
+		{
+			name: "tool use response without params",
+			resp: Response{
+				Type:     ToolUseResponse,
+				Message:  "Reading file content",
+				ToolType: "read_file",
+			},
+			want: `<tool_use:read_file>
+<message>Reading file content</message>
+</tool_use:read_file>`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.resp.String()
+			if got != tt.want {
+				t.Errorf("Response.String() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 // ToolType is a helper type that implements fmt.Stringer
 type ToolType string
 
