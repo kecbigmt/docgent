@@ -130,21 +130,12 @@ func parseDiff(diffStr string) (Diff, error) {
 type ProposalRefineSystemPrompt struct {
 	proposal           Proposal
 	remainingStepCount int
-	messageHistory     autoagent.MessageHistory
 }
 
-func NewProposalRefineSystemPrompt(proposal Proposal, remainingStepCount int, messageHistory autoagent.MessageHistory) ProposalRefineSystemPrompt {
+func NewProposalRefineSystemPrompt(proposal Proposal, remainingStepCount int) ProposalRefineSystemPrompt {
 	return ProposalRefineSystemPrompt{
 		proposal:           proposal,
 		remainingStepCount: remainingStepCount,
-		messageHistory:     messageHistory,
-	}
-}
-
-func (p ProposalRefineSystemPrompt) ToMessage() autoagent.Message {
-	return autoagent.Message{
-		Role:    "system",
-		Content: p.String(),
 	}
 }
 
@@ -158,10 +149,7 @@ func (p ProposalRefineSystemPrompt) String() string {
 				[]autoagent.ToolUseParameterGuideline{
 					autoagent.NewToolUseParameterGuideline("name", "The name of the file you want to find."),
 				},
-				`<tool_use:find_file>
-<message>Finding a document file...</message>
-<param:name>how-to-use-docgent.md</param:name>
-</tool_use:find_file>`,
+				`{"type":"tool_use","message":"Finding a document file...","toolType": "find_file","toolParams":[{"k":"name","v":"how-to-use-docgent.md"}]}`,
 			),
 			autoagent.NewToolUseGuideline(
 				"apply_proposal_diffs",
@@ -169,23 +157,7 @@ func (p ProposalRefineSystemPrompt) String() string {
 				[]autoagent.ToolUseParameterGuideline{
 					autoagent.NewToolUseParameterGuideline("diff", "The diff you want to apply to the proposal. Multiple diffs can be added. diff should be a valid unified format."),
 				},
-				`<tool_use:apply_proposal_diffs>
-<message>Updating proposal...</message>
-<param:diff>--- a/how-to-use-docgent.md
-+++ b/how-to-use-docgent.md
-@@ -1,3 +1,3 @@
--Hello
-+Hi
- World
-</param:diff>
-<param:diff>
---- /dev/null
-+++ b/bast-practice-for-docgent.md
-@@ -0,0 +1,2 @@
-+This is a new file.
-+It has a few lines of text.
-</param:diff>
-</tool_use:apply_proposal_diffs>`,
+				`{"type":"tool_use","message":"Applying file changes...","toolType": "apply_proposal_diffs","toolParams":[{"k":"diff","v":"--- a/how-to-use-docgent.md\n+++ b/how-to-use-docgent.md\n@@ -1,3 +1,3 @@\n-Hello\n+Hi\n World"},{"k":"diff","v":"--- /dev/null\n+++ b/bast-practice-for-docgent.md\n@@ -0,0 +1,2 @@\n+This is a new file.\n+It has a few lines of text."}]}`,
 			),
 			autoagent.NewToolUseGuideline(
 				"update_proposal_text",
@@ -194,11 +166,7 @@ func (p ProposalRefineSystemPrompt) String() string {
 					autoagent.NewToolUseParameterGuideline("title", "The title of the proposal."),
 					autoagent.NewToolUseParameterGuideline("body", "The body of the proposal."),
 				},
-				`<tool_use:update_proposal_text>
-<message>Updating proposal...</message>
-<param:title>[title]</param:title>
-<param:body>[body]</param:body>
-</tool_use:update_proposal_text>`,
+				`{"type":"tool_use","message":"Updating proposal text...","toolType": "update_proposal_text","toolParams":[{"k":"title","v":"New Title"},{"k":"body","v":"New Body"}]`,
 			),
 		},
 		autoagent.NewTaskInstruction(
@@ -217,10 +185,6 @@ func (p ProposalRefineSystemPrompt) String() string {
 			autoagent.NewConversationContext(
 				"Proposal Diffs",
 				p.proposal.Diffs.ToXMLString(),
-			),
-			autoagent.NewConversationContext(
-				"Message History",
-				p.messageHistory.ToXMLString(),
 			),
 		},
 	)

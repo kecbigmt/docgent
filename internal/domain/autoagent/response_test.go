@@ -1,10 +1,11 @@
 package autoagent
 
 import (
+	"encoding/json"
 	"testing"
 )
 
-func TestParseResponse(t *testing.T) {
+func TestUnmarshal(t *testing.T) {
 	tests := []struct {
 		name    string
 		raw     string
@@ -13,7 +14,7 @@ func TestParseResponse(t *testing.T) {
 	}{
 		{
 			name: "complete response",
-			raw:  "<complete>Task completed successfully</complete>",
+			raw:  `{"type":"complete","message":"Task completed successfully"}`,
 			want: Response{
 				Type:    CompleteResponse,
 				Message: "Task completed successfully",
@@ -22,7 +23,7 @@ func TestParseResponse(t *testing.T) {
 		},
 		{
 			name: "error response",
-			raw:  "<error>Something went wrong</error>",
+			raw:  `{"type":"error","message":"Something went wrong"}`,
 			want: Response{
 				Type:    ErrorResponse,
 				Message: "Something went wrong",
@@ -31,10 +32,7 @@ func TestParseResponse(t *testing.T) {
 		},
 		{
 			name: "tool use response",
-			raw: `<tool_use:read_file>
-<message>Reading file content</message>
-<param:path>test.txt</param:path>
-</tool_use:read_file>`,
+			raw:  `{"type":"tool_use","message":"Reading file content","toolType":"read_file","toolParams":[{"k":"path","v":"test.txt"}]}`,
 			want: Response{
 				Type:     ToolUseResponse,
 				Message:  "Reading file content",
@@ -50,11 +48,7 @@ func TestParseResponse(t *testing.T) {
 		},
 		{
 			name: "tool use response with multiple params",
-			raw: `<tool_use:write_file>
-<message>Writing content to file</message>
-<param:path>test.txt</param:path>
-<param:content>Hello, World!</param:content>
-</tool_use:write_file>`,
+			raw:  `{"type":"tool_use","message":"Writing content to file","toolType":"write_file","toolParams":[{"k":"path","v":"test.txt"},{"k":"content","v":"Hello, World!"}]}`,
 			want: Response{
 				Type:     ToolUseResponse,
 				Message:  "Writing content to file",
@@ -86,9 +80,10 @@ func TestParseResponse(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := ParseResponse(tt.raw)
+			var got Response
+			err := json.Unmarshal([]byte(tt.raw), &got)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("ParseResponse() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("json.Unmarshal() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if err != nil {
@@ -96,31 +91,31 @@ func TestParseResponse(t *testing.T) {
 			}
 
 			if got.Type != tt.want.Type {
-				t.Errorf("ParseResponse() Type = %v, want %v", got.Type, tt.want.Type)
+				t.Errorf("Response.Type = %v, want %v", got.Type, tt.want.Type)
 			}
 			if got.Message != tt.want.Message {
-				t.Errorf("ParseResponse() Message = %v, want %v", got.Message, tt.want.Message)
+				t.Errorf("Response.Message = %v, want %v", got.Message, tt.want.Message)
 			}
 			if got.ToolType != tt.want.ToolType {
-				t.Errorf("ParseResponse() ToolType = %v, want %v", got.ToolType, tt.want.ToolType)
+				t.Errorf("Response.ToolType = %v, want %v", got.ToolType, tt.want.ToolType)
 			}
 			if len(got.ToolParams) != len(tt.want.ToolParams) {
-				t.Errorf("ParseResponse() ToolParams length = %v, want %v", len(got.ToolParams), len(tt.want.ToolParams))
+				t.Errorf("Response.ToolParams length = %v, want %v", len(got.ToolParams), len(tt.want.ToolParams))
 				return
 			}
 			for i := range got.ToolParams {
 				if got.ToolParams[i].Key != tt.want.ToolParams[i].Key {
-					t.Errorf("ParseResponse() ToolParams[%d].Key = %v, want %v", i, got.ToolParams[i].Key, tt.want.ToolParams[i].Key)
+					t.Errorf("Response.ToolParams[%d].Key = %v, want %v", i, got.ToolParams[i].Key, tt.want.ToolParams[i].Key)
 				}
 				if got.ToolParams[i].Value != tt.want.ToolParams[i].Value {
-					t.Errorf("ParseResponse() ToolParams[%d].Value = %v, want %v", i, got.ToolParams[i].Value, tt.want.ToolParams[i].Value)
+					t.Errorf("Response.ToolParams[%d].Value = %v, want %v", i, got.ToolParams[i].Value, tt.want.ToolParams[i].Value)
 				}
 			}
 		})
 	}
 }
 
-func TestString(t *testing.T) {
+func TestMarshal(t *testing.T) {
 	tests := []struct {
 		name string
 		resp Response
@@ -132,7 +127,7 @@ func TestString(t *testing.T) {
 				Type:    CompleteResponse,
 				Message: "Task completed successfully",
 			},
-			want: "<complete>Task completed successfully</complete>",
+			want: `{"type":"complete","message":"Task completed successfully"}`,
 		},
 		{
 			name: "error response",
@@ -140,7 +135,7 @@ func TestString(t *testing.T) {
 				Type:    ErrorResponse,
 				Message: "Something went wrong",
 			},
-			want: "<error>Something went wrong</error>",
+			want: `{"type":"error","message":"Something went wrong"}`,
 		},
 		{
 			name: "tool use response with params",
@@ -159,11 +154,7 @@ func TestString(t *testing.T) {
 					},
 				},
 			},
-			want: `<tool_use:write_file>
-<message>Writing content to file</message>
-<param:path>test.txt</param:path>
-<param:content>Hello, World!</param:content>
-</tool_use:write_file>`,
+			want: `{"type":"tool_use","message":"Writing content to file","toolType":"write_file","toolParams":[{"k":"path","v":"test.txt"},{"k":"content","v":"Hello, World!"}]}`,
 		},
 		{
 			name: "tool use response without params",
@@ -172,25 +163,20 @@ func TestString(t *testing.T) {
 				Message:  "Reading file content",
 				ToolType: "read_file",
 			},
-			want: `<tool_use:read_file>
-<message>Reading file content</message>
-</tool_use:read_file>`,
+			want: `{"type":"tool_use","message":"Reading file content","toolType":"read_file"}`,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := tt.resp.String()
-			if got != tt.want {
-				t.Errorf("Response.String() = %v, want %v", got, tt.want)
+			got, err := json.Marshal(tt.resp)
+			if err != nil {
+				t.Errorf("json.Marshal() error = %v", err)
+				return
+			}
+			if string(got) != tt.want {
+				t.Errorf("Response.String() = %v, want %v", string(got), tt.want)
 			}
 		})
 	}
-}
-
-// ToolType is a helper type that implements fmt.Stringer
-type ToolType string
-
-func (t ToolType) String() string {
-	return string(t)
 }

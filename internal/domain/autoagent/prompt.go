@@ -42,7 +42,7 @@ func (s SystemPrompt) String() string {
 
 RESPONSE FORMAT
 
-You have to respond in the following XML-like format. You can use 3 response types.
+You have to respond in the following JSON format. You can use 3 response types.
 
 [xxx]: Dynamic values
 
@@ -50,26 +50,21 @@ You have to respond in the following XML-like format. You can use 3 response typ
 
 When you have completed the task, respond with the following message:
 
-<complete>[message]</complete>
+{ "type": "complete", "message": "[message]" }
 
 # Error response
 
 If something goes wrong, respond with the following message:
 
-<error>[message]</error>
+{ "type": "error", "message": "[message]" }
 
 # Tool use response
 
 If you want to use a tool, respond with the following message:
 
-<tool_use:[tool_name]>
-<message>[message]</message>
-<param:[parameter_1_name]>[value1]</param:[parameter_1_name]>
-<param:[parameter_2_name]>[value2]</param:[parameter_2_name]>
-</params>
-</tool_use:[tool_name]>
+{ "type": "tool_use", "message": "[message]", "toolName": "[tool_name]", "toolParams": [{ "[key1]": "[value1]" }, { "[key2]": "[value2]" }] }
 
-Let user know what you are doing with the tool in the <message> field.
+Let user know what you are doing with the tool in the "message" field.
 
 ====
 

@@ -1,19 +1,31 @@
 package autoagent
 
-import "fmt"
-
 type Message struct {
-	Role    string
+	Role    Role
 	Content string
 }
 
-type MessageHistory []Message
+func NewMessage(role Role, content string) Message {
+	return Message{Role: role, Content: content}
+}
 
-func (h MessageHistory) ToXMLString() string {
-	str := "<message_history>"
-	for _, message := range h {
-		str += fmt.Sprintf("<item><role>%s</role><content>%s</content></item>", message.Role, message.Content)
+type Role int
+
+const (
+	SystemRole Role = iota
+	UserRole
+	AgentRole
+)
+
+func (r Role) String() string {
+	switch r {
+	case SystemRole:
+		return "system"
+	case UserRole:
+		return "user"
+	case AgentRole:
+		return "agent"
+	default:
+		return "unknown"
 	}
-	str += "</message_history>"
-	return str
 }
