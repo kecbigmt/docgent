@@ -10,7 +10,7 @@ type ToolType int
 
 const (
 	FindFileTool ToolType = iota
-	UpdateProposalDiffsTool
+	ApplyProposalDiffsTool
 	UpdateProposalTextTool
 )
 
@@ -18,8 +18,8 @@ func (t ToolType) String() string {
 	switch t {
 	case FindFileTool:
 		return "find_file"
-	case UpdateProposalDiffsTool:
-		return "update_proposal_diffs"
+	case ApplyProposalDiffsTool:
+		return "apply_proposal_diffs"
 	case UpdateProposalTextTool:
 		return "update_proposal_text"
 	default:
@@ -31,7 +31,7 @@ type FindFileToolParams struct {
 	Name string
 }
 
-type UpdateProposalDiffsToolParams struct {
+type ApplyProposalDiffsToolParams struct {
 	Diffs []Diff
 }
 
@@ -64,7 +64,7 @@ func ParseResponseFromProposalRefineAgent(response autoagent.Response) (Proposal
 			ToolType:   FindFileTool,
 			ToolParams: FindFileToolParams{Name: name},
 		}, nil
-	case "update_proposal_diffs":
+	case "apply_proposal_diffs":
 		diffsStr := response.ToolParams.GetAll("diff")
 		var diffs []Diff
 		for _, diffStr := range diffsStr {
@@ -77,8 +77,8 @@ func ParseResponseFromProposalRefineAgent(response autoagent.Response) (Proposal
 		return ProposalRefineAgentResponse{
 			Type:       autoagent.ToolUseResponse,
 			Message:    response.Message,
-			ToolType:   UpdateProposalDiffsTool,
-			ToolParams: UpdateProposalDiffsToolParams{Diffs: diffs},
+			ToolType:   ApplyProposalDiffsTool,
+			ToolParams: ApplyProposalDiffsToolParams{Diffs: diffs},
 		}, nil
 	case "update_proposal_text":
 		title, _ := response.ToolParams.GetOne("title")
@@ -164,12 +164,12 @@ func (p ProposalRefineSystemPrompt) String() string {
 </tool_use:find_file>`,
 			),
 			autoagent.NewToolUseGuideline(
-				"update_proposal_diffs",
-				"It allows you to update the proposal diffs.",
+				"apply_proposal_diffs",
+				"It allows you to apply diffs to the proposal.",
 				[]autoagent.ToolUseParameterGuideline{
-					autoagent.NewToolUseParameterGuideline("diff", "The diff you want to add to the proposal diffs. Multiple diffs can be added. diff should be a valid unified format."),
+					autoagent.NewToolUseParameterGuideline("diff", "The diff you want to apply to the proposal. Multiple diffs can be added. diff should be a valid unified format."),
 				},
-				`<tool_use:update_proposal_diffs>
+				`<tool_use:apply_proposal_diffs>
 <message>Updating proposal...</message>
 <param:diff>--- a/how-to-use-docgent.md
 +++ b/how-to-use-docgent.md
@@ -185,7 +185,7 @@ func (p ProposalRefineSystemPrompt) String() string {
 +This is a new file.
 +It has a few lines of text.
 </param:diff>
-</tool_use:update_proposal_diffs>`,
+</tool_use:apply_proposal_diffs>`,
 			),
 			autoagent.NewToolUseGuideline(
 				"update_proposal_text",

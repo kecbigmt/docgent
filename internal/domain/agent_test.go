@@ -37,11 +37,11 @@ func TestParseResponseFromProposalRefineAgent(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "update_proposal_diffs tool",
+			name: "apply_proposal_diffs tool",
 			input: autoagent.Response{
 				Type:     autoagent.ToolUseResponse,
 				Message:  "Updating proposal diffs...",
-				ToolType: "update_proposal_diffs",
+				ToolType: "apply_proposal_diffs",
 				ToolParams: []autoagent.ToolParam{
 					{
 						Key: "diff",
@@ -57,8 +57,8 @@ func TestParseResponseFromProposalRefineAgent(t *testing.T) {
 			want: ProposalRefineAgentResponse{
 				Type:     autoagent.ToolUseResponse,
 				Message:  "Updating proposal diffs...",
-				ToolType: UpdateProposalDiffsTool,
-				ToolParams: UpdateProposalDiffsToolParams{
+				ToolType: ApplyProposalDiffsTool,
+				ToolParams: ApplyProposalDiffsToolParams{
 					Diffs: []Diff{
 						{
 							OldName: "test.md",
@@ -75,11 +75,11 @@ func TestParseResponseFromProposalRefineAgent(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "update_proposal_diffs tool with new file",
+			name: "apply_proposal_diffs tool with new file",
 			input: autoagent.Response{
 				Type:     autoagent.ToolUseResponse,
 				Message:  "Updating proposal diffs...",
-				ToolType: "update_proposal_diffs",
+				ToolType: "apply_proposal_diffs",
 				ToolParams: []autoagent.ToolParam{
 					{
 						Key: "diff",
@@ -94,8 +94,8 @@ func TestParseResponseFromProposalRefineAgent(t *testing.T) {
 			want: ProposalRefineAgentResponse{
 				Type:     autoagent.ToolUseResponse,
 				Message:  "Updating proposal diffs...",
-				ToolType: UpdateProposalDiffsTool,
-				ToolParams: UpdateProposalDiffsToolParams{
+				ToolType: ApplyProposalDiffsTool,
+				ToolParams: ApplyProposalDiffsToolParams{
 					Diffs: []Diff{
 						{
 							OldName: "",
