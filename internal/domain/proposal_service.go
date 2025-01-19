@@ -36,3 +36,7 @@ func (s *ProposalService) GenerateContent(diffs Diffs, contextDescription string
 func (s *ProposalService) CreateComment(proposalHandle ProposalHandle, commentBody string) (Comment, error) {
 	return s.repository.CreateComment(proposalHandle, commentBody)
 }
+
+func (s *ProposalService) UpdateContent(handle ProposalHandle, content ProposalContent) error {
+	return s.repository.UpdateProposalContent(handle, content)
+}
