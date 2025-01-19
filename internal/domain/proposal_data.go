@@ -8,14 +8,14 @@ import "strconv"
 
 type Proposal struct {
 	Handle ProposalHandle
-	Diffs  []Diff
+	Diffs  Diffs
 	ProposalContent
 	Comments []Comment
 }
 
 func NewProposal(
 	handle ProposalHandle,
-	diffs []Diff,
+	diffs Diffs,
 	content ProposalContent,
 	comments []Comment,
 ) Proposal {
