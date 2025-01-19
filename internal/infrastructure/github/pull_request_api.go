@@ -86,9 +86,9 @@ func (s *PullRequestAPI) CreateProposal(diffs domain.Diffs, content domain.Propo
 func (s *PullRequestAPI) GetProposal(handle domain.ProposalHandle) (domain.Proposal, error) {
 	ctx := context.Background()
 
-	number, err := strconv.Atoi(handle.Value)
+	number, err := s.parseHandle(handle)
 	if err != nil {
-		return domain.Proposal{}, fmt.Errorf("failed to convert pull request number: %w", err)
+		return domain.Proposal{}, err
 	}
 
 	pr, _, err := s.client.PullRequests.Get(ctx, s.owner, s.repo, number)
@@ -134,9 +134,9 @@ func (s *PullRequestAPI) CreateComment(proposalHandle domain.ProposalHandle, com
 		Body: github.Ptr(commentBody),
 	}
 
-	number, err := strconv.Atoi(proposalHandle.Value)
+	number, err := s.parseHandle(proposalHandle)
 	if err != nil {
-		return domain.Comment{}, fmt.Errorf("failed to convert pull request number: %w", err)
+		return domain.Comment{}, fmt.Errorf("failed to parse handle: %w", err)
 	}
 
 	issueComment, _, err := s.client.Issues.CreateComment(ctx, s.owner, s.repo, number, newComment)
@@ -154,9 +154,9 @@ func (s *PullRequestAPI) CreateComment(proposalHandle domain.ProposalHandle, com
 func (s *PullRequestAPI) UpdateProposalContent(proposalHandle domain.ProposalHandle, content domain.ProposalContent) error {
 	ctx := context.Background()
 
-	number, err := strconv.Atoi(proposalHandle.Value)
+	number, err := s.parseHandle(proposalHandle)
 	if err != nil {
-		return fmt.Errorf("failed to convert pull request number: %w", err)
+		return err
 	}
 
 	// Get current PR to preserve other fields
@@ -179,4 +179,12 @@ func (s *PullRequestAPI) UpdateProposalContent(proposalHandle domain.ProposalHan
 	}
 
 	return nil
+}
+
+func (s *PullRequestAPI) parseHandle(handle domain.ProposalHandle) (int, error) {
+	number, err := strconv.Atoi(handle.Value)
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse proposal handle to pull request number: %w", err)
+	}
+	return number, nil
 }
