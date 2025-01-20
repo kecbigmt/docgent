@@ -11,6 +11,7 @@ import (
 
 	"docgent-backend/internal/application"
 	"docgent-backend/internal/domain"
+	"docgent-backend/internal/domain/autoagent"
 	"docgent-backend/internal/infrastructure/genkit"
 	"docgent-backend/internal/infrastructure/github"
 )
@@ -38,6 +39,8 @@ func main() {
 			AsGitHubEventRoute(application.NewGitHubIssueCommentEventConsumer),
 			AsDocumentAgent(genkit.NewDocumentAgent),
 			AsPoposalAgent(genkit.NewProposalAgent),
+			AsAutoAgent(genkit.NewAutoAgent),
+			AsGitHubServiceProvider(github.NewServiceProvider),
 			AsGitHubPullRequestAPIFactory(github.NewPullRequestAPIFactory),
 			zap.NewExample,
 		),
@@ -94,6 +97,16 @@ func AsDocumentAgent(f any, anns ...fx.Annotation) any {
 
 func AsPoposalAgent(f any, anns ...fx.Annotation) any {
 	anns = append([]fx.Annotation{fx.As(new(domain.ProposalAgent))}, anns...)
+	return fx.Annotate(f, anns...)
+}
+
+func AsAutoAgent(f any, anns ...fx.Annotation) any {
+	anns = append([]fx.Annotation{fx.As(new(autoagent.Agent))}, anns...)
+	return fx.Annotate(f, anns...)
+}
+
+func AsGitHubServiceProvider(f any, anns ...fx.Annotation) any {
+	anns = append([]fx.Annotation{fx.As(new(application.GitHubServiceProvider))}, anns...)
 	return fx.Annotate(f, anns...)
 }
 

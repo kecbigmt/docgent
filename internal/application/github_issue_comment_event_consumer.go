@@ -1,6 +1,9 @@
 package application
 
 import (
+	"context"
+	"docgent-backend/internal/domain/autoagent"
+	"docgent-backend/internal/workflow"
 	"fmt"
 	"strconv"
 
@@ -12,19 +15,22 @@ import (
 type GitHubIssueCommentEventConsumerParams struct {
 	fx.In
 
-	Logger                      *zap.Logger
-	GitHubPullRequestAPIFactory GitHubPullRequestAPIFactory
+	AutoAgent       autoagent.Agent
+	Logger          *zap.Logger
+	ServiceProvider GitHubServiceProvider
 }
 
 type GitHubIssueCommentEventConsumer struct {
-	logger                      *zap.Logger
-	githubPullRequestAPIFactory GitHubPullRequestAPIFactory
+	agent           autoagent.Agent
+	logger          *zap.Logger
+	serviceProvider GitHubServiceProvider
 }
 
 func NewGitHubIssueCommentEventConsumer(params GitHubIssueCommentEventConsumerParams) *GitHubIssueCommentEventConsumer {
 	return &GitHubIssueCommentEventConsumer{
-		logger:                      params.Logger,
-		githubPullRequestAPIFactory: params.GitHubPullRequestAPIFactory,
+		agent:           params.AutoAgent,
+		logger:          params.Logger,
+		serviceProvider: params.ServiceProvider,
 	}
 }
 
@@ -65,23 +71,41 @@ func (c *GitHubIssueCommentEventConsumer) ConsumeEvent(event interface{}) {
 		return
 	}
 
-	githubPullRequestAPI := c.githubPullRequestAPIFactory.New(GitHubAppParams{
-		InstallationID: installationID,
-		Repo:           repoName,
-		Owner:          ownerName,
-		DefaultBranch:  defaultBranch,
-	})
+	ctx := context.Background()
 
-	handle := githubPullRequestAPI.NewProposalHandle(strconv.Itoa(ev.Issue.GetNumber()))
+	// Create conversation service with PR and comment context
+	conversationService := c.serviceProvider.NewIssueCommentConversationService(installationID, ownerName, repoName, ev.Issue.GetNumber())
 
-	comment, err := githubPullRequestAPI.CreateComment(handle, ev.Comment.GetBody())
+	// Get PR head branch using service provider
+	headBranch, err := c.serviceProvider.GetPullRequestHeadBranch(ctx, installationID, ownerName, repoName, ev.Issue.GetNumber())
 	if err != nil {
-		c.logger.Error("Failed to create comment", zap.Error(err), zap.String("pull_request", pullRequestPath))
+		c.logger.Error("Failed to get pull request head branch", zap.Error(err))
+		return
+	}
+
+	// Create file query service with PR's head branch
+	fileQueryService := c.serviceProvider.NewFileQueryService(installationID, ownerName, repoName, headBranch)
+
+	// Create proposal service
+	proposalService := c.serviceProvider.NewPullRequestAPI(installationID, ownerName, repoName, defaultBranch)
+
+	// Create workflow instance
+	workflow := workflow.NewProposalRefineWorkflow(
+		c.agent,             // AI interaction
+		conversationService, // Comment management
+		fileQueryService,    // File operations
+		proposalService,     // PR management
+	)
+
+	// Process feedback
+	handle := proposalService.NewProposalHandle(strconv.Itoa(ev.Issue.GetNumber()))
+	if err := workflow.Refine(handle, ev.Comment.GetBody()); err != nil {
+		c.logger.Error("Refinement failed", zap.Error(err))
 		return
 	}
 
 	c.logger.Info(
-		"Comment created",
-		zap.String("comment", pullRequestPath+"#issuecomment-"+comment.Handle.Value),
+		"Comment processed and refinement applied",
+		zap.String("pull_request", pullRequestPath),
 	)
 }
