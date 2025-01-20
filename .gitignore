@@ -1,0 +1,5 @@
+.env
+.env.*
+.clinerules
+.cursorrules
+/docs/tmp
