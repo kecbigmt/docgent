@@ -41,6 +41,9 @@ func (s *FileQueryService) Find(name string) (domain.File, error) {
 		},
 	)
 	if err != nil {
+		if _, ok := err.(*github.ErrorResponse); ok && err.(*github.ErrorResponse).Response.StatusCode == 404 {
+			return domain.File{}, domain.ErrFileNotFound
+		}
 		return domain.File{}, fmt.Errorf("failed to get file contents: %w", err)
 	}
 
