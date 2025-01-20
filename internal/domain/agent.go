@@ -52,6 +52,13 @@ type ProposalRefineAgentResponse struct {
 }
 
 func ParseResponseFromProposalRefineAgent(response autoagent.Response) (ProposalRefineAgentResponse, error) {
+	if response.Type != autoagent.ToolUseResponse {
+		return ProposalRefineAgentResponse{
+			Type:    response.Type,
+			Message: response.Message,
+		}, nil
+	}
+
 	switch response.ToolType {
 	case "find_file":
 		name, ok := response.ToolParams.GetOne("name")
