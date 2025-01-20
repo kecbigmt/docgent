@@ -11,18 +11,18 @@ import (
 )
 
 type FileQueryService struct {
-	client     *github.Client
-	owner      string
-	repo       string
-	baseBranch string
+	client *github.Client
+	owner  string
+	repo   string
+	branch string
 }
 
-func NewFileQueryService(client *github.Client, config APIConfig) *FileQueryService {
+func NewFileQueryService(client *github.Client, owner, repo, branch string) *FileQueryService {
 	return &FileQueryService{
-		client:     client,
-		owner:      config.Owner,
-		repo:       config.Repo,
-		baseBranch: config.BaseBranch,
+		client: client,
+		owner:  owner,
+		repo:   repo,
+		branch: branch,
 	}
 }
 
@@ -37,7 +37,7 @@ func (s *FileQueryService) Find(name string) (domain.File, error) {
 		s.repo,
 		filePath,
 		&github.RepositoryContentGetOptions{
-			Ref: s.baseBranch,
+			Ref: s.branch,
 		},
 	)
 	if err != nil {
