@@ -80,7 +80,7 @@ func (a *AutoAgent) SendMessage(ctx context.Context, message autoagent.Message) 
 		if cand.Content != nil {
 			for _, part := range cand.Content.Parts {
 				text, ok := part.(genai.Text)
-				if ok {
+				if !ok {
 					continue
 				}
 				resContent += string(text)
