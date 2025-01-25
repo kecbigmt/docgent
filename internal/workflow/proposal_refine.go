@@ -69,7 +69,6 @@ func (w *ProposalRefineWorkflow) Refine(proposalHandle domain.ProposalHandle, us
 			go w.conversationService.Reply("Failed to generate response")
 			return fmt.Errorf("failed to generate response: %w", err)
 		}
-		go w.conversationService.Reply(rawResponse.Message)
 		currentTaskCount++
 
 		response, err := domain.ParseResponseFromProposalRefineAgent(rawResponse)
