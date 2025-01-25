@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 
 	"docgent-backend/internal/domain"
 	"docgent-backend/internal/domain/autoagent"
@@ -108,7 +109,13 @@ func (w *ProposalRefineWorkflow) Refine(proposalHandle domain.ProposalHandle, us
 				w.nextMessage = systemMessage
 				continue
 			}
+		case autoagent.CompleteResponse:
+			return nil
+		case autoagent.ErrorResponse:
+			return nil
 		}
+
+		go w.conversationService.Reply("Max task count reached")
 
 		return nil
 	}
@@ -124,10 +131,11 @@ func (w *ProposalRefineWorkflow) handleFindFileTool(rawParams interface{}) (auto
 
 	file, err := w.fileQueryService.Find(params.Name)
 	if err != nil {
+		log.Printf("Failed to find document: %s", err)
 		if errors.Is(err, domain.ErrFileNotFound) {
 			return autoagent.NewMessage(autoagent.SystemRole, fmt.Sprintf("File not found: %s", params.Name)), nil
 		}
-		return autoagent.Message{}, fmt.Errorf("failed to find document: %w", err)
+		return autoagent.NewMessage(autoagent.SystemRole, fmt.Errorf("failed to find document: %w", err).Error()), nil
 	}
 
 	return autoagent.NewMessage(autoagent.SystemRole, fmt.Sprintf("Found document: %s\n\n%s", file.Name, file.Content)), nil
@@ -141,7 +149,8 @@ func (w *ProposalRefineWorkflow) handleApplyProposalDiffsTool(proposalHandle dom
 
 	err := w.proposalRepository.ApplyProposalDiffs(proposalHandle, params.Diffs)
 	if err != nil {
-		return autoagent.Message{}, fmt.Errorf("failed to update proposal diffs: %w", err)
+		log.Printf("Failed to update proposal diffs: %s", err)
+		return autoagent.NewMessage(autoagent.SystemRole, fmt.Errorf("failed to update proposal diffs: %w", err).Error()), nil
 	}
 
 	return autoagent.NewMessage(autoagent.SystemRole, "Proposal diffs applied"), nil
@@ -158,7 +167,8 @@ func (w *ProposalRefineWorkflow) handleUpdateProposalTextTool(proposalHandle dom
 		domain.NewProposalContent(params.Title, params.Body),
 	)
 	if err != nil {
-		return autoagent.Message{}, fmt.Errorf("failed to update proposal text: %w", err)
+		log.Printf("Failed to update proposal text: %s", err)
+		return autoagent.NewMessage(autoagent.SystemRole, fmt.Errorf("failed to update proposal text: %w", err).Error()), nil
 	}
 
 	return autoagent.NewMessage(autoagent.SystemRole, "Proposal text updated"), nil
