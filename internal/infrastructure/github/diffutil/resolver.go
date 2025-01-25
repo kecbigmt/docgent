@@ -91,6 +91,7 @@ func (r *Resolver) resolveUpdateDiffWithoutRename(diff domain.Diff) error {
 		Message: github.Ptr(fmt.Sprintf("Update file %s", diff.NewName)),
 		Content: []byte(patchedText),
 		Branch:  github.Ptr(r.branchName),
+		SHA:     fileContent.SHA,
 	}
 
 	_, _, err = r.client.Repositories.UpdateFile(ctx, r.owner, r.repo, diff.NewName, opts)
