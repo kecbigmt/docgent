@@ -44,6 +44,7 @@ func (c *GitHubIssueCommentEventConsumer) ConsumeEvent(event interface{}) {
 		c.logger.Error("Failed to convert event data to IssueCommentEvent")
 		return
 	}
+	c.logger.Info("Processing issue comment event", zap.String("action", ev.GetAction()))
 
 	installationID := ev.GetInstallation().GetID()
 	repo := ev.GetRepo()
