@@ -53,7 +53,7 @@ func (r *Resolver) resolveCreateDiff(diff domain.Diff) error {
 		Branch:  github.Ptr(r.branchName),
 	}
 
-	_, _, err = r.client.Repositories.CreateFile(ctx, r.owner, r.repo, "docs/"+diff.NewName, opts)
+	_, _, err = r.client.Repositories.CreateFile(ctx, r.owner, r.repo, diff.NewName, opts)
 	if err != nil {
 		return fmt.Errorf("failed to create file: %w", err)
 	}
@@ -69,7 +69,15 @@ func (r *Resolver) resolveUpdateDiffWithoutRename(diff domain.Diff) error {
 		return fmt.Errorf("failed to parse diff: %w", err)
 	}
 
-	fileContent, _, _, err := r.client.Repositories.GetContents(ctx, r.owner, r.repo, "docs/"+diff.NewName, nil)
+	fileContent, _, _, err := r.client.Repositories.GetContents(
+		ctx,
+		r.owner,
+		r.repo,
+		diff.NewName,
+		&github.RepositoryContentGetOptions{
+			Ref: r.branchName,
+		},
+	)
 	if err != nil {
 		return fmt.Errorf("failed to get file content: %w", err)
 	}
@@ -85,7 +93,7 @@ func (r *Resolver) resolveUpdateDiffWithoutRename(diff domain.Diff) error {
 		Branch:  github.Ptr(r.branchName),
 	}
 
-	_, _, err = r.client.Repositories.UpdateFile(ctx, r.owner, r.repo, "docs/"+diff.NewName, opts)
+	_, _, err = r.client.Repositories.UpdateFile(ctx, r.owner, r.repo, diff.NewName, opts)
 	if err != nil {
 		return fmt.Errorf("failed to update file: %w", err)
 	}
@@ -101,7 +109,15 @@ func (r *Resolver) resolveUpdateDiffWithRename(diff domain.Diff) error {
 		return fmt.Errorf("failed to parse diff: %w", err)
 	}
 
-	fileContent, _, _, err := r.client.Repositories.GetContents(ctx, r.owner, r.repo, "docs/"+diff.NewName, nil)
+	fileContent, _, _, err := r.client.Repositories.GetContents(
+		ctx,
+		r.owner,
+		r.repo,
+		diff.NewName,
+		&github.RepositoryContentGetOptions{
+			Ref: r.branchName,
+		},
+	)
 	if err != nil {
 		return fmt.Errorf("failed to get file content: %w", err)
 	}
@@ -117,7 +133,7 @@ func (r *Resolver) resolveUpdateDiffWithRename(diff domain.Diff) error {
 		Message: github.Ptr(fmt.Sprintf("Delete file %s", diff.OldName)),
 		Branch:  github.Ptr(r.branchName),
 	}
-	_, _, err = r.client.Repositories.DeleteFile(ctx, r.owner, r.repo, "docs/"+diff.OldName, deleteOpts)
+	_, _, err = r.client.Repositories.DeleteFile(ctx, r.owner, r.repo, diff.OldName, deleteOpts)
 	if err != nil {
 		return fmt.Errorf("failed to delete file: %w", err)
 	}
@@ -129,7 +145,7 @@ func (r *Resolver) resolveUpdateDiffWithRename(diff domain.Diff) error {
 		Branch:  github.Ptr(r.branchName),
 	}
 
-	_, _, err = r.client.Repositories.CreateFile(ctx, r.owner, r.repo, "docs/"+diff.NewName, createOpts)
+	_, _, err = r.client.Repositories.CreateFile(ctx, r.owner, r.repo, diff.NewName, createOpts)
 	if err != nil {
 		return fmt.Errorf("failed to create file: %w", err)
 	}
