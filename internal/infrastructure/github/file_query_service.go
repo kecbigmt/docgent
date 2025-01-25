@@ -3,7 +3,6 @@ package github
 import (
 	"context"
 	"fmt"
-	"path"
 
 	"docgent-backend/internal/domain"
 
@@ -27,15 +26,12 @@ func NewFileQueryService(client *github.Client, owner, repo, branch string) *Fil
 }
 
 func (s *FileQueryService) Find(name string) (domain.File, error) {
-	// docsディレクトリ内のパスを構築
-	filePath := path.Join("docs", name)
-
 	// ファイルの内容を取得
 	fileContent, _, _, err := s.client.Repositories.GetContents(
 		context.Background(),
 		s.owner,
 		s.repo,
-		filePath,
+		name,
 		&github.RepositoryContentGetOptions{
 			Ref: s.branch,
 		},
