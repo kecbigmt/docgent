@@ -3,6 +3,7 @@ package diffutil
 import (
 	"context"
 	"fmt"
+	"encoding/base64"
 
 	"github.com/google/go-github/v68/github"
 	"github.com/sergi/go-diff/diffmatchpatch"
@@ -86,6 +87,12 @@ func (r *Resolver) resolveUpdateDiffWithoutRename(diff domain.Diff) error {
 		return fmt.Errorf("failed to get file content: %w", err)
 	}
 
+	// Base64デコードを実行
+	decodedContent, err := base64.StdEncoding.DecodeString(content)
+	if err != nil {
+		return fmt.Errorf("failed to decode base64 content: %w", err)
+	}
+
 	patchedText, _ := dmp.PatchApply(patches, content)
 	opts := &github.RepositoryContentFileOptions{
 		Message: github.Ptr(fmt.Sprintf("Update file %s", diff.NewName)),
@@ -127,6 +134,12 @@ func (r *Resolver) resolveUpdateDiffWithRename(diff domain.Diff) error {
 		return fmt.Errorf("failed to get file content: %w", err)
 	}
 
+	// Base64デコードを実行
+	decodedContent, err := base64.StdEncoding.DecodeString(content)
+	if err != nil {
+		return fmt.Errorf("failed to decode base64 content: %w", err)
+	}
+
 	patchedText, _ := dmp.PatchApply(patches, content)
 
 	// Delete the old file
@@ -134,6 +147,7 @@ func (r *Resolver) resolveUpdateDiffWithRename(diff domain.Diff) error {
 		Message: github.Ptr(fmt.Sprintf("Delete file %s", diff.OldName)),
 		Branch:  github.Ptr(r.branchName),
 	}
+
 	_, _, err = r.client.Repositories.DeleteFile(ctx, r.owner, r.repo, diff.OldName, deleteOpts)
 	if err != nil {
 		return fmt.Errorf("failed to delete file: %w", err)

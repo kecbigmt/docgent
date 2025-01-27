@@ -172,7 +172,7 @@ func TestResolver_Execute_UpdateFileWithRename(t *testing.T) {
 				body: &github.RepositoryContent{
 					Name:    github.Ptr("new.txt"),
 					Path:    github.Ptr("new.txt"),
-					Content: github.Ptr("SGVsbG8KV29ybGQK"), // base64 encoded "Hello\nWorld\n"
+					Content: github.Ptr(encodeContent("Hello\nWorld\n")),
 					SHA:     github.Ptr("abc123"),
 				},
 			},
