@@ -47,7 +47,10 @@ func (r *Resolver) resolveCreateDiff(diff domain.Diff) error {
 		return fmt.Errorf("failed to parse diff: %w", err)
 	}
 
-	newText, _ := dmp.PatchApply(patches, "")
+	newText, results := dmp.PatchApply(patches, "")
+	if !anyPatchApplied(results) {
+		return fmt.Errorf("no changes were applied to the file")
+	}
 	opts := &github.RepositoryContentFileOptions{
 		Message: github.Ptr(fmt.Sprintf("Create file %s", diff.NewName)),
 		Content: []byte(newText),
@@ -93,7 +96,11 @@ func (r *Resolver) resolveUpdateDiffWithoutRename(diff domain.Diff) error {
 		return fmt.Errorf("failed to decode base64 content: %w", err)
 	}
 
-	patchedText, _ := dmp.PatchApply(patches, content)
+	patchedText, results := dmp.PatchApply(patches, string(decodedContent))
+	if !anyPatchApplied(results) {
+		return fmt.Errorf("no changes were applied to the file")
+	}
+
 	opts := &github.RepositoryContentFileOptions{
 		Message: github.Ptr(fmt.Sprintf("Update file %s", diff.NewName)),
 		Content: []byte(patchedText),
@@ -140,7 +147,10 @@ func (r *Resolver) resolveUpdateDiffWithRename(diff domain.Diff) error {
 		return fmt.Errorf("failed to decode base64 content: %w", err)
 	}
 
-	patchedText, _ := dmp.PatchApply(patches, content)
+	patchedText, results := dmp.PatchApply(patches, string(decodedContent))
+	if !anyPatchApplied(results) {
+		return fmt.Errorf("no changes were applied to the file")
+	}
 
 	// Delete the old file
 	deleteOpts := &github.RepositoryContentFileOptions{
@@ -166,4 +176,14 @@ func (r *Resolver) resolveUpdateDiffWithRename(diff domain.Diff) error {
 	}
 
 	return nil
+}
+
+// anyPatchApplied checks if any of the patches were successfully applied
+func anyPatchApplied(results []bool) bool {
+	for _, applied := range results {
+		if applied {
+			return true
+		}
+	}
+	return false
 }

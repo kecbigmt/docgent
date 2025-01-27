@@ -319,3 +319,42 @@ func TestResolver_Execute_InvalidDiff(t *testing.T) {
 		t.Errorf("expected error to contain 'failed to parse diff', got %v", err)
 	}
 }
+
+func TestResolver_Execute_NoChangesApplied(t *testing.T) {
+	mock := &mockTransport{
+		responses: map[string]mockResponse{
+			"GET /repos/owner/repo/contents/file.txt": {
+				statusCode: http.StatusOK,
+				body: &github.RepositoryContent{
+					Name:    github.Ptr("file.txt"),
+					Path:    github.Ptr("file.txt"),
+					Content: github.Ptr(encodeContent("ABCDEFG")), // diffの適用対象がdiffとは無関係のもの
+					SHA:     github.Ptr("abc123"),
+				},
+			},
+		},
+	}
+
+	client := github.NewClient(&http.Client{Transport: mock})
+	resolver := &Resolver{
+		client:     client,
+		owner:      "owner",
+		repo:       "repo",
+		branchName: "main",
+	}
+
+	diff := domain.Diff{
+		OldName:   "file.txt",
+		NewName:   "file.txt",
+		Body:      "@@ -1,2 +1,2 @@\n-Hello\n+Hi\n  World\n",
+		IsNewFile: false,
+	}
+
+	err := resolver.Execute(diff)
+	if err == nil {
+		t.Error("expected error, got nil")
+	}
+	if !strings.Contains(err.Error(), "no changes were applied") {
+		t.Errorf("expected error to contain 'no changes were applied', got %v", err)
+	}
+}
