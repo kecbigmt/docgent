@@ -6,4 +6,5 @@ type CommandUnion interface {
 
 type Cases struct {
 	ChangeFile func(ChangeFile)
+	ReadFile   func(ReadFile)
 }
