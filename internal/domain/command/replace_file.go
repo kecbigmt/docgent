@@ -9,7 +9,7 @@ type ReplaceFile struct {
 	NewContent string   `xml:"new_content"`
 }
 
-func (fc ReplaceFile) Match(cs Cases) { cs.ReplaceFile(fc) }
+func (fc ReplaceFile) Match(cs FileChangeCases) { cs.ReplaceFile(fc) }
 
 func NewReplaceFile(oldPath, newPath, newContent string) ReplaceFile {
 	return ReplaceFile{

@@ -10,7 +10,7 @@ type ModifyFile struct {
 	Hunks   []ModifyHunk `xml:"hunk"`
 }
 
-func (fc ModifyFile) Match(cs Cases) { cs.ModifyFile(fc) }
+func (fc ModifyFile) Match(cs FileChangeCases) { cs.ModifyFile(fc) }
 
 func (mf *ModifyFile) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	type modifyFile ModifyFile

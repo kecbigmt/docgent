@@ -10,7 +10,7 @@ type CreateFile struct {
 	Content string   `xml:"content"`
 }
 
-func (fc CreateFile) Match(cs Cases) { cs.CreateFile(fc) }
+func (fc CreateFile) Match(cs FileChangeCases) { cs.CreateFile(fc) }
 
 func NewCreateFile(path, content string) CreateFile {
 	return CreateFile{

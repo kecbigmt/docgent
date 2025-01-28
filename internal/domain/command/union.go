@@ -5,8 +5,5 @@ type CommandUnion interface {
 }
 
 type Cases struct {
-	CreateFile  func(CreateFile)
-	ModifyFile  func(ModifyFile)
-	ReplaceFile func(ReplaceFile)
-	DeleteFile  func(DeleteFile)
+	ChangeFile func(ChangeFile)
 }
