@@ -31,19 +31,33 @@ func TestParse(t *testing.T) {
 					<replace>Hi</replace>
 				</hunk>
 			</modify_file>`,
-			want: NewChangeFile(NewModifyFile("test.txt", []ModifyHunk{
-				NewModifyHunk("Hello", "Hi"),
+			want: NewChangeFile(NewModifyFile("test.txt", []Hunk{
+				NewHunk("Hello", "Hi"),
 			})),
 			wantErr: false,
 		},
 		{
-			name: "replace_file",
-			xmlStr: `<replace_file>
+			name: "rename_file",
+			xmlStr: `<rename_file>
 				<old_path>old.txt</old_path>
 				<new_path>new.txt</new_path>
-				<new_content>New content</new_content>
-			</replace_file>`,
-			want:    NewChangeFile(NewReplaceFile("old.txt", "new.txt", "New content")),
+				<hunk>
+					<search>old content</search>
+					<replace>new content</replace>
+				</hunk>
+			</rename_file>`,
+			want: NewChangeFile(NewRenameFile("old.txt", "new.txt", []Hunk{
+				NewHunk("old content", "new content"),
+			})),
+			wantErr: false,
+		},
+		{
+			name: "rename_file_without_hunks",
+			xmlStr: `<rename_file>
+				<old_path>old.txt</old_path>
+				<new_path>new.txt</new_path>
+			</rename_file>`,
+			want:    NewChangeFile(NewRenameFile("old.txt", "new.txt", nil)),
 			wantErr: false,
 		},
 		{
@@ -91,11 +105,11 @@ func TestParse(t *testing.T) {
 							assert.Equal(t, wantModify.Path, gotModify.Path)
 							assert.Equal(t, wantModify.Hunks, gotModify.Hunks)
 						},
-						ReplaceFile: func(gotReplace ReplaceFile) {
-							wantReplace := wantChange.Unwrap().(ReplaceFile)
-							assert.Equal(t, wantReplace.OldPath, gotReplace.OldPath)
-							assert.Equal(t, wantReplace.NewPath, gotReplace.NewPath)
-							assert.Equal(t, wantReplace.NewContent, gotReplace.NewContent)
+						RenameFile: func(gotRename RenameFile) {
+							wantRename := wantChange.Unwrap().(RenameFile)
+							assert.Equal(t, wantRename.OldPath, gotRename.OldPath)
+							assert.Equal(t, wantRename.NewPath, gotRename.NewPath)
+							assert.Equal(t, wantRename.Hunks, gotRename.Hunks)
 						},
 						DeleteFile: func(DeleteFile) {
 							t.Error("unexpected DeleteFile")

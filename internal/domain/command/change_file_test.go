@@ -25,21 +25,33 @@ func TestChangeFile_MarshalXML(t *testing.T) {
 			name: "modify file",
 			change: NewChangeFile(NewModifyFile(
 				"example.txt",
-				[]ModifyHunk{
-					NewModifyHunk("old text", "new text"),
-					NewModifyHunk("another old", "another new"),
+				[]Hunk{
+					NewHunk("old text", "new text"),
+					NewHunk("another old", "another new"),
 				},
 			)),
 			expected: `<modify_file><path>example.txt</path><hunk><search>old text</search><replace>new text</replace></hunk><hunk><search>another old</search><replace>another new</replace></hunk></modify_file>`,
 		},
 		{
-			name: "replace file",
-			change: NewChangeFile(NewReplaceFile(
+			name: "rename file",
+			change: NewChangeFile(NewRenameFile(
 				"old.txt",
 				"new.txt",
-				"updated content",
+				[]Hunk{
+					NewHunk("old content", "new content"),
+					NewHunk("another old content", "another new content"),
+				},
 			)),
-			expected: `<replace_file><old_path>old.txt</old_path><new_path>new.txt</new_path><new_content>updated content</new_content></replace_file>`,
+			expected: `<rename_file><old_path>old.txt</old_path><new_path>new.txt</new_path><hunk><search>old content</search><replace>new content</replace></hunk><hunk><search>another old content</search><replace>another new content</replace></hunk></rename_file>`,
+		},
+		{
+			name: "rename file without hunks",
+			change: NewChangeFile(NewRenameFile(
+				"old.txt",
+				"new.txt",
+				nil,
+			)),
+			expected: `<rename_file><old_path>old.txt</old_path><new_path>new.txt</new_path></rename_file>`,
 		},
 		{
 			name: "delete file",

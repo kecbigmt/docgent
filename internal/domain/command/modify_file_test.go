@@ -15,22 +15,22 @@ func TestModifyFile_MarshalXML(t *testing.T) {
 	}{
 		{
 			name: "modify file with single hunk",
-			input: NewModifyFile("test.txt", []ModifyHunk{
-				NewModifyHunk("old text", "new text"),
+			input: NewModifyFile("test.txt", []Hunk{
+				NewHunk("old text", "new text"),
 			}),
 			expected: `<modify_file><path>test.txt</path><hunk><search>old text</search><replace>new text</replace></hunk></modify_file>`,
 		},
 		{
 			name: "modify file with multiple hunks",
-			input: NewModifyFile("test.txt", []ModifyHunk{
-				NewModifyHunk("first old", "first new"),
-				NewModifyHunk("second old", "second new"),
+			input: NewModifyFile("test.txt", []Hunk{
+				NewHunk("first old", "first new"),
+				NewHunk("second old", "second new"),
 			}),
 			expected: `<modify_file><path>test.txt</path><hunk><search>first old</search><replace>first new</replace></hunk><hunk><search>second old</search><replace>second new</replace></hunk></modify_file>`,
 		},
 		{
 			name:     "modify file with empty hunks",
-			input:    NewModifyFile("test.txt", []ModifyHunk{}),
+			input:    NewModifyFile("test.txt", []Hunk{}),
 			expected: `<modify_file><path>test.txt</path></modify_file>`,
 		},
 	}
@@ -54,22 +54,22 @@ func TestModifyFile_UnmarshalXML(t *testing.T) {
 		{
 			name:  "modify file with single hunk",
 			input: `<modify_file><path>test.txt</path><hunk><search>old text</search><replace>new text</replace></hunk></modify_file>`,
-			expected: NewModifyFile("test.txt", []ModifyHunk{
-				NewModifyHunk("old text", "new text"),
+			expected: NewModifyFile("test.txt", []Hunk{
+				NewHunk("old text", "new text"),
 			}),
 		},
 		{
 			name:  "modify file with multiple hunks",
 			input: `<modify_file><path>test.txt</path><hunk><search>first old</search><replace>first new</replace></hunk><hunk><search>second old</search><replace>second new</replace></hunk></modify_file>`,
-			expected: NewModifyFile("test.txt", []ModifyHunk{
-				NewModifyHunk("first old", "first new"),
-				NewModifyHunk("second old", "second new"),
+			expected: NewModifyFile("test.txt", []Hunk{
+				NewHunk("first old", "first new"),
+				NewHunk("second old", "second new"),
 			}),
 		},
 		{
 			name:    "modify file with empty hunks",
 			input:   `<modify_file><path>test.txt</path></modify_file>`,
-			wantErr: ErrEmptyModifyHunks,
+			wantErr: ErrEmptyHunks,
 		},
 	}
 

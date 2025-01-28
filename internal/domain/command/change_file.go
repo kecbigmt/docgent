@@ -26,8 +26,20 @@ type ChangeFileUnion interface {
 }
 
 type FileChangeCases struct {
-	CreateFile  func(CreateFile)
-	ModifyFile  func(ModifyFile)
-	ReplaceFile func(ReplaceFile)
-	DeleteFile  func(DeleteFile)
+	CreateFile func(CreateFile)
+	ModifyFile func(ModifyFile)
+	RenameFile func(RenameFile)
+	DeleteFile func(DeleteFile)
+}
+
+type Hunk struct {
+	Search  string `xml:"search"`
+	Replace string `xml:"replace"`
+}
+
+func NewHunk(search, replace string) Hunk {
+	return Hunk{
+		Search:  search,
+		Replace: replace,
+	}
 }

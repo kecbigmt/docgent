@@ -5,9 +5,9 @@ import (
 )
 
 type ModifyFile struct {
-	XMLName xml.Name     `xml:"modify_file"`
-	Path    string       `xml:"path"`
-	Hunks   []ModifyHunk `xml:"hunk"`
+	XMLName xml.Name `xml:"modify_file"`
+	Path    string   `xml:"path"`
+	Hunks   []Hunk   `xml:"hunk"`
 }
 
 func (fc ModifyFile) Match(cs FileChangeCases) { cs.ModifyFile(fc) }
@@ -19,28 +19,16 @@ func (mf *ModifyFile) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error
 		return err
 	}
 	if v.Hunks == nil {
-		return ErrEmptyModifyHunks
+		return ErrEmptyHunks
 	}
 	*mf = ModifyFile(v)
 	return nil
 }
 
-func NewModifyFile(path string, hunks []ModifyHunk) ModifyFile {
+func NewModifyFile(path string, hunks []Hunk) ModifyFile {
 	return ModifyFile{
 		XMLName: xml.Name{Space: "", Local: "modify_file"},
 		Path:    path,
 		Hunks:   hunks,
-	}
-}
-
-type ModifyHunk struct {
-	Search  string `xml:"search"`
-	Replace string `xml:"replace"`
-}
-
-func NewModifyHunk(search, replace string) ModifyHunk {
-	return ModifyHunk{
-		Search:  search,
-		Replace: replace,
 	}
 }

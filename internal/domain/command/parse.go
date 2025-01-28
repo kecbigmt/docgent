@@ -34,10 +34,10 @@ func Parse(xmlStr string) (CommandUnion, error) {
 			return nil, fmt.Errorf("failed to decode modify_file: %w", err)
 		}
 		return NewChangeFile(mf), nil
-	case "replace_file":
-		var rf ReplaceFile
+	case "rename_file":
+		var rf RenameFile
 		if err := decoder.DecodeElement(&rf, &startElement); err != nil {
-			return nil, fmt.Errorf("failed to decode replace_file: %w", err)
+			return nil, fmt.Errorf("failed to decode rename_file: %w", err)
 		}
 		return NewChangeFile(rf), nil
 	case "read_file":
