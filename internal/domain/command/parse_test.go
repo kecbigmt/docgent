@@ -92,33 +92,39 @@ func TestParse(t *testing.T) {
 
 			// Matchメソッドを使って検証
 			got.Match(Cases{
-				ChangeFile: func(gotChange ChangeFile) {
+				ChangeFile: func(gotChange ChangeFile) error {
 					wantChange := tt.want.(ChangeFile)
-					gotChange.Unwrap().Match(FileChangeCases{
-						CreateFile: func(gotCreate CreateFile) {
+					return gotChange.Unwrap().Match(FileChangeCases{
+						CreateFile: func(gotCreate CreateFile) error {
 							wantCreate := wantChange.Unwrap().(CreateFile)
 							assert.Equal(t, wantCreate.Path, gotCreate.Path)
 							assert.Equal(t, wantCreate.Content, gotCreate.Content)
+							return nil
 						},
-						ModifyFile: func(gotModify ModifyFile) {
+						ModifyFile: func(gotModify ModifyFile) error {
 							wantModify := wantChange.Unwrap().(ModifyFile)
 							assert.Equal(t, wantModify.Path, gotModify.Path)
 							assert.Equal(t, wantModify.Hunks, gotModify.Hunks)
+							return nil
 						},
-						RenameFile: func(gotRename RenameFile) {
+						RenameFile: func(gotRename RenameFile) error {
 							wantRename := wantChange.Unwrap().(RenameFile)
 							assert.Equal(t, wantRename.OldPath, gotRename.OldPath)
 							assert.Equal(t, wantRename.NewPath, gotRename.NewPath)
 							assert.Equal(t, wantRename.Hunks, gotRename.Hunks)
+							return nil
 						},
-						DeleteFile: func(DeleteFile) {
-							t.Error("unexpected DeleteFile")
+						DeleteFile: func(gotDelete DeleteFile) error {
+							wantDelete := wantChange.Unwrap().(DeleteFile)
+							assert.Equal(t, wantDelete.Path, gotDelete.Path)
+							return nil
 						},
 					})
 				},
-				ReadFile: func(gotRead ReadFile) {
+				ReadFile: func(gotRead ReadFile) error {
 					wantRead := tt.want.(ReadFile)
 					assert.Equal(t, wantRead.Path, gotRead.Path)
+					return nil
 				},
 			})
 		})

@@ -187,7 +187,7 @@ index 0000000..e69de29
 
 			// Matchメソッドを使って検証
 			got.Unwrap().Match(command.FileChangeCases{
-				ModifyFile: func(gotModify command.ModifyFile) {
+				ModifyFile: func(gotModify command.ModifyFile) error {
 					wantModify := tt.want.Unwrap().(command.ModifyFile)
 					assert.Equal(t, wantModify.Path, gotModify.Path)
 					assert.Equal(t, len(wantModify.Hunks), len(gotModify.Hunks))
@@ -195,17 +195,20 @@ index 0000000..e69de29
 						assert.Equal(t, wantModify.Hunks[i].Search, gotModify.Hunks[i].Search)
 						assert.Equal(t, wantModify.Hunks[i].Replace, gotModify.Hunks[i].Replace)
 					}
+					return nil
 				},
-				CreateFile: func(gotCreate command.CreateFile) {
+				CreateFile: func(gotCreate command.CreateFile) error {
 					wantCreate := tt.want.Unwrap().(command.CreateFile)
 					assert.Equal(t, wantCreate.Path, gotCreate.Path)
 					assert.Equal(t, wantCreate.Content, gotCreate.Content)
+					return nil
 				},
-				DeleteFile: func(gotDelete command.DeleteFile) {
+				DeleteFile: func(gotDelete command.DeleteFile) error {
 					wantDelete := tt.want.Unwrap().(command.DeleteFile)
 					assert.Equal(t, wantDelete.Path, gotDelete.Path)
+					return nil
 				},
-				RenameFile: func(gotRename command.RenameFile) {
+				RenameFile: func(gotRename command.RenameFile) error {
 					wantRename := tt.want.Unwrap().(command.RenameFile)
 					assert.Equal(t, wantRename.OldPath, gotRename.OldPath)
 					assert.Equal(t, wantRename.NewPath, gotRename.NewPath)
@@ -214,6 +217,7 @@ index 0000000..e69de29
 						assert.Equal(t, wantRename.Hunks[i].Search, gotRename.Hunks[i].Search)
 						assert.Equal(t, wantRename.Hunks[i].Replace, gotRename.Hunks[i].Replace)
 					}
+					return nil
 				},
 			})
 		})

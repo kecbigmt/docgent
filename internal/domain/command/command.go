@@ -1,10 +1,10 @@
 package command
 
 type CommandUnion interface {
-	Match(Cases)
+	Match(Cases) error
 }
 
 type Cases struct {
-	ChangeFile func(ChangeFile)
-	ReadFile   func(ReadFile)
+	ChangeFile func(ChangeFile) error
+	ReadFile   func(ReadFile) error
 }

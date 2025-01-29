@@ -31,13 +31,12 @@ func NewApplier(
 func (h *Applier) Apply(ctx context.Context, fc command.ChangeFile) error {
 	change := fc.Unwrap()
 	cases := command.FileChangeCases{
-		CreateFile: func(c command.CreateFile) { h.handleCreate(ctx, c) },
-		ModifyFile: func(c command.ModifyFile) { h.handleModify(ctx, c) },
-		RenameFile: func(c command.RenameFile) { h.handleRename(ctx, c) },
-		DeleteFile: func(c command.DeleteFile) { h.handleDelete(ctx, c) },
+		CreateFile: func(c command.CreateFile) error { return h.handleCreate(ctx, c) },
+		ModifyFile: func(c command.ModifyFile) error { return h.handleModify(ctx, c) },
+		RenameFile: func(c command.RenameFile) error { return h.handleRename(ctx, c) },
+		DeleteFile: func(c command.DeleteFile) error { return h.handleDelete(ctx, c) },
 	}
-	change.Match(cases)
-	return nil
+	return change.Match(cases)
 }
 
 func (h *Applier) handleCreate(ctx context.Context, cmd command.CreateFile) error {
