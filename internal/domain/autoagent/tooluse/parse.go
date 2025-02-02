@@ -6,8 +6,8 @@ import (
 	"strings"
 )
 
-// Parse parses XML string and returns ToolUseUnion
-func Parse(xmlStr string) (ToolUseUnion, error) {
+// Parse parses XML string and returns Union
+func Parse(xmlStr string) (Union, error) {
 	decoder := xml.NewDecoder(strings.NewReader(xmlStr))
 
 	// 最初のトークンを読み込んで、要素の種類を判断

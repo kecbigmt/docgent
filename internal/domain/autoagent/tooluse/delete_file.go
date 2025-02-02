@@ -7,7 +7,7 @@ type DeleteFile struct {
 	Path    string   `xml:"path"`
 }
 
-func (fc DeleteFile) Match(cs FileChangeCases) error { return cs.DeleteFile(fc) }
+func (fc DeleteFile) Match(cs FileChangeCases) (string, bool, error) { return cs.DeleteFile(fc) }
 
 func NewDeleteFile(path string) DeleteFile {
 	return DeleteFile{

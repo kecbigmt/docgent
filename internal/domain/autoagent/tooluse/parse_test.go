@@ -10,7 +10,7 @@ func TestParse(t *testing.T) {
 	tests := []struct {
 		name    string
 		xmlStr  string
-		want    ToolUseUnion
+		want    Union
 		wantErr bool
 	}{
 		{
@@ -92,39 +92,39 @@ func TestParse(t *testing.T) {
 
 			// Matchメソッドを使って検証
 			got.Match(Cases{
-				ChangeFile: func(gotChange ChangeFile) error {
+				ChangeFile: func(gotChange ChangeFile) (string, bool, error) {
 					wantChange := tt.want.(ChangeFile)
 					return gotChange.Unwrap().Match(FileChangeCases{
-						CreateFile: func(gotCreate CreateFile) error {
+						CreateFile: func(gotCreate CreateFile) (string, bool, error) {
 							wantCreate := wantChange.Unwrap().(CreateFile)
 							assert.Equal(t, wantCreate.Path, gotCreate.Path)
 							assert.Equal(t, wantCreate.Content, gotCreate.Content)
-							return nil
+							return "file created", false, nil
 						},
-						ModifyFile: func(gotModify ModifyFile) error {
+						ModifyFile: func(gotModify ModifyFile) (string, bool, error) {
 							wantModify := wantChange.Unwrap().(ModifyFile)
 							assert.Equal(t, wantModify.Path, gotModify.Path)
 							assert.Equal(t, wantModify.Hunks, gotModify.Hunks)
-							return nil
+							return "file modified", false, nil
 						},
-						RenameFile: func(gotRename RenameFile) error {
+						RenameFile: func(gotRename RenameFile) (string, bool, error) {
 							wantRename := wantChange.Unwrap().(RenameFile)
 							assert.Equal(t, wantRename.OldPath, gotRename.OldPath)
 							assert.Equal(t, wantRename.NewPath, gotRename.NewPath)
 							assert.Equal(t, wantRename.Hunks, gotRename.Hunks)
-							return nil
+							return "file renamed", false, nil
 						},
-						DeleteFile: func(gotDelete DeleteFile) error {
+						DeleteFile: func(gotDelete DeleteFile) (string, bool, error) {
 							wantDelete := wantChange.Unwrap().(DeleteFile)
 							assert.Equal(t, wantDelete.Path, gotDelete.Path)
-							return nil
+							return "file deleted", false, nil
 						},
 					})
 				},
-				ReadFile: func(gotRead ReadFile) error {
+				ReadFile: func(gotRead ReadFile) (string, bool, error) {
 					wantRead := tt.want.(ReadFile)
 					assert.Equal(t, wantRead.Path, gotRead.Path)
-					return nil
+					return "file read", false, nil
 				},
 			})
 		})

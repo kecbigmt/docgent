@@ -187,7 +187,7 @@ index 0000000..e69de29
 
 			// Matchメソッドを使って検証
 			got.Unwrap().Match(tooluse.FileChangeCases{
-				ModifyFile: func(gotModify tooluse.ModifyFile) error {
+				ModifyFile: func(gotModify tooluse.ModifyFile) (string, bool, error) {
 					wantModify := tt.want.Unwrap().(tooluse.ModifyFile)
 					assert.Equal(t, wantModify.Path, gotModify.Path)
 					assert.Equal(t, len(wantModify.Hunks), len(gotModify.Hunks))
@@ -195,20 +195,20 @@ index 0000000..e69de29
 						assert.Equal(t, wantModify.Hunks[i].Search, gotModify.Hunks[i].Search)
 						assert.Equal(t, wantModify.Hunks[i].Replace, gotModify.Hunks[i].Replace)
 					}
-					return nil
+					return "File modified", false, nil
 				},
-				CreateFile: func(gotCreate tooluse.CreateFile) error {
+				CreateFile: func(gotCreate tooluse.CreateFile) (string, bool, error) {
 					wantCreate := tt.want.Unwrap().(tooluse.CreateFile)
 					assert.Equal(t, wantCreate.Path, gotCreate.Path)
 					assert.Equal(t, wantCreate.Content, gotCreate.Content)
-					return nil
+					return "File created", false, nil
 				},
-				DeleteFile: func(gotDelete tooluse.DeleteFile) error {
+				DeleteFile: func(gotDelete tooluse.DeleteFile) (string, bool, error) {
 					wantDelete := tt.want.Unwrap().(tooluse.DeleteFile)
 					assert.Equal(t, wantDelete.Path, gotDelete.Path)
-					return nil
+					return "File deleted", false, nil
 				},
-				RenameFile: func(gotRename tooluse.RenameFile) error {
+				RenameFile: func(gotRename tooluse.RenameFile) (string, bool, error) {
 					wantRename := tt.want.Unwrap().(tooluse.RenameFile)
 					assert.Equal(t, wantRename.OldPath, gotRename.OldPath)
 					assert.Equal(t, wantRename.NewPath, gotRename.NewPath)
@@ -217,7 +217,7 @@ index 0000000..e69de29
 						assert.Equal(t, wantRename.Hunks[i].Search, gotRename.Hunks[i].Search)
 						assert.Equal(t, wantRename.Hunks[i].Replace, gotRename.Hunks[i].Replace)
 					}
-					return nil
+					return "File renamed", false, nil
 				},
 			})
 		})

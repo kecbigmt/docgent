@@ -15,20 +15,20 @@ import (
 type GitHubIssueCommentEventConsumerParams struct {
 	fx.In
 
-	AutoAgent       autoagent.Agent
+	ChatModel       autoagent.ChatModel
 	Logger          *zap.Logger
 	ServiceProvider GitHubServiceProvider
 }
 
 type GitHubIssueCommentEventConsumer struct {
-	agent           autoagent.Agent
+	chatModel       autoagent.ChatModel
 	logger          *zap.Logger
 	serviceProvider GitHubServiceProvider
 }
 
 func NewGitHubIssueCommentEventConsumer(params GitHubIssueCommentEventConsumerParams) *GitHubIssueCommentEventConsumer {
 	return &GitHubIssueCommentEventConsumer{
-		agent:           params.AutoAgent,
+		chatModel:       params.ChatModel,
 		logger:          params.Logger,
 		serviceProvider: params.ServiceProvider,
 	}
@@ -92,7 +92,7 @@ func (c *GitHubIssueCommentEventConsumer) ConsumeEvent(event interface{}) {
 
 	// Create workflow instance
 	workflow := workflow.NewProposalRefineWorkflow(
-		c.agent,             // AI interaction
+		c.chatModel,         // AI interaction
 		conversationService, // Comment management
 		fileQueryService,    // File operations
 		proposalService,     // PR management

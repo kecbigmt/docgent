@@ -182,7 +182,7 @@ func TestApplier_HandleModify(t *testing.T) {
 			client := github.NewClient(&http.Client{Transport: mt})
 			h := NewApplier(client, "owner", "repo", "main")
 
-			err := h.Apply(context.Background(), tooluse.NewChangeFile(tt.cmd))
+			_, _, err := h.Apply(context.Background(), tooluse.NewChangeFile(tt.cmd))
 			if tt.wantErr != nil {
 				assert.ErrorIs(t, err, tt.wantErr)
 			} else {
@@ -294,7 +294,7 @@ func TestApplier_HandleRename(t *testing.T) {
 			client := github.NewClient(&http.Client{Transport: mt})
 			h := NewApplier(client, "owner", "repo", "main")
 
-			err := h.Apply(context.Background(), tooluse.NewChangeFile(tt.cmd))
+			_, _, err := h.Apply(context.Background(), tooluse.NewChangeFile(tt.cmd))
 			if tt.wantErr != nil {
 				assert.ErrorIs(t, err, tt.wantErr)
 			} else {

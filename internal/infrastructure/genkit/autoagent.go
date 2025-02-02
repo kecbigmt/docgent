@@ -2,28 +2,39 @@ package genkit
 
 import (
 	"context"
-	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/google/generative-ai-go/genai"
+	"go.uber.org/fx"
+	"go.uber.org/zap"
+	"google.golang.org/api/googleapi"
 	"google.golang.org/api/option"
 
 	"docgent-backend/internal/domain/autoagent"
 )
 
+type AutoAgentParams struct {
+	fx.In
+
+	Logger *zap.Logger
+	Config Config
+}
+
 type AutoAgent struct {
+	logger  *zap.Logger
 	model   *genai.GenerativeModel
 	history []autoagent.Message
 }
 
-func NewAutoAgent(config Config) (autoagent.Agent, error) {
+func NewAutoAgent(params AutoAgentParams) (autoagent.ChatModel, error) {
 	ctx := context.Background()
-	client, err := genai.NewClient(ctx, option.WithAPIKey(config.APIKey))
+	client, err := genai.NewClient(ctx, option.WithAPIKey(params.Config.APIKey))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create genai client: %w", err)
 	}
 
-	model := client.GenerativeModel(config.GenerativeModelName)
+	model := client.GenerativeModel(params.Config.GenerativeModelName)
 	model.ResponseMIMEType = "application/json"
 	model.ResponseSchema = &genai.Schema{
 		Type: genai.TypeObject,
@@ -42,10 +53,14 @@ func NewAutoAgent(config Config) (autoagent.Agent, error) {
 				},
 			},
 		},
-		Required: []string{"type", "message"},
+		Required: []string{"type", "message", "toolType", "toolParams"},
 	}
+	model.SetTemperature(0.1)
+	model.SetTopP(0.5)
+	model.SetTopK(20)
 
 	return &AutoAgent{
+		logger:  params.Logger,
 		model:   model,
 		history: []autoagent.Message{},
 	}, nil
@@ -56,7 +71,7 @@ func (a *AutoAgent) SetSystemInstruction(instruction string) error {
 	return nil
 }
 
-func (a *AutoAgent) SendMessage(ctx context.Context, message autoagent.Message) (autoagent.Response, error) {
+func (a *AutoAgent) SendMessage(ctx context.Context, message autoagent.Message) (string, error) {
 	cs := a.model.StartChat()
 
 	for _, message := range a.history {
@@ -72,7 +87,18 @@ func (a *AutoAgent) SendMessage(ctx context.Context, message autoagent.Message) 
 
 	res, err := cs.SendMessage(ctx, part)
 	if err != nil {
-		return autoagent.Response{}, fmt.Errorf("failed to send message: %w", err)
+		var gerr *googleapi.Error
+		if !errors.As(err, &gerr) {
+			a.logger.Debug("failed to send message", zap.Error(err))
+		} else {
+			a.logger.Debug(
+				"failed to send message",
+				zap.Int("code", gerr.Code),
+				zap.String("message", gerr.Message),
+				zap.String("body", gerr.Body),
+			)
+		}
+		return "", fmt.Errorf("failed to send message: %w", err)
 	}
 
 	var resContent string
@@ -88,14 +114,11 @@ func (a *AutoAgent) SendMessage(ctx context.Context, message autoagent.Message) 
 		}
 	}
 
-	var response autoagent.Response
-	if err := json.Unmarshal([]byte(resContent), &response); err != nil {
-		return autoagent.Response{}, fmt.Errorf("failed to unmarshal response: %w", err)
-	}
+	a.logger.Debug("response", zap.String("content", resContent))
 
 	a.history = append(a.history, message)
 
-	return response, nil
+	return resContent, nil
 }
 
 func (a *AutoAgent) GetHistory() ([]autoagent.Message, error) {

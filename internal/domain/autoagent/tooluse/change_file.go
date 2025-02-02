@@ -6,7 +6,7 @@ type ChangeFile struct {
 	change ChangeFileUnion
 }
 
-func (fc ChangeFile) Match(cs Cases) error { return cs.ChangeFile(fc) }
+func (fc ChangeFile) Match(cs Cases) (string, bool, error) { return cs.ChangeFile(fc) }
 
 func (fc ChangeFile) Unwrap() ChangeFileUnion {
 	return fc.change
@@ -22,14 +22,14 @@ func NewChangeFile(changeFile ChangeFileUnion) ChangeFile {
 }
 
 type ChangeFileUnion interface {
-	Match(FileChangeCases) error
+	Match(FileChangeCases) (string, bool, error)
 }
 
 type FileChangeCases struct {
-	CreateFile func(CreateFile) error
-	ModifyFile func(ModifyFile) error
-	RenameFile func(RenameFile) error
-	DeleteFile func(DeleteFile) error
+	CreateFile func(CreateFile) (string, bool, error)
+	ModifyFile func(ModifyFile) (string, bool, error)
+	RenameFile func(RenameFile) (string, bool, error)
+	DeleteFile func(DeleteFile) (string, bool, error)
 }
 
 type Hunk struct {
