@@ -6,6 +6,6 @@ type Union interface {
 
 type Cases struct {
 	ChangeFile      func(ChangeFile) (string, bool, error)
-	ReadFile        func(ReadFile) (string, bool, error)
+	FindFile        func(FindFile) (string, bool, error)
 	AttemptComplete func(AttemptComplete) (string, bool, error)
 }

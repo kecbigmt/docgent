@@ -65,7 +65,7 @@ func TestParse(t *testing.T) {
 			xmlStr: `<read_file>
 				<path>test.txt</path>
 			</read_file>`,
-			want: ReadFile{
+			want: FindFile{
 				Path: "test.txt",
 			},
 			wantErr: false,
@@ -121,8 +121,8 @@ func TestParse(t *testing.T) {
 						},
 					})
 				},
-				ReadFile: func(gotRead ReadFile) (string, bool, error) {
-					wantRead := tt.want.(ReadFile)
+				FindFile: func(gotRead FindFile) (string, bool, error) {
+					wantRead := tt.want.(FindFile)
 					assert.Equal(t, wantRead.Path, gotRead.Path)
 					return "file read", false, nil
 				},

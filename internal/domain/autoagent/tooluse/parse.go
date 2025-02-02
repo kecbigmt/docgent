@@ -41,7 +41,7 @@ func Parse(xmlStr string) (Union, error) {
 		}
 		return NewChangeFile(rf), nil
 	case "read_file":
-		var rf ReadFile
+		var rf FindFile
 		if err := decoder.DecodeElement(&rf, &startElement); err != nil {
 			return nil, fmt.Errorf("failed to decode read_file: %w", err)
 		}
