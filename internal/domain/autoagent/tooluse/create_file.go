@@ -15,7 +15,7 @@ type CreateFile struct {
 	Content string   `xml:"content"`
 }
 
-func (fc CreateFile) Match(cs FileChangeCases) (string, bool, error) { return cs.CreateFile(fc) }
+func (fc CreateFile) Match(cs ChangeFileCases) (string, bool, error) { return cs.CreateFile(fc) }
 
 func NewCreateFile(path, content string) CreateFile {
 	return CreateFile{

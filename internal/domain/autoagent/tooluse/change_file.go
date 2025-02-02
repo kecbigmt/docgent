@@ -22,10 +22,10 @@ func NewChangeFile(changeFile ChangeFileUnion) ChangeFile {
 }
 
 type ChangeFileUnion interface {
-	Match(FileChangeCases) (string, bool, error)
+	Match(ChangeFileCases) (string, bool, error)
 }
 
-type FileChangeCases struct {
+type ChangeFileCases struct {
 	CreateFile func(CreateFile) (string, bool, error)
 	ModifyFile func(ModifyFile) (string, bool, error)
 	RenameFile func(RenameFile) (string, bool, error)

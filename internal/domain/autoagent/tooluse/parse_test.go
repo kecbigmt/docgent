@@ -94,7 +94,7 @@ func TestParse(t *testing.T) {
 			got.Match(Cases{
 				ChangeFile: func(gotChange ChangeFile) (string, bool, error) {
 					wantChange := tt.want.(ChangeFile)
-					return gotChange.Unwrap().Match(FileChangeCases{
+					return gotChange.Unwrap().Match(ChangeFileCases{
 						CreateFile: func(gotCreate CreateFile) (string, bool, error) {
 							wantCreate := wantChange.Unwrap().(CreateFile)
 							assert.Equal(t, wantCreate.Path, gotCreate.Path)

@@ -30,7 +30,7 @@ func NewApplier(
 
 func (h *Applier) Apply(ctx context.Context, fc tooluse.ChangeFile) (string, bool, error) {
 	change := fc.Unwrap()
-	cases := tooluse.FileChangeCases{
+	cases := tooluse.ChangeFileCases{
 		CreateFile: func(c tooluse.CreateFile) (string, bool, error) { return h.handleCreate(ctx, c) },
 		ModifyFile: func(c tooluse.ModifyFile) (string, bool, error) { return h.handleModify(ctx, c) },
 		RenameFile: func(c tooluse.RenameFile) (string, bool, error) { return h.handleRename(ctx, c) },

@@ -186,7 +186,7 @@ index 0000000..e69de29
 			assert.NoError(t, err)
 
 			// Matchメソッドを使って検証
-			got.Unwrap().Match(tooluse.FileChangeCases{
+			got.Unwrap().Match(tooluse.ChangeFileCases{
 				ModifyFile: func(gotModify tooluse.ModifyFile) (string, bool, error) {
 					wantModify := tt.want.Unwrap().(tooluse.ModifyFile)
 					assert.Equal(t, wantModify.Path, gotModify.Path)

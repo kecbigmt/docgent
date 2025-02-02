@@ -22,7 +22,7 @@ type RenameFile struct {
 	Hunks   []Hunk   `xml:"hunk,omitempty"`
 }
 
-func (fc RenameFile) Match(cs FileChangeCases) (string, bool, error) { return cs.RenameFile(fc) }
+func (fc RenameFile) Match(cs ChangeFileCases) (string, bool, error) { return cs.RenameFile(fc) }
 
 // UnmarshalXML implements xml.Unmarshaler interface
 func (rf *RenameFile) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
