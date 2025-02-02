@@ -4,6 +4,21 @@ import (
 	"encoding/xml"
 )
 
+var ModifyFileUsage = NewUsage("modify_file", "Modify a existing file", []Parameter{
+	NewParameter("path", "The exact path to the existing file to modify", true),
+	NewParameter("hunk", "The hunk to apply to the file. The hunk is a pair of search and replace strings. Search string must be exactly matched with the content of the file. Multiple hunks can be applied to the file.", true),
+}, `<modify_file>
+<path>/path/to/file.md</path>
+<hunk>
+<search>Hello, world!</search>
+<replace>Hi, world!</replace>
+</hunk>
+<hunk>
+<search>Fizz</search>
+<replace>FizzBuzz</replace>
+</hunk>
+</modify_file>`)
+
 type ModifyFile struct {
 	XMLName xml.Name `xml:"modify_file"`
 	Path    string   `xml:"path"`

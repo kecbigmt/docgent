@@ -2,6 +2,19 @@ package tooluse
 
 import "encoding/xml"
 
+var RenameFileUsage = NewUsage("rename_file", "Rename a file", []Parameter{
+	NewParameter("old_path", "The exact path to the existing file to rename", true),
+	NewParameter("new_path", "The new path to the file", true),
+	NewParameter("hunk", "The hunk to apply to the file. The hunk is a pair of search and replace strings. Search string must be exactly matched with the content of the file. Multiple hunks can be applied to the file.", false),
+}, `<rename_file>
+<old_path>/path/to/file.md</old_path>
+<new_path>/path/to/new_file.md</new_path>
+<hunk>
+<search>Hello, world!</search>
+<replace>Hi, world!</replace>
+</hunk>
+</rename_file>`)
+
 type RenameFile struct {
 	XMLName xml.Name `xml:"rename_file"`
 	OldPath string   `xml:"old_path"`
