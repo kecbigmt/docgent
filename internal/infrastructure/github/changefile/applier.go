@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/go-github/v68/github"
 
-	"docgent-backend/internal/domain/tooluse"
+	"docgent-backend/internal/domain/autoagent/tooluse"
 )
 
 type Applier struct {

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"docgent-backend/internal/domain/tooluse"
+	"docgent-backend/internal/domain/autoagent/tooluse"
 )
 
 type fileOperation int

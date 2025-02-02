@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"docgent-backend/internal/domain/tooluse"
+	"docgent-backend/internal/domain/autoagent/tooluse"
 )
 
 func TestApplyHunks(t *testing.T) {
