@@ -31,17 +31,22 @@ index 0000000..e69de29
 @@ -0,0 +1,3 @@
 +This is a new file.
 +It has a few lines of text.
-+End of the file.`
++End of the file.
+diff --git "a/\350\263\252\345\225\217.md" "b/\350\263\252\345\225\217.md"
+index 0000000..e69de29
+--- "a/\350\263\252\345\225\217.md"
++++ "b/\350\263\252\345\225\217.md"
+@@ -1,3 +1,3 @@
+-Foo
++Bar
+ Baz
+`
 
 	expected := []domain.Diff{
 		{
 			OldName: "file1.txt",
 			NewName: "file1.txt",
-			Body: `diff --git a/file1.txt b/file1.txt
-index 1234567..89abcde 100644
---- a/file1.txt
-+++ b/file1.txt
-@@ -1,3 +1,3 @@
+			Body: `@@ -1,3 +1,3 @@
 -Hello
 +Hi
  World
@@ -51,11 +56,7 @@ index 1234567..89abcde 100644
 		{
 			OldName: "file2.txt",
 			NewName: "file2.txt",
-			Body: `diff --git a/file2.txt b/file2.txt
-index 1234567..89abcde 100644
---- a/file2.txt
-+++ b/file2.txt
-@@ -1,3 +1,3 @@
+			Body: `@@ -1,3 +1,3 @@
 -Foo
 +Bar
  Baz
@@ -65,17 +66,22 @@ index 1234567..89abcde 100644
 		{
 			OldName: "",
 			NewName: "newfile.txt",
-			Body: `diff --git a/newfile.txt b/newfile.txt
-new file mode 100644
-index 0000000..e69de29
---- /dev/null
-+++ b/newfile.txt
-@@ -0,0 +1,3 @@
+			Body: `@@ -0,0 +1,3 @@
 +This is a new file.
 +It has a few lines of text.
 +End of the file.
 `,
 			IsNewFile: true,
+		},
+		{
+			OldName: "質問.md",
+			NewName: "質問.md",
+			Body: `@@ -1,3 +1,3 @@
+-Foo
++Bar
+ Baz
+`,
+			IsNewFile: false,
 		},
 	}
 
