@@ -1,4 +1,4 @@
-package changefile
+package github
 
 import (
 	"bytes"
@@ -95,11 +95,12 @@ func (m *mockTransport) verify(t *testing.T) {
 	}
 }
 
-func TestApplier_HandleModify(t *testing.T) {
+func TestFileChangeService_ModifyFile(t *testing.T) {
 	tests := []struct {
 		name         string
 		setup        func(*mockTransport)
-		cmd          tooluse.ModifyFile
+		path         string
+		hunks        []tooluse.Hunk
 		wantErr      error
 		expectedReqs []mockRequest
 	}{
@@ -121,11 +122,9 @@ func TestApplier_HandleModify(t *testing.T) {
 					},
 				}
 			},
-			cmd: tooluse.ModifyFile{
-				Path: "test.txt",
-				Hunks: []tooluse.Hunk{
-					{Search: "World", Replace: "Go"},
-				},
+			path: "test.txt",
+			hunks: []tooluse.Hunk{
+				{Search: "World", Replace: "Go"},
 			},
 			wantErr: nil,
 			expectedReqs: []mockRequest{
@@ -155,11 +154,9 @@ func TestApplier_HandleModify(t *testing.T) {
 					},
 				}
 			},
-			cmd: tooluse.ModifyFile{
-				Path: "notfound.txt",
-				Hunks: []tooluse.Hunk{
-					{Search: "World", Replace: "Go"},
-				},
+			path: "notfound.txt",
+			hunks: []tooluse.Hunk{
+				{Search: "World", Replace: "Go"},
 			},
 			wantErr: ErrNotFound,
 			expectedReqs: []mockRequest{
@@ -180,9 +177,9 @@ func TestApplier_HandleModify(t *testing.T) {
 			tt.setup(mt)
 
 			client := github.NewClient(&http.Client{Transport: mt})
-			h := NewApplier(client, "owner", "repo", "main")
+			h := NewFileChangeService(client, "owner", "repo", "main")
 
-			_, _, err := h.Apply(context.Background(), tooluse.NewChangeFile(tt.cmd))
+			err := h.ModifyFile(context.Background(), tt.path, tt.hunks)
 			if tt.wantErr != nil {
 				assert.ErrorIs(t, err, tt.wantErr)
 			} else {
@@ -194,11 +191,13 @@ func TestApplier_HandleModify(t *testing.T) {
 	}
 }
 
-func TestApplier_HandleRename(t *testing.T) {
+func TestFileChangeService_RenameFile(t *testing.T) {
 	tests := []struct {
 		name         string
 		setup        func(*mockTransport)
-		cmd          tooluse.RenameFile
+		oldPath      string
+		newPath      string
+		hunks        []tooluse.Hunk
 		wantErr      error
 		expectedReqs []mockRequest
 	}{
@@ -224,12 +223,10 @@ func TestApplier_HandleRename(t *testing.T) {
 					},
 				}
 			},
-			cmd: tooluse.RenameFile{
-				OldPath: "old.txt",
-				NewPath: "new.txt",
-				Hunks: []tooluse.Hunk{
-					{Search: "World", Replace: "Go"},
-				},
+			oldPath: "old.txt",
+			newPath: "new.txt",
+			hunks: []tooluse.Hunk{
+				{Search: "World", Replace: "Go"},
 			},
 			wantErr: nil,
 			expectedReqs: []mockRequest{
@@ -258,8 +255,136 @@ func TestApplier_HandleRename(t *testing.T) {
 				},
 			},
 		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mt := &mockTransport{
+				responses:    make(map[string]mockResponse),
+				expectedReqs: tt.expectedReqs,
+			}
+			tt.setup(mt)
+
+			client := github.NewClient(&http.Client{Transport: mt})
+			h := NewFileChangeService(client, "owner", "repo", "main")
+
+			err := h.RenameFile(context.Background(), tt.oldPath, tt.newPath, tt.hunks)
+			if tt.wantErr != nil {
+				assert.ErrorIs(t, err, tt.wantErr)
+			} else {
+				assert.NoError(t, err)
+			}
+
+			mt.verify(t)
+		})
+	}
+}
+
+func TestFileChangeService_CreateFile(t *testing.T) {
+	tests := []struct {
+		name         string
+		setup        func(*mockTransport)
+		path         string
+		content      string
+		wantErr      error
+		expectedReqs []mockRequest
+	}{
 		{
-			name: "異常系: 元ファイルが存在しない",
+			name: "正常系: ファイル作成成功",
+			setup: func(mt *mockTransport) {
+				mt.responses = map[string]mockResponse{
+					"PUT /repos/owner/repo/contents/test.txt": {
+						statusCode: http.StatusOK,
+						body:       &github.RepositoryContentResponse{},
+					},
+				}
+			},
+			path:    "test.txt",
+			content: "Hello, World!",
+			wantErr: nil,
+			expectedReqs: []mockRequest{
+				{
+					method: "PUT",
+					path:   "/repos/owner/repo/contents/test.txt",
+					body: map[string]interface{}{
+						"message": "Create file test.txt",
+						"content": base64.StdEncoding.EncodeToString([]byte("Hello, World!")),
+						"branch":  "main",
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mt := &mockTransport{
+				responses:    make(map[string]mockResponse),
+				expectedReqs: tt.expectedReqs,
+			}
+			tt.setup(mt)
+
+			client := github.NewClient(&http.Client{Transport: mt})
+			h := NewFileChangeService(client, "owner", "repo", "main")
+
+			err := h.CreateFile(context.Background(), tt.path, tt.content)
+			if tt.wantErr != nil {
+				assert.ErrorIs(t, err, tt.wantErr)
+			} else {
+				assert.NoError(t, err)
+			}
+
+			mt.verify(t)
+		})
+	}
+}
+
+func TestFileChangeService_DeleteFile(t *testing.T) {
+	tests := []struct {
+		name         string
+		setup        func(*mockTransport)
+		path         string
+		wantErr      error
+		expectedReqs []mockRequest
+	}{
+		{
+			name: "正常系: ファイル削除成功",
+			setup: func(mt *mockTransport) {
+				mt.responses = map[string]mockResponse{
+					"GET /repos/owner/repo/contents/test.txt": {
+						statusCode: http.StatusOK,
+						body: &github.RepositoryContent{
+							SHA:      github.Ptr("sha"),
+							Encoding: github.Ptr("base64"),
+						},
+					},
+					"DELETE /repos/owner/repo/contents/test.txt": {
+						statusCode: http.StatusOK,
+						body:       &github.RepositoryContentResponse{},
+					},
+				}
+			},
+			path:    "test.txt",
+			wantErr: nil,
+			expectedReqs: []mockRequest{
+				{
+					method: "GET",
+					path:   "/repos/owner/repo/contents/test.txt",
+				},
+				{
+					method: "DELETE",
+					path:   "/repos/owner/repo/contents/test.txt",
+					body: map[string]interface{}{
+						"message": "Delete file test.txt",
+						"sha":     "sha",
+						"branch":  "main",
+						"content": nil,
+					},
+				},
+			},
+		},
+		{
+			name: "異常系: ファイルが存在しない",
 			setup: func(mt *mockTransport) {
 				mt.responses = map[string]mockResponse{
 					"GET /repos/owner/repo/contents/notfound.txt": {
@@ -268,11 +393,7 @@ func TestApplier_HandleRename(t *testing.T) {
 					},
 				}
 			},
-			cmd: tooluse.RenameFile{
-				OldPath: "notfound.txt",
-				NewPath: "new.txt",
-				Hunks:   []tooluse.Hunk{},
-			},
+			path:    "notfound.txt",
 			wantErr: ErrNotFound,
 			expectedReqs: []mockRequest{
 				{
@@ -292,9 +413,9 @@ func TestApplier_HandleRename(t *testing.T) {
 			tt.setup(mt)
 
 			client := github.NewClient(&http.Client{Transport: mt})
-			h := NewApplier(client, "owner", "repo", "main")
+			h := NewFileChangeService(client, "owner", "repo", "main")
 
-			_, _, err := h.Apply(context.Background(), tooluse.NewChangeFile(tt.cmd))
+			err := h.DeleteFile(context.Background(), tt.path)
 			if tt.wantErr != nil {
 				assert.ErrorIs(t, err, tt.wantErr)
 			} else {

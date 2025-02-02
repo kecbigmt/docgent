@@ -1,10 +1,22 @@
 package domain
 
+import (
+	"context"
+	"docgent-backend/internal/domain/autoagent/tooluse"
+)
+
 type File struct {
-	Name    string
+	Path    string
 	Content string
 }
 
 type FileQueryService interface {
-	Find(name string) (File, error)
+	FindFile(ctx context.Context, path string) (File, error)
+}
+
+type FileChangeService interface {
+	CreateFile(ctx context.Context, path, content string) error
+	DeleteFile(ctx context.Context, path string) error
+	ModifyFile(ctx context.Context, path string, hunks []tooluse.Hunk) error
+	RenameFile(ctx context.Context, oldPath, newPath string, hunks []tooluse.Hunk) error
 }

@@ -25,13 +25,13 @@ func NewFileQueryService(client *github.Client, owner, repo, branch string) *Fil
 	}
 }
 
-func (s *FileQueryService) Find(name string) (domain.File, error) {
+func (s *FileQueryService) FindFile(ctx context.Context, path string) (domain.File, error) {
 	// ファイルの内容を取得
 	fileContent, _, _, err := s.client.Repositories.GetContents(
-		context.Background(),
+		ctx,
 		s.owner,
 		s.repo,
-		name,
+		path,
 		&github.RepositoryContentGetOptions{
 			Ref: s.branch,
 		},
@@ -50,7 +50,7 @@ func (s *FileQueryService) Find(name string) (domain.File, error) {
 	}
 
 	return domain.File{
-		Name:    name,
+		Path:    path,
 		Content: content,
 	}, nil
 }

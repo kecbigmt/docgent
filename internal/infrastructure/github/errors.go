@@ -1,4 +1,4 @@
-package changefile
+package github
 
 import "errors"
 
