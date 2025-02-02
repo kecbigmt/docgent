@@ -11,16 +11,17 @@ type Agent struct {
 	chatModel           ChatModel
 	conversationService ConversationService
 	tools               tooluse.Cases
+	systemInstruction   *SystemInstruction
 }
 
-func NewAgent(chatModel ChatModel, conversationService ConversationService, tools tooluse.Cases) *Agent {
-	return &Agent{chatModel: chatModel, conversationService: conversationService, tools: tools}
+func NewAgent(chatModel ChatModel, conversationService ConversationService, systemInstruction *SystemInstruction, tools tooluse.Cases) *Agent {
+	return &Agent{chatModel: chatModel, conversationService: conversationService, tools: tools, systemInstruction: systemInstruction}
 }
 
-func (a *Agent) InitiateTaskLoop(ctx context.Context, task string, systemInstruction string, maxStepCount int) error {
+func (a *Agent) InitiateTaskLoop(ctx context.Context, task string, maxStepCount int) error {
 	currentStepCount := 0
 	nextMessage := NewMessage(UserRole, task)
-	a.chatModel.SetSystemInstruction(systemInstruction)
+	a.chatModel.SetSystemInstruction(a.systemInstruction.String())
 
 	for currentStepCount <= maxStepCount {
 		rawResponse, err := a.chatModel.SendMessage(ctx, nextMessage)
