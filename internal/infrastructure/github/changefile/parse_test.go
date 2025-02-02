@@ -5,14 +5,14 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"docgent-backend/internal/domain/command"
+	"docgent-backend/internal/domain/tooluse"
 )
 
 func TestParseDiff(t *testing.T) {
 	tests := []struct {
 		name       string
 		diff       string
-		want       command.ChangeFile
+		want       tooluse.ChangeFile
 		wantErr    bool
 		wantErrMsg string
 	}{
@@ -28,8 +28,8 @@ index 1234567..89abcde 100644
 +  "fmt"
 +  "os"
 +)`,
-			want: command.NewChangeFile(command.NewModifyFile("main.go", []command.Hunk{
-				command.NewHunk(
+			want: tooluse.NewChangeFile(tooluse.NewModifyFile("main.go", []tooluse.Hunk{
+				tooluse.NewHunk(
 					`import "fmt"`,
 					`import (
   "fmt"
@@ -56,15 +56,15 @@ index 1234567..89abcde 100644
 -  fmt.Println("hi")
 +  fmt.Println("hello")
  }`,
-			want: command.NewChangeFile(command.NewModifyFile("main.go", []command.Hunk{
-				command.NewHunk(
+			want: tooluse.NewChangeFile(tooluse.NewModifyFile("main.go", []tooluse.Hunk{
+				tooluse.NewHunk(
 					`import "fmt"`,
 					`import (
   "fmt"
   "os"
 )`,
 				),
-				command.NewHunk(
+				tooluse.NewHunk(
 					`func greeting() {
   fmt.Println("hi")
 }`,
@@ -88,7 +88,7 @@ index 0000000..e69de29
 +func main() {
 +  println("Hello, World!")
 +}`,
-			want: command.NewChangeFile(command.NewCreateFile("newfile.txt", `package main
+			want: tooluse.NewChangeFile(tooluse.NewCreateFile("newfile.txt", `package main
 
 func main() {
   println("Hello, World!")
@@ -108,7 +108,7 @@ index 1234567..0000000
 -func main() {
 -  println("Goodbye!")
 -}`,
-			want:    command.NewChangeFile(command.NewDeleteFile("old.go")),
+			want:    tooluse.NewChangeFile(tooluse.NewDeleteFile("old.go")),
 			wantErr: false,
 		},
 		{
@@ -117,7 +117,7 @@ index 1234567..0000000
 similarity index 100%
 rename from old.go
 rename to new.go`,
-			want:    command.NewChangeFile(command.NewRenameFile("old.go", "new.go", []command.Hunk{})),
+			want:    tooluse.NewChangeFile(tooluse.NewRenameFile("old.go", "new.go", []tooluse.Hunk{})),
 			wantErr: false,
 		},
 		{
@@ -134,8 +134,8 @@ index 1234567..89abcde 100644
  
 -func oldName() {}
 +func newName() {}`,
-			want: command.NewChangeFile(command.NewRenameFile("old.go", "new.go", []command.Hunk{
-				command.NewHunk(
+			want: tooluse.NewChangeFile(tooluse.NewRenameFile("old.go", "new.go", []tooluse.Hunk{
+				tooluse.NewHunk(
 					"package main\n\nfunc oldName() {}",
 					"package main\n\nfunc newName() {}",
 				),
@@ -145,7 +145,7 @@ index 1234567..89abcde 100644
 		{
 			name:       "invalid diff without git header",
 			diff:       "+++ b/main.go\n@@ -1,1 +1,1 @@\n-test\n+test2\n",
-			want:       command.ChangeFile{},
+			want:       tooluse.ChangeFile{},
 			wantErr:    true,
 			wantErrMsg: "failed to find file paths in diff",
 		},
@@ -155,7 +155,7 @@ index 1234567..89abcde 100644
 @@ -1,1 +1,1 @@
 -test
 +test2`,
-			want:       command.ChangeFile{},
+			want:       tooluse.ChangeFile{},
 			wantErr:    true,
 			wantErrMsg: "invalid git diff header format: diff --git invalid header format",
 		},
@@ -167,7 +167,7 @@ index 0000000..e69de29
 --- /dev/null
 +++ b/newfile.txt
 @@ -0,0 +0,0 @@`,
-			want:       command.ChangeFile{},
+			want:       tooluse.ChangeFile{},
 			wantErr:    true,
 			wantErrMsg: "no content found in new file diff",
 		},
@@ -186,9 +186,9 @@ index 0000000..e69de29
 			assert.NoError(t, err)
 
 			// Matchメソッドを使って検証
-			got.Unwrap().Match(command.FileChangeCases{
-				ModifyFile: func(gotModify command.ModifyFile) error {
-					wantModify := tt.want.Unwrap().(command.ModifyFile)
+			got.Unwrap().Match(tooluse.FileChangeCases{
+				ModifyFile: func(gotModify tooluse.ModifyFile) error {
+					wantModify := tt.want.Unwrap().(tooluse.ModifyFile)
 					assert.Equal(t, wantModify.Path, gotModify.Path)
 					assert.Equal(t, len(wantModify.Hunks), len(gotModify.Hunks))
 					for i := range wantModify.Hunks {
@@ -197,19 +197,19 @@ index 0000000..e69de29
 					}
 					return nil
 				},
-				CreateFile: func(gotCreate command.CreateFile) error {
-					wantCreate := tt.want.Unwrap().(command.CreateFile)
+				CreateFile: func(gotCreate tooluse.CreateFile) error {
+					wantCreate := tt.want.Unwrap().(tooluse.CreateFile)
 					assert.Equal(t, wantCreate.Path, gotCreate.Path)
 					assert.Equal(t, wantCreate.Content, gotCreate.Content)
 					return nil
 				},
-				DeleteFile: func(gotDelete command.DeleteFile) error {
-					wantDelete := tt.want.Unwrap().(command.DeleteFile)
+				DeleteFile: func(gotDelete tooluse.DeleteFile) error {
+					wantDelete := tt.want.Unwrap().(tooluse.DeleteFile)
 					assert.Equal(t, wantDelete.Path, gotDelete.Path)
 					return nil
 				},
-				RenameFile: func(gotRename command.RenameFile) error {
-					wantRename := tt.want.Unwrap().(command.RenameFile)
+				RenameFile: func(gotRename tooluse.RenameFile) error {
+					wantRename := tt.want.Unwrap().(tooluse.RenameFile)
 					assert.Equal(t, wantRename.OldPath, gotRename.OldPath)
 					assert.Equal(t, wantRename.NewPath, gotRename.NewPath)
 					assert.Equal(t, len(wantRename.Hunks), len(gotRename.Hunks))

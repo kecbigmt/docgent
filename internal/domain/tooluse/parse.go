@@ -1,4 +1,4 @@
-package command
+package tooluse
 
 import (
 	"encoding/xml"
@@ -6,8 +6,8 @@ import (
 	"strings"
 )
 
-// Parse parses XML string and returns CommandUnion
-func Parse(xmlStr string) (CommandUnion, error) {
+// Parse parses XML string and returns ToolUseUnion
+func Parse(xmlStr string) (ToolUseUnion, error) {
 	decoder := xml.NewDecoder(strings.NewReader(xmlStr))
 
 	// 最初のトークンを読み込んで、要素の種類を判断

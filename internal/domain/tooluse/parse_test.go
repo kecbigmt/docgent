@@ -1,4 +1,4 @@
-package command
+package tooluse
 
 import (
 	"testing"
@@ -10,7 +10,7 @@ func TestParse(t *testing.T) {
 	tests := []struct {
 		name    string
 		xmlStr  string
-		want    CommandUnion
+		want    ToolUseUnion
 		wantErr bool
 	}{
 		{

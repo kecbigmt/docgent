@@ -13,7 +13,7 @@ import (
 	"github.com/google/go-github/v68/github"
 	"github.com/stretchr/testify/assert"
 
-	"docgent-backend/internal/domain/command"
+	"docgent-backend/internal/domain/tooluse"
 )
 
 type mockTransport struct {
@@ -99,7 +99,7 @@ func TestApplier_HandleModify(t *testing.T) {
 	tests := []struct {
 		name         string
 		setup        func(*mockTransport)
-		cmd          command.ModifyFile
+		cmd          tooluse.ModifyFile
 		wantErr      error
 		expectedReqs []mockRequest
 	}{
@@ -121,9 +121,9 @@ func TestApplier_HandleModify(t *testing.T) {
 					},
 				}
 			},
-			cmd: command.ModifyFile{
+			cmd: tooluse.ModifyFile{
 				Path: "test.txt",
-				Hunks: []command.Hunk{
+				Hunks: []tooluse.Hunk{
 					{Search: "World", Replace: "Go"},
 				},
 			},
@@ -155,9 +155,9 @@ func TestApplier_HandleModify(t *testing.T) {
 					},
 				}
 			},
-			cmd: command.ModifyFile{
+			cmd: tooluse.ModifyFile{
 				Path: "notfound.txt",
-				Hunks: []command.Hunk{
+				Hunks: []tooluse.Hunk{
 					{Search: "World", Replace: "Go"},
 				},
 			},
@@ -182,7 +182,7 @@ func TestApplier_HandleModify(t *testing.T) {
 			client := github.NewClient(&http.Client{Transport: mt})
 			h := NewApplier(client, "owner", "repo", "main")
 
-			err := h.Apply(context.Background(), command.NewChangeFile(tt.cmd))
+			err := h.Apply(context.Background(), tooluse.NewChangeFile(tt.cmd))
 			if tt.wantErr != nil {
 				assert.ErrorIs(t, err, tt.wantErr)
 			} else {
@@ -198,7 +198,7 @@ func TestApplier_HandleRename(t *testing.T) {
 	tests := []struct {
 		name         string
 		setup        func(*mockTransport)
-		cmd          command.RenameFile
+		cmd          tooluse.RenameFile
 		wantErr      error
 		expectedReqs []mockRequest
 	}{
@@ -224,10 +224,10 @@ func TestApplier_HandleRename(t *testing.T) {
 					},
 				}
 			},
-			cmd: command.RenameFile{
+			cmd: tooluse.RenameFile{
 				OldPath: "old.txt",
 				NewPath: "new.txt",
-				Hunks: []command.Hunk{
+				Hunks: []tooluse.Hunk{
 					{Search: "World", Replace: "Go"},
 				},
 			},
@@ -268,10 +268,10 @@ func TestApplier_HandleRename(t *testing.T) {
 					},
 				}
 			},
-			cmd: command.RenameFile{
+			cmd: tooluse.RenameFile{
 				OldPath: "notfound.txt",
 				NewPath: "new.txt",
-				Hunks:   []command.Hunk{},
+				Hunks:   []tooluse.Hunk{},
 			},
 			wantErr: ErrNotFound,
 			expectedReqs: []mockRequest{
@@ -294,7 +294,7 @@ func TestApplier_HandleRename(t *testing.T) {
 			client := github.NewClient(&http.Client{Transport: mt})
 			h := NewApplier(client, "owner", "repo", "main")
 
-			err := h.Apply(context.Background(), command.NewChangeFile(tt.cmd))
+			err := h.Apply(context.Background(), tooluse.NewChangeFile(tt.cmd))
 			if tt.wantErr != nil {
 				assert.ErrorIs(t, err, tt.wantErr)
 			} else {

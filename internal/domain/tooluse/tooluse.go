@@ -1,6 +1,6 @@
-package command
+package tooluse
 
-type CommandUnion interface {
+type ToolUseUnion interface {
 	Match(Cases) error
 }
 

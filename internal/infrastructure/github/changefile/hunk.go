@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	"docgent-backend/internal/domain/command"
+	"docgent-backend/internal/domain/tooluse"
 )
 
-func applyHunks(content string, hunks []command.Hunk) (string, error) {
+func applyHunks(content string, hunks []tooluse.Hunk) (string, error) {
 	result := content
 	for _, hunk := range hunks {
 		if hunk.Search == "" {

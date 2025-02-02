@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/go-github/v68/github"
 
-	"docgent-backend/internal/domain/command"
+	"docgent-backend/internal/domain/tooluse"
 )
 
 type Applier struct {
@@ -28,21 +28,21 @@ func NewApplier(
 	}
 }
 
-func (h *Applier) Apply(ctx context.Context, fc command.ChangeFile) error {
+func (h *Applier) Apply(ctx context.Context, fc tooluse.ChangeFile) error {
 	change := fc.Unwrap()
-	cases := command.FileChangeCases{
-		CreateFile: func(c command.CreateFile) error { return h.handleCreate(ctx, c) },
-		ModifyFile: func(c command.ModifyFile) error { return h.handleModify(ctx, c) },
-		RenameFile: func(c command.RenameFile) error { return h.handleRename(ctx, c) },
-		DeleteFile: func(c command.DeleteFile) error { return h.handleDelete(ctx, c) },
+	cases := tooluse.FileChangeCases{
+		CreateFile: func(c tooluse.CreateFile) error { return h.handleCreate(ctx, c) },
+		ModifyFile: func(c tooluse.ModifyFile) error { return h.handleModify(ctx, c) },
+		RenameFile: func(c tooluse.RenameFile) error { return h.handleRename(ctx, c) },
+		DeleteFile: func(c tooluse.DeleteFile) error { return h.handleDelete(ctx, c) },
 	}
 	return change.Match(cases)
 }
 
-func (h *Applier) handleCreate(ctx context.Context, cmd command.CreateFile) error {
+func (h *Applier) handleCreate(ctx context.Context, toolUse tooluse.CreateFile) error {
 	opts := &github.RepositoryContentFileOptions{
-		Message: github.Ptr(fmt.Sprintf("Create file %s", cmd.Path)),
-		Content: []byte(cmd.Content),
+		Message: github.Ptr(fmt.Sprintf("Create file %s", toolUse.Path)),
+		Content: []byte(toolUse.Content),
 		Branch:  github.Ptr(h.branchName),
 	}
 
@@ -50,7 +50,7 @@ func (h *Applier) handleCreate(ctx context.Context, cmd command.CreateFile) erro
 		ctx,
 		h.owner,
 		h.repo,
-		cmd.Path,
+		toolUse.Path,
 		opts,
 	)
 	if err != nil {
@@ -60,20 +60,20 @@ func (h *Applier) handleCreate(ctx context.Context, cmd command.CreateFile) erro
 	return nil
 }
 
-func (h *Applier) handleModify(ctx context.Context, cmd command.ModifyFile) error {
+func (h *Applier) handleModify(ctx context.Context, toolUse tooluse.ModifyFile) error {
 	// 現在のコンテンツ取得
 	fileContent, _, _, err := h.client.Repositories.GetContents(
 		ctx,
 		h.owner,
 		h.repo,
-		cmd.Path,
+		toolUse.Path,
 		&github.RepositoryContentGetOptions{
 			Ref: h.branchName,
 		},
 	)
 	if err != nil {
 		if ghErr, ok := err.(*github.ErrorResponse); ok && ghErr.Response.StatusCode == 404 {
-			return fmt.Errorf("%w: %s", ErrNotFound, cmd.Path)
+			return fmt.Errorf("%w: %s", ErrNotFound, toolUse.Path)
 		}
 		return fmt.Errorf("GetContents failed: %w", err)
 	}
@@ -84,14 +84,14 @@ func (h *Applier) handleModify(ctx context.Context, cmd command.ModifyFile) erro
 	}
 
 	// Hunk適用
-	modified, err := applyHunks(content, cmd.Hunks)
+	modified, err := applyHunks(content, toolUse.Hunks)
 	if err != nil {
 		return fmt.Errorf("%w: %v", ErrApplyHunksFailed, err)
 	}
 
 	// 更新処理
 	opts := &github.RepositoryContentFileOptions{
-		Message: github.Ptr(fmt.Sprintf("Update file %s", cmd.Path)),
+		Message: github.Ptr(fmt.Sprintf("Update file %s", toolUse.Path)),
 		Content: []byte(modified),
 		Branch:  github.Ptr(h.branchName),
 		SHA:     fileContent.SHA,
@@ -101,7 +101,7 @@ func (h *Applier) handleModify(ctx context.Context, cmd command.ModifyFile) erro
 		ctx,
 		h.owner,
 		h.repo,
-		cmd.Path,
+		toolUse.Path,
 		opts,
 	)
 	if err != nil {
@@ -111,18 +111,18 @@ func (h *Applier) handleModify(ctx context.Context, cmd command.ModifyFile) erro
 	return nil
 }
 
-func (h *Applier) handleRename(ctx context.Context, cmd command.RenameFile) error {
+func (h *Applier) handleRename(ctx context.Context, toolUse tooluse.RenameFile) error {
 	// 旧ファイル取得
 	oldContent, _, _, err := h.client.Repositories.GetContents(
 		ctx,
 		h.owner,
 		h.repo,
-		cmd.OldPath,
+		toolUse.OldPath,
 		&github.RepositoryContentGetOptions{Ref: h.branchName},
 	)
 	if err != nil {
 		if ghErr, ok := err.(*github.ErrorResponse); ok && ghErr.Response.StatusCode == 404 {
-			return fmt.Errorf("%w: %s", ErrNotFound, cmd.OldPath)
+			return fmt.Errorf("%w: %s", ErrNotFound, toolUse.OldPath)
 		}
 		return fmt.Errorf("GetContents(old) failed: %w", err)
 	}
@@ -133,14 +133,14 @@ func (h *Applier) handleRename(ctx context.Context, cmd command.RenameFile) erro
 	}
 
 	// Hunk適用
-	modified, err := applyHunks(content, cmd.Hunks)
+	modified, err := applyHunks(content, toolUse.Hunks)
 	if err != nil {
 		return fmt.Errorf("%w: %v", ErrApplyHunksFailed, err)
 	}
 
 	// 新規作成
 	createOpts := &github.RepositoryContentFileOptions{
-		Message: github.Ptr(fmt.Sprintf("Create file %s", cmd.NewPath)),
+		Message: github.Ptr(fmt.Sprintf("Create file %s", toolUse.NewPath)),
 		Content: []byte(modified),
 		Branch:  github.Ptr(h.branchName),
 	}
@@ -149,7 +149,7 @@ func (h *Applier) handleRename(ctx context.Context, cmd command.RenameFile) erro
 		ctx,
 		h.owner,
 		h.repo,
-		cmd.NewPath,
+		toolUse.NewPath,
 		createOpts,
 	)
 	if err != nil {
@@ -158,7 +158,7 @@ func (h *Applier) handleRename(ctx context.Context, cmd command.RenameFile) erro
 
 	// 旧削除
 	deleteOpts := &github.RepositoryContentFileOptions{
-		Message: github.Ptr(fmt.Sprintf("Delete file %s", cmd.OldPath)),
+		Message: github.Ptr(fmt.Sprintf("Delete file %s", toolUse.OldPath)),
 		Branch:  github.Ptr(h.branchName),
 		SHA:     oldContent.SHA,
 	}
@@ -167,7 +167,7 @@ func (h *Applier) handleRename(ctx context.Context, cmd command.RenameFile) erro
 		ctx,
 		h.owner,
 		h.repo,
-		cmd.OldPath,
+		toolUse.OldPath,
 		deleteOpts,
 	)
 	if err != nil {
@@ -176,9 +176,9 @@ func (h *Applier) handleRename(ctx context.Context, cmd command.RenameFile) erro
 			ctx,
 			h.owner,
 			h.repo,
-			cmd.NewPath,
+			toolUse.NewPath,
 			&github.RepositoryContentFileOptions{
-				Message: github.Ptr(fmt.Sprintf("Rollback: Delete file %s", cmd.NewPath)),
+				Message: github.Ptr(fmt.Sprintf("Rollback: Delete file %s", toolUse.NewPath)),
 				Branch:  github.Ptr(h.branchName),
 			},
 		)
@@ -191,27 +191,27 @@ func (h *Applier) handleRename(ctx context.Context, cmd command.RenameFile) erro
 	return nil
 }
 
-func (h *Applier) handleDelete(ctx context.Context, cmd command.DeleteFile) error {
+func (h *Applier) handleDelete(ctx context.Context, toolUse tooluse.DeleteFile) error {
 	// 現在のファイル取得
 	fileContent, _, _, err := h.client.Repositories.GetContents(
 		ctx,
 		h.owner,
 		h.repo,
-		cmd.Path,
+		toolUse.Path,
 		&github.RepositoryContentGetOptions{
 			Ref: h.branchName,
 		},
 	)
 	if err != nil {
 		if ghErr, ok := err.(*github.ErrorResponse); ok && ghErr.Response.StatusCode == 404 {
-			return fmt.Errorf("%w: %s", ErrNotFound, cmd.Path)
+			return fmt.Errorf("%w: %s", ErrNotFound, toolUse.Path)
 		}
 		return fmt.Errorf("GetContents failed: %w", err)
 	}
 
 	// 削除処理
 	opts := &github.RepositoryContentFileOptions{
-		Message: github.Ptr(fmt.Sprintf("Delete file %s", cmd.Path)),
+		Message: github.Ptr(fmt.Sprintf("Delete file %s", toolUse.Path)),
 		Branch:  github.Ptr(h.branchName),
 		SHA:     fileContent.SHA,
 	}
@@ -220,7 +220,7 @@ func (h *Applier) handleDelete(ctx context.Context, cmd command.DeleteFile) erro
 		ctx,
 		h.owner,
 		h.repo,
-		cmd.Path,
+		toolUse.Path,
 		opts,
 	)
 	if err != nil {

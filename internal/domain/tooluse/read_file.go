@@ -1,4 +1,4 @@
-package command
+package tooluse
 
 type ReadFile struct {
 	Path string `xml:"path"`

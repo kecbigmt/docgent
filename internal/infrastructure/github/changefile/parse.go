@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"docgent-backend/internal/domain/command"
+	"docgent-backend/internal/domain/tooluse"
 )
 
 type fileOperation int
@@ -25,12 +25,12 @@ type diffHeader struct {
 }
 
 // ParseDiff parses a Git diff format string and returns a ChangeFile
-func ParseDiff(gitDiff string) (command.ChangeFile, error) {
+func ParseDiff(gitDiff string) (tooluse.ChangeFile, error) {
 	scanner := bufio.NewScanner(strings.NewReader(gitDiff))
 
 	header, err := parseHeader(scanner)
 	if err != nil {
-		return command.ChangeFile{}, err
+		return tooluse.ChangeFile{}, err
 	}
 
 	switch header.operation {
@@ -43,7 +43,7 @@ func ParseDiff(gitDiff string) (command.ChangeFile, error) {
 	case opModify:
 		return handleModifyFile(scanner, header)
 	default:
-		return command.ChangeFile{}, fmt.Errorf("unknown file operation")
+		return tooluse.ChangeFile{}, fmt.Errorf("unknown file operation")
 	}
 }
 
@@ -127,40 +127,40 @@ func determineOperation(header diffHeader) fileOperation {
 }
 
 // handleCreateFile は新規ファイル作成の処理を行います
-func handleCreateFile(scanner *bufio.Scanner, header diffHeader) (command.ChangeFile, error) {
+func handleCreateFile(scanner *bufio.Scanner, header diffHeader) (tooluse.ChangeFile, error) {
 	content, err := readNewContent(scanner)
 	if err != nil {
-		return command.ChangeFile{}, err
+		return tooluse.ChangeFile{}, err
 	}
-	return command.NewChangeFile(command.NewCreateFile(header.newPath, content)), nil
+	return tooluse.NewChangeFile(tooluse.NewCreateFile(header.newPath, content)), nil
 }
 
 // handleDeleteFile はファイル削除の処理を行います
-func handleDeleteFile(header diffHeader) (command.ChangeFile, error) {
-	return command.NewChangeFile(command.NewDeleteFile(header.oldPath)), nil
+func handleDeleteFile(header diffHeader) (tooluse.ChangeFile, error) {
+	return tooluse.NewChangeFile(tooluse.NewDeleteFile(header.oldPath)), nil
 }
 
 // handleRenameFile はファイルリネームの処理を行います
-func handleRenameFile(scanner *bufio.Scanner, header diffHeader) (command.ChangeFile, error) {
+func handleRenameFile(scanner *bufio.Scanner, header diffHeader) (tooluse.ChangeFile, error) {
 	hunks, err := readHunks(scanner)
 	if err != nil {
-		return command.ChangeFile{}, err
+		return tooluse.ChangeFile{}, err
 	}
-	return command.NewChangeFile(command.NewRenameFile(header.oldPath, header.newPath, hunks)), nil
+	return tooluse.NewChangeFile(tooluse.NewRenameFile(header.oldPath, header.newPath, hunks)), nil
 }
 
 // handleModifyFile はファイル変更の処理を行います
-func handleModifyFile(scanner *bufio.Scanner, header diffHeader) (command.ChangeFile, error) {
+func handleModifyFile(scanner *bufio.Scanner, header diffHeader) (tooluse.ChangeFile, error) {
 	hunks, err := readHunks(scanner)
 	if err != nil {
-		return command.ChangeFile{}, err
+		return tooluse.ChangeFile{}, err
 	}
-	return command.NewChangeFile(command.NewModifyFile(header.newPath, hunks)), nil
+	return tooluse.NewChangeFile(tooluse.NewModifyFile(header.newPath, hunks)), nil
 }
 
 // readHunks reads all hunks from the diff
-func readHunks(scanner *bufio.Scanner) ([]command.Hunk, error) {
-	var hunks []command.Hunk
+func readHunks(scanner *bufio.Scanner) ([]tooluse.Hunk, error) {
+	var hunks []tooluse.Hunk
 	var searchLines, replaceLines []string
 	inHunk := false
 
@@ -172,7 +172,7 @@ func readHunks(scanner *bufio.Scanner) ([]command.Hunk, error) {
 			if inHunk {
 				// 前のハンクを保存
 				if len(searchLines) > 0 || len(replaceLines) > 0 {
-					hunks = append(hunks, command.NewHunk(
+					hunks = append(hunks, tooluse.NewHunk(
 						strings.Join(searchLines, "\n"),
 						strings.Join(replaceLines, "\n"),
 					))
@@ -203,7 +203,7 @@ func readHunks(scanner *bufio.Scanner) ([]command.Hunk, error) {
 
 	// 最後のハンクを保存
 	if len(searchLines) > 0 || len(replaceLines) > 0 {
-		hunks = append(hunks, command.NewHunk(
+		hunks = append(hunks, tooluse.NewHunk(
 			strings.Join(searchLines, "\n"),
 			strings.Join(replaceLines, "\n"),
 		))
