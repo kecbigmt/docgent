@@ -32,11 +32,11 @@ func TestUnmarshal(t *testing.T) {
 		},
 		{
 			name: "tool use response",
-			raw:  `{"type":"tool_use","message":"Reading file content","toolType":"read_file","toolParams":[{"k":"path","v":"test.txt"}]}`,
+			raw:  `{"type":"tool_use","message":"Reading file content","toolType":"find_file","toolParams":[{"k":"path","v":"test.txt"}]}`,
 			want: Response{
 				Type:     ToolUseResponse,
 				Message:  "Reading file content",
-				ToolType: "read_file",
+				ToolType: "find_file",
 				ToolParams: []ToolParam{
 					{
 						Key:   "path",
@@ -161,9 +161,9 @@ func TestMarshal(t *testing.T) {
 			resp: Response{
 				Type:     ToolUseResponse,
 				Message:  "Reading file content",
-				ToolType: "read_file",
+				ToolType: "find_file",
 			},
-			want: `{"type":"tool_use","message":"Reading file content","toolType":"read_file"}`,
+			want: `{"type":"tool_use","message":"Reading file content","toolType":"find_file"}`,
 		},
 	}
 

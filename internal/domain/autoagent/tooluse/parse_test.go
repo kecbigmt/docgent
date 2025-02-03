@@ -61,10 +61,10 @@ func TestParse(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "read_file",
-			xmlStr: `<read_file>
+			name: "find_file",
+			xmlStr: `<find_file>
 				<path>test.txt</path>
-			</read_file>`,
+			</find_file>`,
 			want: FindFile{
 				Path: "test.txt",
 			},

@@ -40,11 +40,12 @@ func Parse(xmlStr string) (Union, error) {
 			return nil, fmt.Errorf("failed to decode rename_file: %w", err)
 		}
 		return NewChangeFile(rf), nil
-	case "read_file":
-		var rf FindFile
-		if err := decoder.DecodeElement(&rf, &startElement); err != nil {
-			return nil, fmt.Errorf("failed to decode read_file: %w", err)
+	case "find_file":
+		var ff FindFile
+		if err := decoder.DecodeElement(&ff, &startElement); err != nil {
+			return nil, fmt.Errorf("failed to decode find_file: %w", err)
 		}
+		return ff, nil
 	case "attempt_complete":
 		var ac AttemptComplete
 		if err := decoder.DecodeElement(&ac, &startElement); err != nil {
