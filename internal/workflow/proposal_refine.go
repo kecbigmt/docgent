@@ -2,22 +2,22 @@ package workflow
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
+	"strings"
 
 	"docgent-backend/internal/domain"
 	"docgent-backend/internal/domain/autoagent"
+	"docgent-backend/internal/domain/autoagent/tooluse"
 )
 
 type ProposalRefineWorkflow struct {
 	chatModel           autoagent.ChatModel
 	conversationService autoagent.ConversationService
 	fileQueryService    domain.FileQueryService
+	fileChangeService   domain.FileChangeService
 	proposalRepository  domain.ProposalRepository
 	remainingStepCount  int
-	nextMessage         autoagent.Message
 }
 
 type NewProposalRefineWorkflowOption func(*ProposalRefineWorkflow)
@@ -26,6 +26,7 @@ func NewProposalRefineWorkflow(
 	chatModel autoagent.ChatModel,
 	conversationService autoagent.ConversationService,
 	fileQueryService domain.FileQueryService,
+	fileChangeService domain.FileChangeService,
 	proposalRepository domain.ProposalRepository,
 	options ...NewProposalRefineWorkflowOption,
 ) *ProposalRefineWorkflow {
@@ -33,6 +34,7 @@ func NewProposalRefineWorkflow(
 		chatModel:           chatModel,
 		conversationService: conversationService,
 		fileQueryService:    fileQueryService,
+		fileChangeService:   fileChangeService,
 		proposalRepository:  proposalRepository,
 		remainingStepCount:  5,
 	}
@@ -59,122 +61,101 @@ func (w *ProposalRefineWorkflow) Refine(proposalHandle domain.ProposalHandle, us
 		return fmt.Errorf("failed to retrieve proposal: %w", err)
 	}
 
-	var currentTaskCount int
-
-	w.nextMessage = autoagent.NewMessage(autoagent.UserRole, userFeedback)
-
-	for w.remainingStepCount > 0 {
-		w.chatModel.SetSystemInstruction(domain.NewProposalRefineSystemPrompt(proposal, w.remainingStepCount).String())
-		rawResponse, err := w.chatModel.SendMessage(ctx, w.nextMessage)
-		if err != nil {
-			go w.conversationService.Reply("Failed to generate response")
-			return fmt.Errorf("failed to generate response: %w", err)
-		}
-		currentTaskCount++
-
-		var response autoagent.Response
-		if err := json.Unmarshal([]byte(rawResponse), &response); err != nil {
-			return fmt.Errorf("failed to unmarshal response: %w", err)
-		}
-
-		proposalRefineResponse, err := domain.ParseResponseFromProposalRefineAgent(response)
-		if err != nil {
-			go w.conversationService.Reply("Failed to parse response")
-			return fmt.Errorf("failed to parse response: %w", err)
-		}
-
-		go w.conversationService.Reply(response.Message)
-
-		switch proposalRefineResponse.Type {
-		case autoagent.ToolUseResponse:
-			switch proposalRefineResponse.ToolType {
-			case domain.FindFileTool:
-				systemMessage, err := w.handleFindFileTool(response.ToolParams)
+	agent := autoagent.NewAgent(
+		w.chatModel,
+		w.conversationService,
+		BuildSystemInstructionToRefineProposal(proposal),
+		tooluse.Cases{
+			AttemptComplete: func(toolUse tooluse.AttemptComplete) (string, bool, error) {
+				go w.conversationService.Reply(toolUse.Message)
+				return "", true, nil
+			},
+			FindFile: func(toolUse tooluse.FindFile) (string, bool, error) {
+				file, err := w.fileQueryService.FindFile(ctx, toolUse.Path)
 				if err != nil {
-
-					go w.conversationService.Reply("Failed to handle find_file")
-					return fmt.Errorf("failed to handle find_file: %s", err)
+					if errors.Is(err, domain.ErrFileNotFound) {
+						return fmt.Sprintf("<error>File not found: %s</error>", toolUse.Path), false, nil
+					}
+					return "", false, err
 				}
-				w.nextMessage = systemMessage
-				continue
-			case domain.UpdateProposalTextTool:
-				systemMessage, err := w.handleUpdateProposalTextTool(proposalHandle, response.ToolParams)
-				if err != nil {
-					go w.conversationService.Reply("Failed to handle update_proposal_text")
-					return fmt.Errorf("failed to handle update_proposal_text: %s", err)
+				return fmt.Sprintf("<success>\n<content>%s</content>\n</success>", file.Content), false, nil
+			},
+			ChangeFile: func(toolUse tooluse.ChangeFile) (string, bool, error) {
+				change := toolUse.Unwrap()
+				cases := tooluse.ChangeFileCases{
+					CreateFile: func(c tooluse.CreateFile) (string, bool, error) {
+						err := w.fileChangeService.CreateFile(ctx, c.Path, c.Content)
+						if err != nil {
+							return "", false, err
+						}
+						return "<success>File created</success>", false, nil
+					},
+					ModifyFile: func(c tooluse.ModifyFile) (string, bool, error) {
+						err := w.fileChangeService.ModifyFile(ctx, c.Path, c.Hunks)
+						if err != nil {
+							return "", false, err
+						}
+						return "<success>File modified</success>", false, nil
+					},
+					RenameFile: func(c tooluse.RenameFile) (string, bool, error) {
+						err := w.fileChangeService.RenameFile(ctx, c.OldPath, c.NewPath, c.Hunks)
+						if err != nil {
+							return "", false, err
+						}
+						return "<success>File renamed</success>", false, nil
+					},
+					DeleteFile: func(c tooluse.DeleteFile) (string, bool, error) {
+						err := w.fileChangeService.DeleteFile(ctx, c.Path)
+						if err != nil {
+							return "", false, err
+						}
+						return "<success>File deleted</success>", false, nil
+					},
 				}
-				w.nextMessage = systemMessage
-				continue
-			case domain.ApplyProposalDiffsTool:
-				systemMessage, err := w.handleApplyProposalDiffsTool(proposalHandle, response.ToolParams)
-				if err != nil {
-					go w.conversationService.Reply("Failed to handle apply_proposal_diffs")
-					return fmt.Errorf("failed to handle apply_proposal_diffs: %s", err)
-				}
-				w.nextMessage = systemMessage
-				continue
-			}
-		case autoagent.CompleteResponse:
-			return nil
-		case autoagent.ErrorResponse:
-			return nil
-		}
+				return change.Match(cases)
+			},
+		},
+	)
 
-		go w.conversationService.Reply("Max task count reached")
+	task := fmt.Sprintf(`<task>
+You submitted a proposal to create/update documents.
+Now, you are given a user feedback.
+Refine the proposal based on the user feedback.
+</task>
+<user_feedback>
+%s
+</user_feedback>
+`, userFeedback)
 
-		return nil
+	err = agent.InitiateTaskLoop(ctx, task, w.remainingStepCount)
+	if err != nil {
+		go w.conversationService.Reply("Something went wrong while refining the proposal")
+		return fmt.Errorf("failed to initiate task loop: %w", err)
 	}
 
 	return nil
 }
 
-func (w *ProposalRefineWorkflow) handleFindFileTool(rawParams interface{}) (autoagent.Message, error) {
-	params, ok := rawParams.(domain.FindFileToolParams)
-	if !ok {
-		return autoagent.Message{}, fmt.Errorf("invalid params type")
+func BuildSystemInstructionToRefineProposal(proposal domain.Proposal) *autoagent.SystemInstruction {
+	var newFiles []string
+	for _, diff := range proposal.Diffs {
+		newFiles = append(newFiles, "- "+diff.NewName)
 	}
+	newFilesStr := strings.Join(newFiles, "\n")
 
-	file, err := w.fileQueryService.Find(params.Name)
-	if err != nil {
-		log.Printf("Failed to find document: %s", err)
-		if errors.Is(err, domain.ErrFileNotFound) {
-			return autoagent.NewMessage(autoagent.UserRole, fmt.Sprintf("File not found: %s", params.Name)), nil
-		}
-		return autoagent.NewMessage(autoagent.UserRole, fmt.Errorf("failed to find document: %w", err).Error()), nil
-	}
-
-	return autoagent.NewMessage(autoagent.UserRole, fmt.Sprintf("Found document: %s\n\n%s", file.Name, file.Content)), nil
-}
-
-func (w *ProposalRefineWorkflow) handleApplyProposalDiffsTool(proposalHandle domain.ProposalHandle, rawParams interface{}) (autoagent.Message, error) {
-	params, ok := rawParams.(domain.ApplyProposalDiffsToolParams)
-	if !ok {
-		return autoagent.Message{}, fmt.Errorf("invalid params type")
-	}
-
-	err := w.proposalRepository.ApplyProposalDiffs(proposalHandle, params.Diffs)
-	if err != nil {
-		log.Printf("Failed to update proposal diffs: %s", err)
-		return autoagent.NewMessage(autoagent.UserRole, fmt.Errorf("failed to update proposal diffs: %w", err).Error()), nil
-	}
-
-	return autoagent.NewMessage(autoagent.UserRole, "Proposal diffs applied"), nil
-}
-
-func (w *ProposalRefineWorkflow) handleUpdateProposalTextTool(proposalHandle domain.ProposalHandle, rawParams interface{}) (autoagent.Message, error) {
-	params, ok := rawParams.(domain.UpdateProposalTextToolParams)
-	if !ok {
-		return autoagent.Message{}, fmt.Errorf("invalid params type")
-	}
-
-	err := w.proposalRepository.UpdateProposalContent(
-		proposalHandle,
-		domain.NewProposalContent(params.Title, params.Body),
+	systemInstruction := autoagent.NewSystemInstruction(
+		[]autoagent.EnvironmentContext{
+			autoagent.NewEnvironmentContext("Current proposal files", newFilesStr),
+		},
+		[]tooluse.Usage{
+			tooluse.CreateFileUsage,
+			tooluse.ModifyFileUsage,
+			tooluse.DeleteFileUsage,
+			tooluse.RenameFileUsage,
+			tooluse.FindFileUsage,
+			tooluse.AttemptCompleteUsage,
+		},
 	)
-	if err != nil {
-		log.Printf("Failed to update proposal text: %s", err)
-		return autoagent.NewMessage(autoagent.UserRole, fmt.Errorf("failed to update proposal text: %w", err).Error()), nil
-	}
 
-	return autoagent.NewMessage(autoagent.UserRole, "Proposal text updated"), nil
+	return systemInstruction
 }
