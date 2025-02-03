@@ -8,14 +8,13 @@ import (
 )
 
 type Agent struct {
-	chatModel           ChatModel
-	conversationService ConversationService
-	tools               tooluse.Cases
-	systemInstruction   *SystemInstruction
+	chatModel         ChatModel
+	tools             tooluse.Cases
+	systemInstruction *SystemInstruction
 }
 
-func NewAgent(chatModel ChatModel, conversationService ConversationService, systemInstruction *SystemInstruction, tools tooluse.Cases) *Agent {
-	return &Agent{chatModel: chatModel, conversationService: conversationService, tools: tools, systemInstruction: systemInstruction}
+func NewAgent(chatModel ChatModel, systemInstruction *SystemInstruction, tools tooluse.Cases) *Agent {
+	return &Agent{chatModel: chatModel, tools: tools, systemInstruction: systemInstruction}
 }
 
 func (a *Agent) InitiateTaskLoop(ctx context.Context, task string, maxStepCount int) error {
@@ -26,28 +25,27 @@ func (a *Agent) InitiateTaskLoop(ctx context.Context, task string, maxStepCount 
 	for currentStepCount <= maxStepCount {
 		rawResponse, err := a.chatModel.SendMessage(ctx, nextMessage)
 		if err != nil {
-			go a.conversationService.Reply("Failed to generate response")
 			return fmt.Errorf("failed to generate response: %w", err)
 		}
 		currentStepCount++
 
 		toolUse, err := tooluse.Parse(rawResponse)
 		if err != nil {
-			go a.conversationService.Reply("Failed to parse response")
 			return fmt.Errorf("failed to parse response: %w", err)
 		}
 
 		message, completed, err := toolUse.Match(a.tools)
 		if err != nil {
-			go a.conversationService.Reply("Failed to match tool use")
 			return fmt.Errorf("failed to match tool use: %w", err)
 		}
 		if completed {
-			go a.conversationService.Reply(message)
 			return nil
 		}
 		nextMessage = NewMessage(UserRole, message)
 	}
+
+	return fmt.Errorf("max task count reached")
+}
 
 	go a.conversationService.Reply("Max task count reached")
 

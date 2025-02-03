@@ -63,7 +63,6 @@ func (w *ProposalRefineWorkflow) Refine(proposalHandle domain.ProposalHandle, us
 
 	agent := autoagent.NewAgent(
 		w.chatModel,
-		w.conversationService,
 		BuildSystemInstructionToRefineProposal(proposal),
 		tooluse.Cases{
 			AttemptComplete: func(toolUse tooluse.AttemptComplete) (string, bool, error) {
