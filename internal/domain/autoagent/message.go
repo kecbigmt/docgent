@@ -12,19 +12,16 @@ func NewMessage(role Role, content string) Message {
 type Role int
 
 const (
-	SystemRole Role = iota
-	UserRole
-	AgentRole
+	UserRole Role = iota
+	AssistantRole
 )
 
 func (r Role) String() string {
 	switch r {
-	case SystemRole:
-		return "system"
 	case UserRole:
 		return "user"
-	case AgentRole:
-		return "agent"
+	case AssistantRole:
+		return "assistant"
 	default:
 		return "unknown"
 	}
