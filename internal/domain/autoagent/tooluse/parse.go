@@ -45,7 +45,12 @@ func Parse(xmlStr string) (Union, error) {
 		if err := decoder.DecodeElement(&rf, &startElement); err != nil {
 			return nil, fmt.Errorf("failed to decode read_file: %w", err)
 		}
-		return rf, nil
+	case "attempt_complete":
+		var ac AttemptComplete
+		if err := decoder.DecodeElement(&ac, &startElement); err != nil {
+			return nil, fmt.Errorf("failed to decode attempt_complete: %w", err)
+		}
+		return ac, nil
 	default:
 		return nil, fmt.Errorf("unknown command type: %s", startElement.Name.Local)
 	}
