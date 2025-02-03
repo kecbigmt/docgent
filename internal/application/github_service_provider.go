@@ -3,14 +3,13 @@ package application
 import (
 	"context"
 	"docgent-backend/internal/domain"
-	"docgent-backend/internal/domain/autoagent"
 )
 
 // GitHubServiceProvider defines the interface for creating GitHub-related services
 type GitHubServiceProvider interface {
-	NewIssueCommentConversationService(installationID int64, owner, repo string, prNumber int) autoagent.ConversationService
+	NewIssueCommentConversationService(installationID int64, owner, repo string, prNumber int) domain.ConversationService
 
-	NewReviewCommentConversationService(installationID int64, owner, repo string, prNumber int, parentCommentID int64) autoagent.ConversationService
+	NewReviewCommentConversationService(installationID int64, owner, repo string, prNumber int, parentCommentID int64) domain.ConversationService
 
 	NewFileQueryService(installationID int64, owner, repo, branch string) domain.FileQueryService
 

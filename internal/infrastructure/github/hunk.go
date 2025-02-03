@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"docgent-backend/internal/domain/autoagent/tooluse"
+	"docgent-backend/internal/domain/tooluse"
 )
 
 func applyHunks(content string, hunks []tooluse.Hunk) (string, error) {

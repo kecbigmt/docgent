@@ -7,13 +7,12 @@ import (
 	"strings"
 
 	"docgent-backend/internal/domain"
-	"docgent-backend/internal/domain/autoagent"
-	"docgent-backend/internal/domain/autoagent/tooluse"
+	"docgent-backend/internal/domain/tooluse"
 )
 
 type ProposalRefineWorkflow struct {
-	chatModel           autoagent.ChatModel
-	conversationService autoagent.ConversationService
+	chatModel           domain.ChatModel
+	conversationService domain.ConversationService
 	fileQueryService    domain.FileQueryService
 	fileChangeService   domain.FileChangeService
 	proposalRepository  domain.ProposalRepository
@@ -23,8 +22,8 @@ type ProposalRefineWorkflow struct {
 type NewProposalRefineWorkflowOption func(*ProposalRefineWorkflow)
 
 func NewProposalRefineWorkflow(
-	chatModel autoagent.ChatModel,
-	conversationService autoagent.ConversationService,
+	chatModel domain.ChatModel,
+	conversationService domain.ConversationService,
 	fileQueryService domain.FileQueryService,
 	fileChangeService domain.FileChangeService,
 	proposalRepository domain.ProposalRepository,
@@ -61,7 +60,7 @@ func (w *ProposalRefineWorkflow) Refine(proposalHandle domain.ProposalHandle, us
 		return fmt.Errorf("failed to retrieve proposal: %w", err)
 	}
 
-	agent := autoagent.NewAgent(
+	agent := domain.NewAgent(
 		w.chatModel,
 		BuildSystemInstructionToRefineProposal(proposal),
 		tooluse.Cases{
@@ -135,16 +134,16 @@ Refine the proposal based on the user feedback.
 	return nil
 }
 
-func BuildSystemInstructionToRefineProposal(proposal domain.Proposal) *autoagent.SystemInstruction {
+func BuildSystemInstructionToRefineProposal(proposal domain.Proposal) *domain.SystemInstruction {
 	var newFiles []string
 	for _, diff := range proposal.Diffs {
 		newFiles = append(newFiles, "- "+diff.NewName)
 	}
 	newFilesStr := strings.Join(newFiles, "\n")
 
-	systemInstruction := autoagent.NewSystemInstruction(
-		[]autoagent.EnvironmentContext{
-			autoagent.NewEnvironmentContext("Current proposal files", newFilesStr),
+	systemInstruction := domain.NewSystemInstruction(
+		[]domain.EnvironmentContext{
+			domain.NewEnvironmentContext("Current proposal files", newFilesStr),
 		},
 		[]tooluse.Usage{
 			tooluse.CreateFileUsage,

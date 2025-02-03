@@ -2,11 +2,10 @@ package github
 
 import (
 	"context"
+	"docgent-backend/internal/domain"
 	"fmt"
 
 	"github.com/google/go-github/v68/github"
-
-	"docgent-backend/internal/domain/autoagent"
 )
 
 type IssueCommentConversationService struct {
@@ -16,7 +15,7 @@ type IssueCommentConversationService struct {
 	prNumber int
 }
 
-func NewIssueCommentConversationService(client *github.Client, owner, repo string, prNumber int) autoagent.ConversationService {
+func NewIssueCommentConversationService(client *github.Client, owner, repo string, prNumber int) domain.ConversationService {
 	return &IssueCommentConversationService{
 		client:   client,
 		owner:    owner,

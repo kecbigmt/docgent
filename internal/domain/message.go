@@ -1,4 +1,4 @@
-package autoagent
+package domain
 
 type Message struct {
 	Role    Role

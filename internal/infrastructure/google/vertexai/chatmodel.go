@@ -2,14 +2,13 @@ package vertexai
 
 import (
 	"context"
+	"docgent-backend/internal/domain"
 	"encoding/json"
 	"fmt"
 
 	"cloud.google.com/go/vertexai/genai"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
-
-	"docgent-backend/internal/domain/autoagent"
 )
 
 type ChatModelParams struct {
@@ -23,10 +22,10 @@ type ChatModel struct {
 	logger  *zap.Logger
 	client  *genai.Client
 	model   *genai.GenerativeModel
-	history []autoagent.Message
+	history []domain.Message
 }
 
-func NewChatModel(params ChatModelParams) (autoagent.ChatModel, error) {
+func NewChatModel(params ChatModelParams) (domain.ChatModel, error) {
 	ctx := context.Background()
 	client, err := genai.NewClient(ctx, params.Config.ProjectID, params.Config.Location)
 	if err != nil {
@@ -54,7 +53,7 @@ func NewChatModel(params ChatModelParams) (autoagent.ChatModel, error) {
 		logger:  params.Logger,
 		client:  client,
 		model:   model,
-		history: []autoagent.Message{},
+		history: []domain.Message{},
 	}, nil
 }
 
@@ -64,7 +63,7 @@ func (c *ChatModel) SetSystemInstruction(instruction string) error {
 	return nil
 }
 
-func (c *ChatModel) SendMessage(ctx context.Context, message autoagent.Message) (string, error) {
+func (c *ChatModel) SendMessage(ctx context.Context, message domain.Message) (string, error) {
 	chat := c.model.StartChat()
 
 	// Set up conversation history
@@ -72,7 +71,7 @@ func (c *ChatModel) SendMessage(ctx context.Context, message autoagent.Message) 
 		content := &genai.Content{
 			Parts: []genai.Part{genai.Text(msg.Content)},
 		}
-		if msg.Role == autoagent.UserRole {
+		if msg.Role == domain.UserRole {
 			content.Role = "user"
 		} else {
 			content.Role = "model"
@@ -112,14 +111,14 @@ func (c *ChatModel) SendMessage(ctx context.Context, message autoagent.Message) 
 
 	// Update conversation history
 	c.history = append(c.history, message)
-	c.history = append(c.history, autoagent.Message{
-		Role:    autoagent.AssistantRole,
+	c.history = append(c.history, domain.Message{
+		Role:    domain.AssistantRole,
 		Content: response.ToolUse,
 	})
 
 	return response.ToolUse, nil
 }
 
-func (c *ChatModel) GetHistory() ([]autoagent.Message, error) {
+func (c *ChatModel) GetHistory() ([]domain.Message, error) {
 	return c.history, nil
 }

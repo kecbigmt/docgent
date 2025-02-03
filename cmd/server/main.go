@@ -11,7 +11,6 @@ import (
 
 	"docgent-backend/internal/application"
 	"docgent-backend/internal/domain"
-	"docgent-backend/internal/domain/autoagent"
 	"docgent-backend/internal/infrastructure/genkit"
 	"docgent-backend/internal/infrastructure/github"
 	"docgent-backend/internal/infrastructure/google/vertexai"
@@ -103,7 +102,7 @@ func AsPoposalAgent(f any, anns ...fx.Annotation) any {
 }
 
 func AsChatModel(f any, anns ...fx.Annotation) any {
-	anns = append([]fx.Annotation{fx.As(new(autoagent.ChatModel))}, anns...)
+	anns = append([]fx.Annotation{fx.As(new(domain.ChatModel))}, anns...)
 	return fx.Annotate(f, anns...)
 }
 

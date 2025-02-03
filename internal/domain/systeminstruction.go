@@ -1,11 +1,11 @@
-package autoagent
+package domain
 
 import (
 	"embed"
 	"strings"
 	"text/template"
 
-	"docgent-backend/internal/domain/autoagent/tooluse"
+	"docgent-backend/internal/domain/tooluse"
 )
 
 //go:embed systeminstruction-template.md

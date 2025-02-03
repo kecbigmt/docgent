@@ -2,7 +2,7 @@ package application
 
 import (
 	"context"
-	"docgent-backend/internal/domain/autoagent"
+	"docgent-backend/internal/domain"
 	"docgent-backend/internal/workflow"
 	"fmt"
 	"strconv"
@@ -15,13 +15,13 @@ import (
 type GitHubIssueCommentEventConsumerParams struct {
 	fx.In
 
-	ChatModel       autoagent.ChatModel
+	ChatModel       domain.ChatModel
 	Logger          *zap.Logger
 	ServiceProvider GitHubServiceProvider
 }
 
 type GitHubIssueCommentEventConsumer struct {
-	chatModel       autoagent.ChatModel
+	chatModel       domain.ChatModel
 	logger          *zap.Logger
 	serviceProvider GitHubServiceProvider
 }

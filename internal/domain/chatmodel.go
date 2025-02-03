@@ -1,4 +1,4 @@
-package autoagent
+package domain
 
 import (
 	"context"

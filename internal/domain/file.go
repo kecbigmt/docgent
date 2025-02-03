@@ -2,7 +2,7 @@ package domain
 
 import (
 	"context"
-	"docgent-backend/internal/domain/autoagent/tooluse"
+	"docgent-backend/internal/domain/tooluse"
 )
 
 type File struct {
