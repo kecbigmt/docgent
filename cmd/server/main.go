@@ -14,6 +14,7 @@ import (
 	"docgent-backend/internal/domain/autoagent"
 	"docgent-backend/internal/infrastructure/genkit"
 	"docgent-backend/internal/infrastructure/github"
+	"docgent-backend/internal/infrastructure/google/vertexai"
 )
 
 func main() {
@@ -26,6 +27,7 @@ func main() {
 			NewGitHubAPI,
 			NewGitHubWebhookRequestParser,
 			NewGenkitConfig,
+			NewVertexAIConfig,
 			NewHTTPServer,
 			fx.Annotate(
 				NewServeMux,
@@ -39,7 +41,7 @@ func main() {
 			AsGitHubEventRoute(application.NewGitHubIssueCommentEventConsumer),
 			AsDocumentAgent(genkit.NewDocumentAgent),
 			AsPoposalAgent(genkit.NewProposalAgent),
-			AsAutoAgent(genkit.NewAutoAgent),
+			AsChatModel(vertexai.NewChatModel),
 			AsGitHubServiceProvider(github.NewServiceProvider),
 			AsGitHubPullRequestAPIFactory(github.NewPullRequestAPIFactory),
 			zap.NewExample,
@@ -100,8 +102,8 @@ func AsPoposalAgent(f any, anns ...fx.Annotation) any {
 	return fx.Annotate(f, anns...)
 }
 
-func AsAutoAgent(f any, anns ...fx.Annotation) any {
-	anns = append([]fx.Annotation{fx.As(new(autoagent.Agent))}, anns...)
+func AsChatModel(f any, anns ...fx.Annotation) any {
+	anns = append([]fx.Annotation{fx.As(new(autoagent.ChatModel))}, anns...)
 	return fx.Annotate(f, anns...)
 }
 
