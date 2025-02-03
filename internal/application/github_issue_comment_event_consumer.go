@@ -87,6 +87,9 @@ func (c *GitHubIssueCommentEventConsumer) ConsumeEvent(event interface{}) {
 	// Create file query service with PR's head branch
 	fileQueryService := c.serviceProvider.NewFileQueryService(installationID, ownerName, repoName, headBranch)
 
+	// Create file change service
+	fileChangeService := c.serviceProvider.NewFileChangeService(installationID, ownerName, repoName, headBranch)
+
 	// Create proposal service
 	proposalService := c.serviceProvider.NewPullRequestAPI(installationID, ownerName, repoName, defaultBranch)
 
@@ -95,6 +98,7 @@ func (c *GitHubIssueCommentEventConsumer) ConsumeEvent(event interface{}) {
 		c.chatModel,         // AI interaction
 		conversationService, // Comment management
 		fileQueryService,    // File operations
+		fileChangeService,   // File operations
 		proposalService,     // PR management
 	)
 

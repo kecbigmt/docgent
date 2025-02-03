@@ -14,6 +14,8 @@ type GitHubServiceProvider interface {
 
 	NewFileQueryService(installationID int64, owner, repo, branch string) domain.FileQueryService
 
+	NewFileChangeService(installationID int64, owner, repo, branch string) domain.FileChangeService
+
 	NewPullRequestAPI(installationID int64, owner, repo, baseBranch string) domain.ProposalRepository
 
 	GetPullRequestHeadBranch(ctx context.Context, installationID int64, owner, repo string, number int) (string, error)
