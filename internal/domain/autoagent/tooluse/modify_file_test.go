@@ -71,6 +71,19 @@ func TestModifyFile_UnmarshalXML(t *testing.T) {
 			input:   `<modify_file><path>test.txt</path></modify_file>`,
 			wantErr: ErrEmptyHunks,
 		},
+		{
+			name: "modify file with newlines in hunks",
+			input: `<modify_file><path>test.txt</path><hunk><search>
+				Hello,
+				world!
+			</search><replace>
+				Hi,
+				world!
+			</replace></hunk></modify_file>`,
+			expected: NewModifyFile("test.txt", []Hunk{
+				NewHunk("Hello,\nworld!", "Hi,\nworld!"),
+			}),
+		},
 	}
 
 	for _, tt := range tests {

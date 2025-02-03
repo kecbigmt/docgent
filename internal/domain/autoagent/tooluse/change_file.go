@@ -1,6 +1,9 @@
 package tooluse
 
-import "encoding/xml"
+import (
+	"encoding/xml"
+	"strings"
+)
 
 type ChangeFile struct {
 	change ChangeFileUnion
@@ -42,4 +45,29 @@ func NewHunk(search, replace string) Hunk {
 		Search:  search,
 		Replace: replace,
 	}
+}
+
+// UnmarshalXML implements xml.Unmarshaler interface
+func (h *Hunk) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	type Alias Hunk
+	aux := &struct {
+		*Alias
+	}{
+		Alias: (*Alias)(h),
+	}
+	if err := d.DecodeElement(aux, &start); err != nil {
+		return err
+	}
+	h.Search = cleanMultilineString(h.Search)
+	h.Replace = cleanMultilineString(h.Replace)
+	return nil
+}
+
+// Trim newlines and remove leading tabs from each line
+func cleanMultilineString(s string) string {
+	lines := strings.Split(s, "\n")
+	for i, line := range lines {
+		lines[i] = strings.TrimLeft(line, "\t")
+	}
+	return strings.Trim(strings.Join(lines, "\n"), "\n")
 }

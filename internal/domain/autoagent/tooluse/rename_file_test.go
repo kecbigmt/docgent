@@ -72,6 +72,23 @@ func TestRenameFile_UnmarshalXML(t *testing.T) {
 				[]Hunk{},
 			),
 		},
+		{
+			name: "with newlines in hunks",
+			input: `<rename_file><old_path>old.txt</old_path><new_path>new.txt</new_path><hunk><search>
+				Hello,
+				world!
+			</search><replace>
+				Hi,
+				world!
+			</replace></hunk></rename_file>`,
+			expected: NewRenameFile(
+				"old.txt",
+				"new.txt",
+				[]Hunk{
+					NewHunk("Hello,\nworld!", "Hi,\nworld!"),
+				},
+			),
+		},
 	}
 
 	for _, tt := range tests {
