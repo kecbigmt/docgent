@@ -20,16 +20,16 @@ type SlackReactionAddedEventConsumerParams struct {
 	Logger                *zap.Logger
 	SlackAPI              SlackAPI
 	GitHubServiceProvider GitHubServiceProvider
-	DocumentAgent         domain.DocumentAgent
-	ProposalAgent         domain.ProposalAgent
+	SlackServiceProvider  SlackServiceProvider
+	ChatModel             domain.ChatModel
 }
 
 type SlackReactionAddedEventConsumer struct {
 	logger                *zap.Logger
 	slackAPI              SlackAPI
 	githubServiceProvider GitHubServiceProvider
-	documentAgent         domain.DocumentAgent
-	proposalAgent         domain.ProposalAgent
+	slackServiceProvider  SlackServiceProvider
+	chatModel             domain.ChatModel
 }
 
 func NewSlackReactionAddedEventConsumer(params SlackReactionAddedEventConsumerParams) *SlackReactionAddedEventConsumer {
@@ -37,8 +37,8 @@ func NewSlackReactionAddedEventConsumer(params SlackReactionAddedEventConsumerPa
 		logger:                params.Logger,
 		slackAPI:              params.SlackAPI,
 		githubServiceProvider: params.GitHubServiceProvider,
-		documentAgent:         params.DocumentAgent,
-		proposalAgent:         params.ProposalAgent,
+		slackServiceProvider:  params.SlackServiceProvider,
+		chatModel:             params.ChatModel,
 	}
 }
 
@@ -56,6 +56,7 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 	threadTimestamp := ev.Item.Timestamp
 
 	slackClient := h.slackAPI.GetClient()
+	conversationService := h.slackServiceProvider.NewConversationService(ev.Item.Channel, threadTimestamp)
 
 	// スレッドのメッセージを取得
 	messages, _, _, err := slackClient.GetConversationReplies(&slack.GetConversationRepliesParameters{
@@ -64,10 +65,7 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 	})
 	if err != nil {
 		h.logger.Error("Failed to get thread messages", zap.Error(err))
-		slackClient.PostMessage(ev.Item.Channel,
-			slack.MsgOptionText(":warning: エラー: スレッドの取得に失敗しました", false),
-			slack.MsgOptionTS(threadTimestamp),
-		)
+		conversationService.Reply(":warning: エラー: スレッドの取得に失敗しました")
 		return
 	}
 
@@ -79,45 +77,43 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 	err = branchService.CreateBranch(ctx, baseBranchName, newBranchName)
 	if err != nil {
 		h.logger.Error("Failed to create branch", zap.Error(err))
-		slackClient.PostMessage(ev.Item.Channel,
-			slack.MsgOptionText(":warning: エラー: ブランチの作成に失敗しました", false),
-			slack.MsgOptionTS(threadTimestamp),
-		)
+		conversationService.Reply(":warning: エラー: ブランチの作成に失敗しました")
 		return
 	}
 
+	fileQueryService := h.githubServiceProvider.NewFileQueryService(githubAppParams.InstallationID, githubAppParams.Owner, githubAppParams.Repo, newBranchName)
+	fileChangeService := h.githubServiceProvider.NewFileChangeService(githubAppParams.InstallationID, githubAppParams.Owner, githubAppParams.Repo, newBranchName)
+
 	githubPullRequestAPI := h.githubServiceProvider.NewPullRequestAPI(githubAppParams.InstallationID, githubAppParams.Owner, githubAppParams.Repo, baseBranchName, newBranchName)
 
-	// スレッドの内容を結合
-	var text string
+	var chatMessages []workflow.ChatMessage
 	for _, msg := range messages {
-		text += msg.Text + "\n"
+		chatMessages = append(chatMessages, workflow.ChatMessage{
+			Author:  msg.User,
+			Content: msg.Text,
+		})
 	}
 
 	// ドキュメントを生成
 	proposalGenerateWorkflow := workflow.NewProposalGenerateWorkflow(
-		h.documentAgent,
-		h.proposalAgent,
+		h.chatModel,
+		conversationService,
+		fileQueryService,
+		fileChangeService,
 		githubPullRequestAPI,
 	)
-	proposalHandle, err := proposalGenerateWorkflow.Execute(ctx, text)
+	proposalHandle, err := proposalGenerateWorkflow.Execute(ctx, chatMessages)
 	if err != nil {
 		h.logger.Error("Failed to generate increment", zap.Error(err))
-		slackClient.PostMessage(ev.Item.Channel,
-			slack.MsgOptionText(":warning: エラー: ドキュメントの生成に失敗しました", false),
-			slack.MsgOptionTS(threadTimestamp),
-		)
+		conversationService.Reply(":warning: エラー: ドキュメントの生成に失敗しました")
 		return
 	}
 
 	// 成功メッセージを投稿
-	slackClient.PostMessage(ev.Item.Channel,
-		slack.MsgOptionText(fmt.Sprintf(
-			"ドキュメントを生成しました！\nPR: https://github.com/%s/%s/pull/%s",
-			githubAppParams.Owner,
-			githubAppParams.Repo,
-			proposalHandle.Value,
-		), false),
-		slack.MsgOptionTS(threadTimestamp),
-	)
+	conversationService.Reply(fmt.Sprintf(
+		"ドキュメントを生成しました！\nPR: https://github.com/%s/%s/pull/%s",
+		githubAppParams.Owner,
+		githubAppParams.Repo,
+		proposalHandle.Value,
+	))
 }

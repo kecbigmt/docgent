@@ -14,6 +14,7 @@ import (
 	"docgent-backend/internal/infrastructure/genkit"
 	"docgent-backend/internal/infrastructure/github"
 	"docgent-backend/internal/infrastructure/google/vertexai"
+	"docgent-backend/internal/infrastructure/slack"
 )
 
 func main() {
@@ -28,6 +29,7 @@ func main() {
 			NewGenkitConfig,
 			NewVertexAIConfig,
 			NewHTTPServer,
+			slack.NewServiceProvider,
 			fx.Annotate(
 				NewServeMux,
 				fx.ParamTags(`group:"routes"`),
