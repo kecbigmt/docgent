@@ -52,6 +52,18 @@ func Parse(xmlStr string) (Union, error) {
 			return nil, fmt.Errorf("failed to decode attempt_complete: %w", err)
 		}
 		return ac, nil
+	case "create_proposal":
+		var cp CreateProposal
+		if err := decoder.DecodeElement(&cp, &startElement); err != nil {
+			return nil, fmt.Errorf("failed to decode create_proposal: %w", err)
+		}
+		return cp, nil
+	case "update_proposal":
+		var up UpdateProposal
+		if err := decoder.DecodeElement(&up, &startElement); err != nil {
+			return nil, fmt.Errorf("failed to decode update_proposal: %w", err)
+		}
+		return up, nil
 	default:
 		return nil, fmt.Errorf("unknown command type: %s", startElement.Name.Local)
 	}
