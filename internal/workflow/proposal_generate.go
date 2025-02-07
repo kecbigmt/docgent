@@ -136,9 +136,12 @@ func (w *ProposalGenerateWorkflow) Execute(
 	}
 
 	task := fmt.Sprintf(`<task>
-1. Analyze the chat history and determine the document files that should be created/modified/renamed/deleted.
-2. Change files for the best documentation.
-3. Create a proposal based on the document file changes. You should contain the chat history in the proposal description as a reference.
+1. Analyze the chat history. Use find_file to check the file content.
+2. Use create_file, modify_file, rename_file, delete_file to change files for the best documentation.
+3. Use create_proposal to create a proposal based on the document file changes. You should contain the chat history in the proposal description as a reference.
+4. Use attempt_complete to complete the task.
+
+You should use create_proposal only after you changed files.
 </task>
 <chat_history>
 %s
