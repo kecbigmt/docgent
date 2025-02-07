@@ -1,7 +1,6 @@
 package github
 
 import (
-	"docgent-backend/internal/application"
 	"docgent-backend/internal/domain"
 )
 
@@ -13,7 +12,7 @@ func NewPullRequestAPIFactory(api *API) *PullRequestAPIFactory {
 	return &PullRequestAPIFactory{api: api}
 }
 
-func (f *PullRequestAPIFactory) New(params application.GitHubAppParams) domain.ProposalRepository {
-	client := f.api.NewClient(params.InstallationID)
-	return NewPullRequestAPI(client, params.Owner, params.Repo, params.DefaultBranch)
+func (f *PullRequestAPIFactory) New(installationID int64, owner, repo, baseBranch, headBranch string) domain.ProposalRepository {
+	client := f.api.NewClient(installationID)
+	return NewPullRequestAPI(client, owner, repo, baseBranch, headBranch)
 }

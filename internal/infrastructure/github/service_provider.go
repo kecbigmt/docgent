@@ -56,8 +56,8 @@ func (p *ServiceProvider) NewBranchService(installationID int64, owner, repo str
 }
 
 // NewPullRequestAPI creates a pull request API with the proper context
-func (p *ServiceProvider) NewPullRequestAPI(installationID int64, owner, repo, baseBranch string) domain.ProposalRepository {
-	return NewPullRequestAPI(p.api.NewClient(installationID), owner, repo, baseBranch)
+func (p *ServiceProvider) NewPullRequestAPI(installationID int64, owner, repo, baseBranch, headBranch string) domain.ProposalRepository {
+	return NewPullRequestAPI(p.api.NewClient(installationID), owner, repo, baseBranch, headBranch)
 }
 
 // GetPullRequestHeadBranch gets the head branch of a pull request
