@@ -59,7 +59,7 @@ func (w *ProposalGenerateWorkflow) Execute(
 
 	agent := domain.NewAgent(
 		w.chatModel,
-		BuildSystemInstructionToGenerateProposal(),
+		buildSystemInstructionToGenerateProposal(),
 		tooluse.Cases{
 			AttemptComplete: func(toolUse tooluse.AttemptComplete) (string, bool, error) {
 				if err := w.conversationService.Reply(toolUse.Message); err != nil {
@@ -163,7 +163,7 @@ You should use create_proposal only after you changed files.
 	return proposalHandle, nil
 }
 
-func BuildSystemInstructionToGenerateProposal() *domain.SystemInstruction {
+func buildSystemInstructionToGenerateProposal() *domain.SystemInstruction {
 	systemInstruction := domain.NewSystemInstruction(
 		[]domain.EnvironmentContext{},
 		[]tooluse.Usage{
