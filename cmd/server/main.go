@@ -42,7 +42,6 @@ func main() {
 			AsPoposalAgent(genkit.NewProposalAgent),
 			AsChatModel(vertexai.NewChatModel),
 			AsGitHubServiceProvider(github.NewServiceProvider),
-			AsGitHubPullRequestAPIFactory(github.NewPullRequestAPIFactory),
 			zap.NewExample,
 		),
 		fx.Invoke(func(*http.Server) {}),
@@ -108,10 +107,5 @@ func AsChatModel(f any, anns ...fx.Annotation) any {
 
 func AsGitHubServiceProvider(f any, anns ...fx.Annotation) any {
 	anns = append([]fx.Annotation{fx.As(new(application.GitHubServiceProvider))}, anns...)
-	return fx.Annotate(f, anns...)
-}
-
-func AsGitHubPullRequestAPIFactory(f any, anns ...fx.Annotation) any {
-	anns = append([]fx.Annotation{fx.As(new(application.GitHubPullRequestAPIFactory))}, anns...)
 	return fx.Annotate(f, anns...)
 }
