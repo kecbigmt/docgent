@@ -124,6 +124,10 @@ func TestProposalGenerateWorkflow_Execute(t *testing.T) {
 			},
 			setupMocks: func(chatModel *MockChatModel, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileChangeService *MockFileChangeService, proposalRepository *MockProposalRepository) {
 				chatModel.On("SetSystemInstruction", mock.Anything).Return(nil)
+
+				chatModel.On("SendMessage", mock.Anything, mock.Anything).Return(`<create_file><path>path/to/file.md</path><content>Hello, world!</content></create_file>`, nil).Once()
+				fileChangeService.On("CreateFile", mock.Anything, "path/to/file.md", "Hello, world!").Return(nil)
+
 				chatModel.On("SendMessage", mock.Anything, mock.Anything).Return(`<create_proposal><title>API仕様書の作成</title><description>APIの仕様書を作成します。エンドポイント、リクエスト、レスポンスの形式を含めます。</description></create_proposal>`, nil).Once()
 
 				proposalHandle := domain.NewProposalHandle("github", "123")
@@ -157,7 +161,11 @@ func TestProposalGenerateWorkflow_Execute(t *testing.T) {
 			},
 			setupMocks: func(chatModel *MockChatModel, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileChangeService *MockFileChangeService, proposalRepository *MockProposalRepository) {
 				chatModel.On("SetSystemInstruction", mock.Anything).Return(nil)
-				chatModel.On("SendMessage", mock.Anything, mock.Anything).Return(`<create_proposal><title>API仕様書の作成</title><description>APIの仕様書を作成します。</description></create_proposal>`, nil)
+
+				chatModel.On("SendMessage", mock.Anything, mock.Anything).Return(`<create_file><path>path/to/file.md</path><content>Hello, world!</content></create_file>`, nil).Once()
+				fileChangeService.On("CreateFile", mock.Anything, "path/to/file.md", "Hello, world!").Return(nil)
+
+				chatModel.On("SendMessage", mock.Anything, mock.Anything).Return(`<create_proposal><title>API仕様書の作成</title><description>APIの仕様書を作成します。</description></create_proposal>`, nil).Once()
 
 				proposalRepository.On("CreateProposal", domain.Diffs{}, mock.Anything).Return(domain.ProposalHandle{}, errors.New("failed to create proposal"))
 				conversationService.On("Reply", mock.Anything).Return(nil)
