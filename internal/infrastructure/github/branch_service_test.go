@@ -87,12 +87,11 @@ func TestBranchService_CreateBranch(t *testing.T) {
 			client := github.NewClient(&http.Client{Transport: mt})
 			s := NewBranchService(client, "owner", "repo")
 
-			branchName, err := s.CreateBranch(context.Background(), tt.baseBranchName, tt.newBranchName)
+			err := s.CreateBranch(context.Background(), tt.baseBranchName, tt.newBranchName)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
-				assert.Equal(t, tt.newBranchName, branchName)
 			}
 
 			mt.verify(t)

@@ -29,7 +29,7 @@ func NewBranchService(
 }
 
 // CreateBranch creates a new branch from the specified base branch.
-func (s *BranchService) CreateBranch(ctx context.Context, baseBranchName, newBranchName string) (string, error) {
+func (s *BranchService) CreateBranch(ctx context.Context, baseBranchName, newBranchName string) error {
 	// Get the base branch reference
 	baseRef, _, err := s.client.Git.GetRef(
 		ctx,
@@ -38,7 +38,7 @@ func (s *BranchService) CreateBranch(ctx context.Context, baseBranchName, newBra
 		fmt.Sprintf("refs/heads/%s", baseBranchName),
 	)
 	if err != nil {
-		return "", fmt.Errorf("failed to get base branch reference: %w", err)
+		return fmt.Errorf("failed to get base branch reference: %w", err)
 	}
 
 	// Create a new reference for the new branch
@@ -56,8 +56,8 @@ func (s *BranchService) CreateBranch(ctx context.Context, baseBranchName, newBra
 		newRef,
 	)
 	if err != nil {
-		return "", fmt.Errorf("failed to create new branch: %w", err)
+		return fmt.Errorf("failed to create new branch: %w", err)
 	}
 
-	return newBranchName, nil
+	return nil
 }
