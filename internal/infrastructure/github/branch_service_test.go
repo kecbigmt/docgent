@@ -11,12 +11,12 @@ import (
 
 func TestBranchService_CreateBranch(t *testing.T) {
 	tests := []struct {
-		name          string
-		setup         func(*mockTransport)
-		baseBranch    string
-		newBranchName string
-		wantErr       bool
-		expectedReqs  []mockRequest
+		name           string
+		setup          func(*mockTransport)
+		baseBranchName string
+		newBranchName  string
+		wantErr        bool
+		expectedReqs   []mockRequest
 	}{
 		{
 			name: "success: create branch from main",
@@ -36,9 +36,9 @@ func TestBranchService_CreateBranch(t *testing.T) {
 					},
 				}
 			},
-			baseBranch:    "main",
-			newBranchName: "docgent/test",
-			wantErr:       false,
+			baseBranchName: "main",
+			newBranchName:  "docgent/test",
+			wantErr:        false,
 			expectedReqs: []mockRequest{
 				{
 					method: "GET",
@@ -64,9 +64,9 @@ func TestBranchService_CreateBranch(t *testing.T) {
 					},
 				}
 			},
-			baseBranch:    "not-exist",
-			newBranchName: "docgent/test",
-			wantErr:       true,
+			baseBranchName: "not-exist",
+			newBranchName:  "docgent/test",
+			wantErr:        true,
 			expectedReqs: []mockRequest{
 				{
 					method: "GET",
@@ -87,7 +87,7 @@ func TestBranchService_CreateBranch(t *testing.T) {
 			client := github.NewClient(&http.Client{Transport: mt})
 			s := NewBranchService(client, "owner", "repo")
 
-			branchName, err := s.CreateBranch(context.Background(), tt.baseBranch, tt.newBranchName)
+			branchName, err := s.CreateBranch(context.Background(), tt.baseBranchName, tt.newBranchName)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
