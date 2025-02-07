@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"docgent-backend/internal/application"
 	"docgent-backend/internal/domain"
 )
 
@@ -47,6 +48,11 @@ func (p *ServiceProvider) NewFileQueryService(installationID int64, owner, repo,
 // NewFileChangeService creates a file change service with the proper context
 func (p *ServiceProvider) NewFileChangeService(installationID int64, owner, repo, branch string) domain.FileChangeService {
 	return NewFileChangeService(p.api.NewClient(installationID), owner, repo, branch)
+}
+
+// NewBranchService creates a branch service with the proper context
+func (p *ServiceProvider) NewBranchService(installationID int64, owner, repo string) application.BranchService {
+	return NewBranchService(p.api.NewClient(installationID), owner, repo)
 }
 
 // NewPullRequestAPI creates a pull request API with the proper context
