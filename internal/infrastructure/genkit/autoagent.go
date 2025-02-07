@@ -2,6 +2,8 @@ package genkit
 
 import (
 	"context"
+	"docgent-backend/internal/domain"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -10,8 +12,6 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/option"
-
-	"docgent-backend/internal/domain/autoagent"
 )
 
 type AutoAgentParams struct {
@@ -24,10 +24,10 @@ type AutoAgentParams struct {
 type AutoAgent struct {
 	logger  *zap.Logger
 	model   *genai.GenerativeModel
-	history []autoagent.Message
+	history []domain.Message
 }
 
-func NewAutoAgent(params AutoAgentParams) (autoagent.ChatModel, error) {
+func NewAutoAgent(params AutoAgentParams) (domain.ChatModel, error) {
 	ctx := context.Background()
 	client, err := genai.NewClient(ctx, option.WithAPIKey(params.Config.APIKey))
 	if err != nil {
@@ -39,22 +39,11 @@ func NewAutoAgent(params AutoAgentParams) (autoagent.ChatModel, error) {
 	model.ResponseSchema = &genai.Schema{
 		Type: genai.TypeObject,
 		Properties: map[string]*genai.Schema{
-			"type":     {Type: genai.TypeString},
-			"message":  {Type: genai.TypeString},
-			"toolType": {Type: genai.TypeString},
-			"toolParams": {
-				Type: genai.TypeArray,
-				Items: &genai.Schema{
-					Type: genai.TypeObject,
-					Properties: map[string]*genai.Schema{
-						"k": {Type: genai.TypeString},
-						"v": {Type: genai.TypeString},
-					},
-				},
-			},
+			"toolUse": {Type: genai.TypeString},
 		},
-		Required: []string{"type", "message", "toolType", "toolParams"},
+		Required: []string{"toolUse"},
 	}
+
 	model.SetTemperature(0.1)
 	model.SetTopP(0.5)
 	model.SetTopK(20)
@@ -62,26 +51,35 @@ func NewAutoAgent(params AutoAgentParams) (autoagent.ChatModel, error) {
 	return &AutoAgent{
 		logger:  params.Logger,
 		model:   model,
-		history: []autoagent.Message{},
+		history: []domain.Message{},
 	}, nil
 }
 
 func (a *AutoAgent) SetSystemInstruction(instruction string) error {
 	a.model.SystemInstruction = genai.NewUserContent(genai.Text(instruction))
+	a.logger.Debug("set system instruction", zap.String("instruction", instruction))
 	return nil
 }
 
-func (a *AutoAgent) SendMessage(ctx context.Context, message autoagent.Message) (string, error) {
+func (a *AutoAgent) SendMessage(ctx context.Context, message domain.Message) (string, error) {
 	cs := a.model.StartChat()
 
 	for _, message := range a.history {
+		var role string
+		if message.Role == domain.UserRole {
+			role = "user"
+		} else {
+			role = "model"
+		}
 		cs.History = append(cs.History, &genai.Content{
 			Parts: []genai.Part{
 				genai.Text(message.Content),
 			},
-			Role: message.Role.String(),
+			Role: role,
 		})
 	}
+
+	a.logger.Debug("sending message", zap.String("role", "user"), zap.String("content", message.Content))
 
 	part := genai.Text(fmt.Sprintf("[%s] %s", message.Role, message.Content))
 
@@ -114,13 +112,25 @@ func (a *AutoAgent) SendMessage(ctx context.Context, message autoagent.Message) 
 		}
 	}
 
-	a.logger.Debug("response", zap.String("content", resContent))
+	response := &struct {
+		ToolUse string `json:"toolUse"`
+	}{}
+
+	if err := json.Unmarshal([]byte(resContent), response); err != nil {
+		return "", fmt.Errorf("failed to unmarshal response: %w", err)
+	}
+
+	a.logger.Debug("received response", zap.String("role", "agent"), zap.String("content", response.ToolUse))
 
 	a.history = append(a.history, message)
+	a.history = append(a.history, domain.Message{
+		Role:    domain.AssistantRole,
+		Content: response.ToolUse,
+	})
 
-	return resContent, nil
+	return response.ToolUse, nil
 }
 
-func (a *AutoAgent) GetHistory() ([]autoagent.Message, error) {
+func (a *AutoAgent) GetHistory() ([]domain.Message, error) {
 	return a.history, nil
 }
