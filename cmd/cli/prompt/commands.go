@@ -7,12 +7,12 @@ import (
 
 	"docgent-backend/cmd/cli/internal/dto"
 	"docgent-backend/internal/domain"
+	"docgent-backend/internal/workflow"
 )
 
 type BuildCmd struct {
 	ProposalFile   string `arg:"" help:"提案書データ（JSONファイル）"`
 	RemainingSteps int    `flag:"" help:"残りの修正ステップ数" default:"5"`
-	OutputFormat   string `flag:"" help:"出力形式 (text|json)" default:"text"`
 }
 
 func (c *BuildCmd) Run() error {
@@ -23,15 +23,9 @@ func (c *BuildCmd) Run() error {
 	}
 
 	// 既存のドメインロジックを活用してプロンプト生成
-	prompt := domain.NewProposalRefineSystemPrompt(proposal, c.RemainingSteps)
+	prompt := workflow.BuildSystemInstructionToRefineProposal(proposal)
 
-	// フォーマットに応じて出力
-	switch c.OutputFormat {
-	case "json":
-		return printJSON(prompt)
-	default:
-		fmt.Println(prompt.String())
-	}
+	fmt.Println(prompt.String())
 	return nil
 }
 
@@ -47,13 +41,4 @@ func loadProposalData(filePath string) (domain.Proposal, error) {
 	}
 
 	return proposalDTO.ToDomain(), nil
-}
-
-func printJSON(prompt domain.ProposalRefineSystemPrompt) error {
-	jsonData, err := json.MarshalIndent(prompt, "", "  ")
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(jsonData))
-	return nil
 }
