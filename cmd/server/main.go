@@ -11,7 +11,6 @@ import (
 
 	"docgent-backend/internal/application"
 	"docgent-backend/internal/domain"
-	"docgent-backend/internal/infrastructure/genkit"
 	"docgent-backend/internal/infrastructure/github"
 	"docgent-backend/internal/infrastructure/google/vertexai"
 	"docgent-backend/internal/infrastructure/slack"
@@ -26,7 +25,6 @@ func main() {
 			NewSlackAPI,
 			NewGitHubAPI,
 			NewGitHubWebhookRequestParser,
-			NewGenkitConfig,
 			NewVertexAIConfig,
 			NewHTTPServer,
 			slack.NewServiceProvider,
@@ -40,8 +38,6 @@ func main() {
 			AsRoute(application.NewGitHubWebhookHandler),
 			AsSlackEventRoute(application.NewSlackReactionAddedEventConsumer),
 			AsGitHubEventRoute(application.NewGitHubIssueCommentEventConsumer),
-			AsDocumentAgent(genkit.NewDocumentAgent),
-			AsPoposalAgent(genkit.NewProposalAgent),
 			AsChatModel(vertexai.NewChatModel),
 			AsGitHubServiceProvider(github.NewServiceProvider),
 			zap.NewExample,
@@ -89,16 +85,6 @@ func AsSlackEventRoute(f any, anns ...fx.Annotation) any {
 
 func AsGitHubEventRoute(f any, anns ...fx.Annotation) any {
 	anns = append([]fx.Annotation{fx.As(new(application.GitHubEventRoute)), fx.ResultTags(`group:"github_event_routes"`)}, anns...)
-	return fx.Annotate(f, anns...)
-}
-
-func AsDocumentAgent(f any, anns ...fx.Annotation) any {
-	anns = append([]fx.Annotation{fx.As(new(domain.DocumentAgent))}, anns...)
-	return fx.Annotate(f, anns...)
-}
-
-func AsPoposalAgent(f any, anns ...fx.Annotation) any {
-	anns = append([]fx.Annotation{fx.As(new(domain.ProposalAgent))}, anns...)
 	return fx.Annotate(f, anns...)
 }
 
