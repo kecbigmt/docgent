@@ -21,6 +21,7 @@ type ProposalGenerateWorkflow struct {
 	fileQueryService    domain.FileQueryService
 	fileChangeService   domain.FileChangeService
 	proposalRepository  domain.ProposalRepository
+	ragCorpus           domain.RAGCorpus
 	remainingStepCount  int
 }
 
@@ -32,6 +33,7 @@ func NewProposalGenerateWorkflow(
 	fileQueryService domain.FileQueryService,
 	fileChangeService domain.FileChangeService,
 	proposalRepository domain.ProposalRepository,
+	ragCorpus domain.RAGCorpus,
 	options ...NewProposalGenerateWorkflowOption,
 ) *ProposalGenerateWorkflow {
 	workflow := &ProposalGenerateWorkflow{
@@ -40,6 +42,7 @@ func NewProposalGenerateWorkflow(
 		fileQueryService:    fileQueryService,
 		fileChangeService:   fileChangeService,
 		proposalRepository:  proposalRepository,
+		ragCorpus:           ragCorpus,
 		remainingStepCount:  5,
 	}
 
@@ -127,6 +130,22 @@ func (w *ProposalGenerateWorkflow) Execute(
 				proposalHandle = handle
 				return fmt.Sprintf("<success>Proposal created: %s</success>", handle.Value), false, nil
 			},
+			QueryRAG: func(toolUse tooluse.QueryRAG) (string, bool, error) {
+				docs, err := w.ragCorpus.Query(ctx, toolUse.Query, 10, 0.7)
+				if err != nil {
+					return fmt.Sprintf("<error>Failed to query RAG: %s</error>", err), false, nil
+				}
+				if len(docs) == 0 {
+					return "<success>No relevant documents found.</success>", false, nil
+				}
+				var result strings.Builder
+				result.WriteString("<success>\n")
+				for _, doc := range docs {
+					result.WriteString(fmt.Sprintf("<document source=%q score=%.2f>\n%s\n</document>\n", doc.Source, doc.Score, doc.Content))
+				}
+				result.WriteString("</success>")
+				return result.String(), false, nil
+			},
 		},
 	)
 
@@ -136,7 +155,7 @@ func (w *ProposalGenerateWorkflow) Execute(
 	}
 
 	task := fmt.Sprintf(`<task>
-1. Analyze the chat history. Use find_file to check the file content.
+1. Analyze the chat history. Use query_rag to find relevant existing documents and find_file to check the file content.
 2. Use create_file, modify_file, rename_file, delete_file to change files for the best documentation.
 3. Use create_proposal to create a proposal based on the document file changes. You should contain the chat history in the proposal description as a reference.
 4. Use attempt_complete to complete the task.
@@ -173,6 +192,7 @@ func buildSystemInstructionToGenerateProposal() *domain.SystemInstruction {
 			tooluse.RenameFileUsage,
 			tooluse.FindFileUsage,
 			tooluse.CreateProposalUsage,
+			tooluse.QueryRAGUsage,
 			tooluse.AttemptCompleteUsage,
 		},
 	)

@@ -16,6 +16,7 @@ type ProposalRefineWorkflow struct {
 	fileQueryService    domain.FileQueryService
 	fileChangeService   domain.FileChangeService
 	proposalRepository  domain.ProposalRepository
+	ragCorpus           domain.RAGCorpus
 	remainingStepCount  int
 }
 
@@ -27,6 +28,7 @@ func NewProposalRefineWorkflow(
 	fileQueryService domain.FileQueryService,
 	fileChangeService domain.FileChangeService,
 	proposalRepository domain.ProposalRepository,
+	ragCorpus domain.RAGCorpus,
 	options ...NewProposalRefineWorkflowOption,
 ) *ProposalRefineWorkflow {
 	workflow := &ProposalRefineWorkflow{
@@ -35,6 +37,7 @@ func NewProposalRefineWorkflow(
 		fileQueryService:    fileQueryService,
 		fileChangeService:   fileChangeService,
 		proposalRepository:  proposalRepository,
+		ragCorpus:           ragCorpus,
 		remainingStepCount:  5,
 	}
 
@@ -56,7 +59,9 @@ func (w *ProposalRefineWorkflow) Refine(proposalHandle domain.ProposalHandle, us
 
 	proposal, err := w.proposalRepository.GetProposal(proposalHandle)
 	if err != nil {
-		go w.conversationService.Reply("Failed to retrieve proposal")
+		if err := w.conversationService.Reply("Failed to retrieve proposal"); err != nil {
+			return fmt.Errorf("failed to reply error message: %w", err)
+		}
 		return fmt.Errorf("failed to retrieve proposal: %w", err)
 	}
 
@@ -65,7 +70,9 @@ func (w *ProposalRefineWorkflow) Refine(proposalHandle domain.ProposalHandle, us
 		buildSystemInstructionToRefineProposal(proposal),
 		tooluse.Cases{
 			AttemptComplete: func(toolUse tooluse.AttemptComplete) (string, bool, error) {
-				go w.conversationService.Reply(toolUse.Message)
+				if err := w.conversationService.Reply(toolUse.Message); err != nil {
+					return "", false, fmt.Errorf("failed to reply: %w", err)
+				}
 				return "", true, nil
 			},
 			FindFile: func(toolUse tooluse.FindFile) (string, bool, error) {
@@ -112,13 +119,29 @@ func (w *ProposalRefineWorkflow) Refine(proposalHandle domain.ProposalHandle, us
 				}
 				return change.Match(cases)
 			},
+			QueryRAG: func(toolUse tooluse.QueryRAG) (string, bool, error) {
+				docs, err := w.ragCorpus.Query(ctx, toolUse.Query, 10, 0.7)
+				if err != nil {
+					return fmt.Sprintf("<error>Failed to query RAG: %s</error>", err), false, nil
+				}
+				if len(docs) == 0 {
+					return "<success>No relevant documents found.</success>", false, nil
+				}
+				var result strings.Builder
+				result.WriteString("<success>\n")
+				for _, doc := range docs {
+					result.WriteString(fmt.Sprintf("<document source=%q score=%.2f>\n%s\n</document>\n", doc.Source, doc.Score, doc.Content))
+				}
+				result.WriteString("</success>")
+				return result.String(), false, nil
+			},
 		},
 	)
 
 	task := fmt.Sprintf(`<task>
 You submitted a proposal to create/update documents.
 Now, you are given a user feedback.
-Refine the proposal based on the user feedback.
+Use query_rag to find relevant existing documents and refine the proposal based on the user feedback.
 </task>
 <user_feedback>
 %s
@@ -127,7 +150,9 @@ Refine the proposal based on the user feedback.
 
 	err = agent.InitiateTaskLoop(ctx, task, w.remainingStepCount)
 	if err != nil {
-		go w.conversationService.Reply("Something went wrong while refining the proposal")
+		if err := w.conversationService.Reply("Something went wrong while refining the proposal"); err != nil {
+			return fmt.Errorf("failed to reply error message: %w", err)
+		}
 		return fmt.Errorf("failed to initiate task loop: %w", err)
 	}
 
@@ -151,6 +176,7 @@ func buildSystemInstructionToRefineProposal(proposal domain.Proposal) *domain.Sy
 			tooluse.DeleteFileUsage,
 			tooluse.RenameFileUsage,
 			tooluse.FindFileUsage,
+			tooluse.QueryRAGUsage,
 			tooluse.AttemptCompleteUsage,
 		},
 	)
