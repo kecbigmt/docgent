@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"docgent-backend/internal/application"
+	application "docgent-backend/internal/application/github"
 	"docgent-backend/internal/domain"
 )
 
@@ -13,7 +13,7 @@ type ServiceProvider struct {
 	api *API
 }
 
-func NewServiceProvider(api *API) *ServiceProvider {
+func NewServiceProvider(api *API) application.ServiceProvider {
 	return &ServiceProvider{
 		api: api,
 	}

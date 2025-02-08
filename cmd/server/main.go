@@ -40,7 +40,7 @@ func main() {
 			AsSlackEventRoute(application.NewSlackReactionAddedEventConsumer),
 			AsGitHubEventRoute(application.NewGitHubIssueCommentEventConsumer),
 			AsChatModel(genai.NewChatModel),
-			AsGitHubServiceProvider(github.NewServiceProvider),
+			github.NewServiceProvider,
 			zap.NewExample,
 		),
 		fx.Invoke(func(*http.Server) {}),
@@ -91,10 +91,5 @@ func AsGitHubEventRoute(f any, anns ...fx.Annotation) any {
 
 func AsChatModel(f any, anns ...fx.Annotation) any {
 	anns = append([]fx.Annotation{fx.As(new(domain.ChatModel))}, anns...)
-	return fx.Annotate(f, anns...)
-}
-
-func AsGitHubServiceProvider(f any, anns ...fx.Annotation) any {
-	anns = append([]fx.Annotation{fx.As(new(application.GitHubServiceProvider))}, anns...)
 	return fx.Annotate(f, anns...)
 }

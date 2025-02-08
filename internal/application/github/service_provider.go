@@ -1,12 +1,12 @@
-package application
+package github
 
 import (
 	"context"
 	"docgent-backend/internal/domain"
 )
 
-// GitHubServiceProvider defines the interface for creating GitHub-related services
-type GitHubServiceProvider interface {
+// ServiceProvider defines the interface for creating GitHub-related services
+type ServiceProvider interface {
 	NewIssueCommentConversationService(installationID int64, owner, repo string, prNumber int) domain.ConversationService
 
 	NewReviewCommentConversationService(installationID int64, owner, repo string, prNumber int, parentCommentID int64) domain.ConversationService

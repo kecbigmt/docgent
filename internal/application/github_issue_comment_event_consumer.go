@@ -2,14 +2,16 @@ package application
 
 import (
 	"context"
-	"docgent-backend/internal/domain"
-	"docgent-backend/internal/workflow"
 	"fmt"
 	"strconv"
 
 	"github.com/google/go-github/v68/github"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
+
+	appgithub "docgent-backend/internal/application/github"
+	"docgent-backend/internal/domain"
+	"docgent-backend/internal/workflow"
 )
 
 type GitHubIssueCommentEventConsumerParams struct {
@@ -17,7 +19,7 @@ type GitHubIssueCommentEventConsumerParams struct {
 
 	ChatModel                domain.ChatModel
 	Logger                   *zap.Logger
-	ServiceProvider          GitHubServiceProvider
+	GitHubServiceProvider    appgithub.ServiceProvider
 	RAGService               domain.RAGService
 	ApplicationConfigService ApplicationConfigService
 }
@@ -25,7 +27,7 @@ type GitHubIssueCommentEventConsumerParams struct {
 type GitHubIssueCommentEventConsumer struct {
 	chatModel                domain.ChatModel
 	logger                   *zap.Logger
-	serviceProvider          GitHubServiceProvider
+	githubServiceProvider    appgithub.ServiceProvider
 	ragService               domain.RAGService
 	applicationConfigService ApplicationConfigService
 }
@@ -34,7 +36,7 @@ func NewGitHubIssueCommentEventConsumer(params GitHubIssueCommentEventConsumerPa
 	return &GitHubIssueCommentEventConsumer{
 		chatModel:                params.ChatModel,
 		logger:                   params.Logger,
-		serviceProvider:          params.ServiceProvider,
+		githubServiceProvider:    params.GitHubServiceProvider,
 		ragService:               params.RAGService,
 		applicationConfigService: params.ApplicationConfigService,
 	}
@@ -91,24 +93,24 @@ func (c *GitHubIssueCommentEventConsumer) ConsumeEvent(event interface{}) {
 	ctx := context.Background()
 
 	// Create conversation service with PR and comment context
-	conversationService := c.serviceProvider.NewIssueCommentConversationService(installationID, ownerName, repoName, ev.Issue.GetNumber())
+	conversationService := c.githubServiceProvider.NewIssueCommentConversationService(installationID, ownerName, repoName, ev.Issue.GetNumber())
 
 	// Get PR head branch using service provider
-	headBranch, err := c.serviceProvider.GetPullRequestHeadBranch(ctx, installationID, ownerName, repoName, ev.Issue.GetNumber())
+	headBranch, err := c.githubServiceProvider.GetPullRequestHeadBranch(ctx, installationID, ownerName, repoName, ev.Issue.GetNumber())
 	if err != nil {
 		c.logger.Error("Failed to get pull request head branch", zap.Error(err))
 		return
 	}
 
 	// Create file query service with PR's head branch
-	fileQueryService := c.serviceProvider.NewFileQueryService(installationID, ownerName, repoName, headBranch)
+	fileQueryService := c.githubServiceProvider.NewFileQueryService(installationID, ownerName, repoName, headBranch)
 
 	// Create file change service
-	fileChangeService := c.serviceProvider.NewFileChangeService(installationID, ownerName, repoName, headBranch)
+	fileChangeService := c.githubServiceProvider.NewFileChangeService(installationID, ownerName, repoName, headBranch)
 
 	// Create proposal service
 	// TODO: PRの作成以外ではブランチ名が不要なので、サービスを分ける
-	proposalService := c.serviceProvider.NewPullRequestAPI(installationID, ownerName, repoName, defaultBranch, "")
+	proposalService := c.githubServiceProvider.NewPullRequestAPI(installationID, ownerName, repoName, defaultBranch, "")
 
 	// Create workflow instance
 	workflow := workflow.NewProposalRefineWorkflow(

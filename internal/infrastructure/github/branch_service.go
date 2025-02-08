@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/go-github/v68/github"
 
-	"docgent-backend/internal/application"
+	application "docgent-backend/internal/application/github"
 )
 
 // BranchService implements the application.BranchService interface using GitHub API.
