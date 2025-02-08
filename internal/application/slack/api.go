@@ -1,4 +1,4 @@
-package application
+package slack
 
 import (
 	"net/http"
@@ -6,7 +6,7 @@ import (
 	"github.com/slack-go/slack"
 )
 
-type SlackAPI interface {
+type API interface {
 	GetClient() *slack.Client
 	NewSecretsVerifier(http.Header) (slack.SecretsVerifier, error)
 }

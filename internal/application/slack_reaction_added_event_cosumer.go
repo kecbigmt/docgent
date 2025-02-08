@@ -14,15 +14,16 @@ import (
 	"docgent-backend/internal/workflow"
 
 	appgithub "docgent-backend/internal/application/github"
+	appslack "docgent-backend/internal/application/slack"
 )
 
 type SlackReactionAddedEventConsumerParams struct {
 	fx.In
 
 	Logger                   *zap.Logger
-	SlackAPI                 SlackAPI
+	SlackAPI                 appslack.API
 	GitHubServiceProvider    appgithub.ServiceProvider
-	SlackServiceProvider     SlackServiceProvider
+	SlackServiceProvider     appslack.ServiceProvider
 	ChatModel                domain.ChatModel
 	RAGService               domain.RAGService
 	ApplicationConfigService ApplicationConfigService
@@ -30,9 +31,9 @@ type SlackReactionAddedEventConsumerParams struct {
 
 type SlackReactionAddedEventConsumer struct {
 	logger                   *zap.Logger
-	slackAPI                 SlackAPI
+	slackAPI                 appslack.API
 	githubServiceProvider    appgithub.ServiceProvider
-	slackServiceProvider     SlackServiceProvider
+	slackServiceProvider     appslack.ServiceProvider
 	chatModel                domain.ChatModel
 	ragService               domain.RAGService
 	applicationConfigService ApplicationConfigService

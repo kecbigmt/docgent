@@ -1,19 +1,19 @@
 package slack
 
 import (
-	"docgent-backend/internal/application"
+	application "docgent-backend/internal/application/slack"
 	"docgent-backend/internal/domain"
 
 	"github.com/slack-go/slack"
 )
 
 type ConversationService struct {
-	slackAPI        application.SlackAPI
+	slackAPI        application.API
 	channelID       string
 	threadTimestamp string
 }
 
-func NewConversationService(slackAPI application.SlackAPI, channelID string, threadTimestamp string) domain.ConversationService {
+func NewConversationService(slackAPI application.API, channelID string, threadTimestamp string) domain.ConversationService {
 	return &ConversationService{
 		slackAPI:        slackAPI,
 		channelID:       channelID,

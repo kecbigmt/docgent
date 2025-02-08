@@ -8,6 +8,8 @@ import (
 	"github.com/slack-go/slack/slackevents"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
+
+	appslack "docgent-backend/internal/application/slack"
 )
 
 type SlackEventHandlerParams struct {
@@ -15,14 +17,14 @@ type SlackEventHandlerParams struct {
 
 	Logger                   *zap.Logger
 	EventRoutes              []SlackEventRoute `group:"slack_event_routes"`
-	SlackAPI                 SlackAPI
+	SlackAPI                 appslack.API
 	ApplicationConfigService ApplicationConfigService
 }
 
 type SlackEventHandler struct {
 	log                      *zap.Logger
 	eventRoutes              []SlackEventRoute
-	slackAPI                 SlackAPI
+	slackAPI                 appslack.API
 	applicationConfigService ApplicationConfigService
 }
 

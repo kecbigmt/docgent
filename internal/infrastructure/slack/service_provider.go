@@ -1,15 +1,15 @@
 package slack
 
 import (
-	"docgent-backend/internal/application"
+	application "docgent-backend/internal/application/slack"
 	"docgent-backend/internal/domain"
 )
 
 type ServiceProvider struct {
-	slackAPI application.SlackAPI
+	slackAPI application.API
 }
 
-func NewServiceProvider(slackAPI application.SlackAPI) application.SlackServiceProvider {
+func NewServiceProvider(slackAPI application.API) application.ServiceProvider {
 	return &ServiceProvider{
 		slackAPI: slackAPI,
 	}
