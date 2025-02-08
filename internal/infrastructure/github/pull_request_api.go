@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-	"time"
 
 	"github.com/google/go-github/v68/github"
 
@@ -17,14 +16,16 @@ type PullRequestAPI struct {
 	owner         string
 	repo          string
 	defaultBranch string
+	headBranch    string
 }
 
-func NewPullRequestAPI(client *github.Client, owner, repo, defaultBranch string) *PullRequestAPI {
+func NewPullRequestAPI(client *github.Client, owner, repo, defaultBranch string, headBranch string) *PullRequestAPI {
 	return &PullRequestAPI{
 		client:        client,
 		owner:         owner,
 		repo:          repo,
 		defaultBranch: defaultBranch,
+		headBranch:    headBranch,
 	}
 }
 
@@ -39,39 +40,18 @@ func (s *PullRequestAPI) NewCommentHandle(issueCommentID string) domain.CommentH
 func (s *PullRequestAPI) CreateProposal(diffs domain.Diffs, content domain.ProposalContent) (domain.ProposalHandle, error) {
 	ctx := context.Background()
 
-	// 1. Get the SHA of the base branch
-	baseBranchName := s.defaultBranch
-	ref, _, err := s.client.Git.GetRef(ctx, s.owner, s.repo, "refs/heads/"+baseBranchName)
-	if err != nil {
-		return domain.ProposalHandle{}, fmt.Errorf("failed to get ref: %w", err)
-	}
-
-	// 2. Create a new branch
-	branchName := fmt.Sprintf("docgent/%d", time.Now().Unix())
-	newRef := &github.Reference{
-		Ref: github.Ptr("refs/heads/" + branchName),
-		Object: &github.GitObject{
-			SHA: ref.Object.SHA,
-		},
-	}
-	_, _, err = s.client.Git.CreateRef(ctx, s.owner, s.repo, newRef)
-	if err != nil {
-		return domain.ProposalHandle{}, fmt.Errorf("failed to create branch: %w", err)
-	}
-
 	for _, diff := range diffs {
-		resolver := diffutil.NewResolver(s.client, s.owner, s.repo, branchName)
+		resolver := diffutil.NewResolver(s.client, s.owner, s.repo, s.headBranch)
 		if err := resolver.Execute(diff); err != nil {
 			return domain.ProposalHandle{}, fmt.Errorf("failed to resolve diff: %w", err)
 		}
 	}
 
-	// 5. Create Pull Request
 	newPR := &github.NewPullRequest{
 		Title: github.Ptr(content.Title),
 		Body:  github.Ptr(content.Body),
-		Head:  github.Ptr(branchName),
-		Base:  github.Ptr(baseBranchName),
+		Head:  github.Ptr(s.headBranch),
+		Base:  github.Ptr(s.defaultBranch),
 	}
 
 	pr, _, err := s.client.PullRequests.Create(ctx, s.owner, s.repo, newPR)
@@ -96,23 +76,19 @@ func (s *PullRequestAPI) GetProposal(handle domain.ProposalHandle) (domain.Propo
 		return domain.Proposal{}, fmt.Errorf("failed to get pull request: %w", err)
 	}
 
-	// Get PR diff
 	diff, _, err := s.client.PullRequests.GetRaw(ctx, s.owner, s.repo, number, github.RawOptions{Type: github.Diff})
 	if err != nil {
 		return domain.Proposal{}, fmt.Errorf("failed to get pull request diff: %w", err)
 	}
 
-	// Parse diff using util.ParseGitHubPRDiff
 	parser := diffutil.NewParser()
 	diffs := parser.Execute(diff)
 
-	// Get PR comments
 	comments, _, err := s.client.Issues.ListComments(ctx, s.owner, s.repo, number, nil)
 	if err != nil {
 		return domain.Proposal{}, fmt.Errorf("failed to get pull request comments: %w", err)
 	}
 
-	// Convert comments to domain model
 	domainComments := make([]domain.Comment, len(comments))
 	for i, comment := range comments {
 		handle := s.NewCommentHandle(strconv.FormatInt(comment.GetID(), 10))
@@ -159,7 +135,6 @@ func (s *PullRequestAPI) ApplyProposalDiffs(handle domain.ProposalHandle, diffs 
 		return err
 	}
 
-	// Get current PR to get the branch name
 	pr, _, err := s.client.PullRequests.Get(ctx, s.owner, s.repo, number)
 	if err != nil {
 		return fmt.Errorf("failed to get pull request: %w", err)
@@ -167,7 +142,6 @@ func (s *PullRequestAPI) ApplyProposalDiffs(handle domain.ProposalHandle, diffs 
 
 	branchName := pr.Head.GetRef()
 
-	// Apply each diff using the resolver
 	for _, diff := range diffs {
 		resolver := diffutil.NewResolver(s.client, s.owner, s.repo, branchName)
 		if err := resolver.Execute(diff); err != nil {
@@ -186,13 +160,11 @@ func (s *PullRequestAPI) UpdateProposalContent(proposalHandle domain.ProposalHan
 		return err
 	}
 
-	// Get current PR to preserve other fields
 	pr, _, err := s.client.PullRequests.Get(ctx, s.owner, s.repo, number)
 	if err != nil {
 		return fmt.Errorf("failed to get pull request: %w", err)
 	}
 
-	// Update PR with new content
 	updatePR := &github.PullRequest{
 		Title: github.Ptr(content.Title),
 		Body:  github.Ptr(content.Body),

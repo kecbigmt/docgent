@@ -91,7 +91,8 @@ func (c *GitHubIssueCommentEventConsumer) ConsumeEvent(event interface{}) {
 	fileChangeService := c.serviceProvider.NewFileChangeService(installationID, ownerName, repoName, headBranch)
 
 	// Create proposal service
-	proposalService := c.serviceProvider.NewPullRequestAPI(installationID, ownerName, repoName, defaultBranch)
+	// TODO: PRの作成以外ではブランチ名が不要なので、サービスを分ける
+	proposalService := c.serviceProvider.NewPullRequestAPI(installationID, ownerName, repoName, defaultBranch, "")
 
 	// Create workflow instance
 	workflow := workflow.NewProposalRefineWorkflow(

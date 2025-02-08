@@ -52,7 +52,7 @@ func main() {
 	client := api.NewClient(CLI.InstallationID)
 
 	// Create PullRequestAPI
-	prAPI := gh.NewPullRequestAPI(client, owner, repo, "main")
+	prAPI := gh.NewPullRequestAPI(client, owner, repo, "main", "")
 
 	// Get proposal using domain handle
 	handle := prAPI.NewProposalHandle(number)

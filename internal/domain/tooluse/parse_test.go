@@ -71,6 +71,24 @@ func TestParse(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "create_proposal",
+			xmlStr: `<create_proposal>
+				<title>Test Proposal</title>
+				<description>This is a test proposal</description>
+			</create_proposal>`,
+			want:    NewCreateProposal("Test Proposal", "This is a test proposal"),
+			wantErr: false,
+		},
+		{
+			name: "update_proposal",
+			xmlStr: `<update_proposal>
+				<title>Updated Proposal</title>
+				<description>This is an updated proposal</description>
+			</update_proposal>`,
+			want:    NewUpdateProposal("Updated Proposal", "This is an updated proposal"),
+			wantErr: false,
+		},
+		{
 			name: "invalid_command",
 			xmlStr: `<unknown_command>
 				<path>test.txt</path>
@@ -125,6 +143,18 @@ func TestParse(t *testing.T) {
 					wantRead := tt.want.(FindFile)
 					assert.Equal(t, wantRead.Path, gotRead.Path)
 					return "file read", false, nil
+				},
+				CreateProposal: func(gotCreate CreateProposal) (string, bool, error) {
+					wantCreate := tt.want.(CreateProposal)
+					assert.Equal(t, wantCreate.Title, gotCreate.Title)
+					assert.Equal(t, wantCreate.Description, gotCreate.Description)
+					return "proposal created", false, nil
+				},
+				UpdateProposal: func(gotUpdate UpdateProposal) (string, bool, error) {
+					wantUpdate := tt.want.(UpdateProposal)
+					assert.Equal(t, wantUpdate.Title, gotUpdate.Title)
+					assert.Equal(t, wantUpdate.Description, gotUpdate.Description)
+					return "proposal updated", false, nil
 				},
 			})
 		})

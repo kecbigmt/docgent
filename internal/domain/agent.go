@@ -35,7 +35,8 @@ func (a *Agent) InitiateTaskLoop(ctx context.Context, task string, maxStepCount 
 
 		toolUse, err := tooluse.Parse(rawResponse)
 		if err != nil {
-			return fmt.Errorf("failed to parse response: %w", err)
+			nextMessage = NewMessage(UserRole, fmt.Sprintf("<error>failed to parse response: %s</error>", err))
+			continue
 		}
 
 		message, completed, err := toolUse.Match(a.tools)

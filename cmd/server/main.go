@@ -11,9 +11,9 @@ import (
 
 	"docgent-backend/internal/application"
 	"docgent-backend/internal/domain"
-	"docgent-backend/internal/infrastructure/genkit"
 	"docgent-backend/internal/infrastructure/github"
 	"docgent-backend/internal/infrastructure/google/vertexai"
+	"docgent-backend/internal/infrastructure/slack"
 )
 
 func main() {
@@ -25,9 +25,9 @@ func main() {
 			NewSlackAPI,
 			NewGitHubAPI,
 			NewGitHubWebhookRequestParser,
-			NewGenkitConfig,
 			NewVertexAIConfig,
 			NewHTTPServer,
+			slack.NewServiceProvider,
 			fx.Annotate(
 				NewServeMux,
 				fx.ParamTags(`group:"routes"`),
@@ -38,11 +38,8 @@ func main() {
 			AsRoute(application.NewGitHubWebhookHandler),
 			AsSlackEventRoute(application.NewSlackReactionAddedEventConsumer),
 			AsGitHubEventRoute(application.NewGitHubIssueCommentEventConsumer),
-			AsDocumentAgent(genkit.NewDocumentAgent),
-			AsPoposalAgent(genkit.NewProposalAgent),
 			AsChatModel(vertexai.NewChatModel),
 			AsGitHubServiceProvider(github.NewServiceProvider),
-			AsGitHubPullRequestAPIFactory(github.NewPullRequestAPIFactory),
 			zap.NewExample,
 		),
 		fx.Invoke(func(*http.Server) {}),
@@ -91,16 +88,6 @@ func AsGitHubEventRoute(f any, anns ...fx.Annotation) any {
 	return fx.Annotate(f, anns...)
 }
 
-func AsDocumentAgent(f any, anns ...fx.Annotation) any {
-	anns = append([]fx.Annotation{fx.As(new(domain.DocumentAgent))}, anns...)
-	return fx.Annotate(f, anns...)
-}
-
-func AsPoposalAgent(f any, anns ...fx.Annotation) any {
-	anns = append([]fx.Annotation{fx.As(new(domain.ProposalAgent))}, anns...)
-	return fx.Annotate(f, anns...)
-}
-
 func AsChatModel(f any, anns ...fx.Annotation) any {
 	anns = append([]fx.Annotation{fx.As(new(domain.ChatModel))}, anns...)
 	return fx.Annotate(f, anns...)
@@ -108,10 +95,5 @@ func AsChatModel(f any, anns ...fx.Annotation) any {
 
 func AsGitHubServiceProvider(f any, anns ...fx.Annotation) any {
 	anns = append([]fx.Annotation{fx.As(new(application.GitHubServiceProvider))}, anns...)
-	return fx.Annotate(f, anns...)
-}
-
-func AsGitHubPullRequestAPIFactory(f any, anns ...fx.Annotation) any {
-	anns = append([]fx.Annotation{fx.As(new(application.GitHubPullRequestAPIFactory))}, anns...)
 	return fx.Annotate(f, anns...)
 }

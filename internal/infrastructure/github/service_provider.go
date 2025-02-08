@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"docgent-backend/internal/application"
 	"docgent-backend/internal/domain"
 )
 
@@ -49,9 +50,14 @@ func (p *ServiceProvider) NewFileChangeService(installationID int64, owner, repo
 	return NewFileChangeService(p.api.NewClient(installationID), owner, repo, branch)
 }
 
+// NewBranchService creates a branch service with the proper context
+func (p *ServiceProvider) NewBranchService(installationID int64, owner, repo string) application.BranchService {
+	return NewBranchService(p.api.NewClient(installationID), owner, repo)
+}
+
 // NewPullRequestAPI creates a pull request API with the proper context
-func (p *ServiceProvider) NewPullRequestAPI(installationID int64, owner, repo, baseBranch string) domain.ProposalRepository {
-	return NewPullRequestAPI(p.api.NewClient(installationID), owner, repo, baseBranch)
+func (p *ServiceProvider) NewPullRequestAPI(installationID int64, owner, repo, baseBranch, headBranch string) domain.ProposalRepository {
+	return NewPullRequestAPI(p.api.NewClient(installationID), owner, repo, baseBranch, headBranch)
 }
 
 // GetPullRequestHeadBranch gets the head branch of a pull request

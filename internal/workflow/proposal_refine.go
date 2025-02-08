@@ -62,7 +62,7 @@ func (w *ProposalRefineWorkflow) Refine(proposalHandle domain.ProposalHandle, us
 
 	agent := domain.NewAgent(
 		w.chatModel,
-		BuildSystemInstructionToRefineProposal(proposal),
+		buildSystemInstructionToRefineProposal(proposal),
 		tooluse.Cases{
 			AttemptComplete: func(toolUse tooluse.AttemptComplete) (string, bool, error) {
 				go w.conversationService.Reply(toolUse.Message)
@@ -134,7 +134,7 @@ Refine the proposal based on the user feedback.
 	return nil
 }
 
-func BuildSystemInstructionToRefineProposal(proposal domain.Proposal) *domain.SystemInstruction {
+func buildSystemInstructionToRefineProposal(proposal domain.Proposal) *domain.SystemInstruction {
 	var newFiles []string
 	for _, diff := range proposal.Diffs {
 		newFiles = append(newFiles, "- "+diff.NewName)
