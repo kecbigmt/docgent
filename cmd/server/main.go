@@ -36,6 +36,7 @@ func main() {
 			),
 			AsRoute(application.NewEchoHandler),
 			AsRoute(application.NewHelloHandler),
+			AsRoute(application.NewHealthHandler),
 			AsRoute(application.NewSlackEventHandler),
 			AsRoute(application.NewGitHubWebhookHandler),
 			AsSlackEventRoute(application.NewSlackReactionAddedEventConsumer),
