@@ -69,6 +69,12 @@ func Parse(xmlStr string) (Union, error) {
 			return nil, fmt.Errorf("failed to decode update_proposal: %w", err)
 		}
 		return up, nil
+	case "query_rag":
+		var qr QueryRAG
+		if err := decoder.DecodeElement(&qr, &startElement); err != nil {
+			return nil, fmt.Errorf("failed to decode query_rag: %w", err)
+		}
+		return qr, nil
 	default:
 		return nil, fmt.Errorf("unknown command type: %s", startElement.Name.Local)
 	}

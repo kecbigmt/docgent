@@ -10,4 +10,5 @@ type Cases struct {
 	AttemptComplete func(AttemptComplete) (string, bool, error)
 	CreateProposal  func(CreateProposal) (string, bool, error)
 	UpdateProposal  func(UpdateProposal) (string, bool, error)
+	QueryRAG        func(QueryRAG) (string, bool, error)
 }
