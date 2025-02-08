@@ -2,7 +2,6 @@ package domain
 
 import (
 	"context"
-	"fmt"
 )
 
 type RAGService interface {
@@ -26,7 +25,3 @@ type RAGDocument struct {
 	// It ranges from 0.0 to 1.0, where 1.0 is the highest relevance.
 	Score float64
 }
-
-var ErrRAGCorpusUnavailable = fmt.Errorf("rag service is unavailable")
-var ErrRAGCorpusTimeout = fmt.Errorf("rag service timeout")
-var ErrRAGCorpusInvalidQuery = fmt.Errorf("invalid query")
