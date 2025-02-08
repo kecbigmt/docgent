@@ -24,11 +24,19 @@ type RagResources struct {
 }
 
 type Query struct {
-	Text           string `json:"text"`
-	SimilarityTopK int32  `json:"similarity_top_k"`
+	Text               string             `json:"text"`
+	RagRetrievalConfig RagRetrievalConfig `json:"rag_retrieval_config,omitempty"`
+}
+
+type RagRetrievalConfig struct {
+	TopK int32 `json:"top_k"`
 }
 
 type RetrieveContextsResponse struct {
+	Contexts RetrieveContexts `json:"contexts"`
+}
+
+type RetrieveContexts struct {
 	Contexts []*RetrievalContext `json:"contexts"`
 }
 
@@ -41,17 +49,20 @@ type RetrievalContext struct {
 
 func (c *Client) RetrieveContexts(ctx context.Context, corpusName string, query string, similarityTopK int32, vectorDistanceThreshold float64) (RetrieveContextsResponse, error) {
 	url := fmt.Sprintf("https://%s-aiplatform.googleapis.com/v1/projects/%s/locations/%s:retrieveContexts", c.location, c.projectID, c.location)
+	corpus := fmt.Sprintf("projects/%s/locations/%s/ragCorpora/%s", c.projectID, c.location, corpusName)
 
 	reqBody := RetrieveContextsRequest{
 		VertexRagStore: VertexRagStore{
 			RagResources: RagResources{
-				RagCorpus: corpusName,
+				RagCorpus: corpus,
 			},
 			VectorDistanceThreshold: vectorDistanceThreshold,
 		},
 		Query: Query{
-			Text:           query,
-			SimilarityTopK: similarityTopK,
+			Text: query,
+			RagRetrievalConfig: RagRetrievalConfig{
+				TopK: similarityTopK,
+			},
 		},
 	}
 	reqBodyBytes, err := json.Marshal(reqBody)
@@ -83,6 +94,8 @@ func (c *Client) RetrieveContexts(ctx context.Context, corpusName string, query 
 	if err != nil {
 		return RetrieveContextsResponse{}, err
 	}
+
+	fmt.Println(string(resBody))
 
 	var responseBody RetrieveContextsResponse
 	err = json.Unmarshal(resBody, &responseBody)

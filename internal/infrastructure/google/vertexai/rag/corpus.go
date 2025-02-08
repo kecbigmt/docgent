@@ -26,8 +26,8 @@ func (c *Corpus) Query(ctx context.Context, query string, similarityTopK int32, 
 		return nil, fmt.Errorf("failed to retrieve contexts: %w", err)
 	}
 
-	documents := make([]domain.RAGDocument, len(response.Contexts))
-	for i, context := range response.Contexts {
+	documents := make([]domain.RAGDocument, len(response.Contexts.Contexts))
+	for i, context := range response.Contexts.Contexts {
 		documents[i] = domain.RAGDocument{
 			Source:  context.SourceUri,
 			Content: context.Text,

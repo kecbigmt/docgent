@@ -114,16 +114,18 @@ func TestCorpus_Query(t *testing.T) {
 					"POST /v1/projects/test-project/locations/test-location:retrieveContexts": {
 						statusCode: http.StatusOK,
 						body: lib.RetrieveContextsResponse{
-							Contexts: []*lib.RetrievalContext{
-								{
-									Text:      "test content 1",
-									SourceUri: "source1.md",
-									Score:     0.9,
-								},
-								{
-									Text:      "test content 2",
-									SourceUri: "source2.md",
-									Score:     0.8,
+							Contexts: lib.RetrieveContexts{
+								Contexts: []*lib.RetrievalContext{
+									{
+										Text:      "test content 1",
+										SourceUri: "source1.md",
+										Score:     0.9,
+									},
+									{
+										Text:      "test content 2",
+										SourceUri: "source2.md",
+										Score:     0.8,
+									},
 								},
 							},
 						},
@@ -150,13 +152,15 @@ func TestCorpus_Query(t *testing.T) {
 					body: map[string]interface{}{
 						"vertex_rag_store": map[string]interface{}{
 							"rag_resources": map[string]interface{}{
-								"rag_corpus": "test-corpus",
+								"rag_corpus": "projects/test-project/locations/test-location/ragCorpora/test-corpus",
 							},
 							"vector_distance_threshold": 0.8,
 						},
 						"query": map[string]interface{}{
-							"text":             "test query",
-							"similarity_top_k": float64(3),
+							"text": "test query",
+							"rag_retrieval_config": map[string]interface{}{
+								"top_k": float64(3),
+							},
 						},
 					},
 				},
@@ -184,13 +188,15 @@ func TestCorpus_Query(t *testing.T) {
 					body: map[string]interface{}{
 						"vertex_rag_store": map[string]interface{}{
 							"rag_resources": map[string]interface{}{
-								"rag_corpus": "test-corpus",
+								"rag_corpus": "projects/test-project/locations/test-location/ragCorpora/test-corpus",
 							},
 							"vector_distance_threshold": 0.8,
 						},
 						"query": map[string]interface{}{
-							"text":             "test query",
-							"similarity_top_k": float64(3),
+							"text": "test query",
+							"rag_retrieval_config": map[string]interface{}{
+								"top_k": float64(3),
+							},
 						},
 					},
 				},
@@ -206,7 +212,9 @@ func TestCorpus_Query(t *testing.T) {
 					"POST /v1/projects/test-project/locations/test-location:retrieveContexts": {
 						statusCode: http.StatusOK,
 						body: lib.RetrieveContextsResponse{
-							Contexts: []*lib.RetrievalContext{},
+							Contexts: lib.RetrieveContexts{
+								Contexts: []*lib.RetrievalContext{},
+							},
 						},
 					},
 				}
@@ -220,13 +228,15 @@ func TestCorpus_Query(t *testing.T) {
 					body: map[string]interface{}{
 						"vertex_rag_store": map[string]interface{}{
 							"rag_resources": map[string]interface{}{
-								"rag_corpus": "test-corpus",
+								"rag_corpus": "projects/test-project/locations/test-location/ragCorpora/test-corpus",
 							},
 							"vector_distance_threshold": 0.8,
 						},
 						"query": map[string]interface{}{
-							"text":             "test query",
-							"similarity_top_k": float64(3),
+							"text": "test query",
+							"rag_retrieval_config": map[string]interface{}{
+								"top_k": float64(3),
+							},
 						},
 					},
 				},
