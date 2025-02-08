@@ -3,14 +3,17 @@ package rag
 import (
 	"context"
 	"docgent-backend/internal/domain"
+	"fmt"
+
+	"docgent-backend/internal/infrastructure/google/vertexai/rag/lib"
 )
 
 type Corpus struct {
-	client     *Client
+	client     *lib.Client
 	corpusName string
 }
 
-func NewCorpus(client *Client, corpusName string) domain.RAGCorpus {
+func NewCorpus(client *lib.Client, corpusName string) domain.RAGCorpus {
 	return &Corpus{
 		client:     client,
 		corpusName: corpusName,
@@ -20,7 +23,7 @@ func NewCorpus(client *Client, corpusName string) domain.RAGCorpus {
 func (c *Corpus) Query(ctx context.Context, query string, similarityTopK int32, vectorDistanceThreshold float64) ([]domain.RAGDocument, error) {
 	response, err := c.client.RetrieveContexts(ctx, c.corpusName, query, similarityTopK, vectorDistanceThreshold)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to retrieve contexts: %w", err)
 	}
 
 	documents := make([]domain.RAGDocument, len(response.Contexts))

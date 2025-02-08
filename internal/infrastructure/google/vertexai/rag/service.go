@@ -2,13 +2,14 @@ package rag
 
 import (
 	"docgent-backend/internal/domain"
+	"docgent-backend/internal/infrastructure/google/vertexai/rag/lib"
 )
 
 type Service struct {
-	client *Client
+	client *lib.Client
 }
 
-func NewService(client *Client) domain.RAGService {
+func NewService(client *lib.Client) domain.RAGService {
 	return &Service{
 		client: client,
 	}

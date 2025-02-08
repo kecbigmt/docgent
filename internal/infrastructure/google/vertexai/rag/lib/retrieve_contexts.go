@@ -1,4 +1,4 @@
-package rag
+package lib
 
 import (
 	"bytes"
@@ -7,26 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-
-	"golang.org/x/oauth2"
 )
-
-type Client struct {
-	httpClient *http.Client
-	ProjectID  string
-	Location   string
-}
-
-func NewClient(config Config) *Client {
-	ctx := context.Background()
-	client := oauth2.NewClient(ctx, config.Credentials.TokenSource)
-
-	return &Client{
-		httpClient: client,
-		ProjectID:  config.ProjectID,
-		Location:   config.Location,
-	}
-}
 
 type RetrieveContextsRequest struct {
 	VertexRagStore VertexRagStore `json:"vertex_rag_store"`
@@ -59,13 +40,18 @@ type RetrievalContext struct {
 }
 
 func (c *Client) RetrieveContexts(ctx context.Context, corpusName string, query string, similarityTopK int32, vectorDistanceThreshold float64) (RetrieveContextsResponse, error) {
-	url := fmt.Sprintf("https://%s-aiplatform.googleapis.com/v1/projects/%s/locations/%s:retrieveContexts", c.Location, c.ProjectID, c.Location)
+	url := fmt.Sprintf("https://%s-aiplatform.googleapis.com/v1/projects/%s/locations/%s:retrieveContexts", c.location, c.projectID, c.location)
 
 	reqBody := RetrieveContextsRequest{
 		VertexRagStore: VertexRagStore{
 			RagResources: RagResources{
 				RagCorpus: corpusName,
 			},
+			VectorDistanceThreshold: vectorDistanceThreshold,
+		},
+		Query: Query{
+			Text:           query,
+			SimilarityTopK: similarityTopK,
 		},
 	}
 	reqBodyBytes, err := json.Marshal(reqBody)
@@ -84,8 +70,14 @@ func (c *Client) RetrieveContexts(ctx context.Context, corpusName string, query 
 	if err != nil {
 		return RetrieveContextsResponse{}, err
 	}
-
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return RetrieveContextsResponse{}, &HTTPError{
+			StatusCode: resp.StatusCode,
+			Status:     http.StatusText(resp.StatusCode),
+		}
+	}
 
 	resBody, err := io.ReadAll(resp.Body)
 	if err != nil {

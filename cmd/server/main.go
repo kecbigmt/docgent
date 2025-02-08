@@ -27,7 +27,7 @@ func main() {
 			NewGitHubAPI,
 			NewGitHubWebhookRequestParser,
 			NewGenAIConfig,
-			NewRAGConfig,
+			NewRAGClient,
 			NewHTTPServer,
 			slack.NewServiceProvider,
 			fx.Annotate(
