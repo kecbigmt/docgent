@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"strconv"
 
 	"github.com/slack-go/slack/slackevents"
 	"go.uber.org/fx"
@@ -14,22 +13,25 @@ import (
 type SlackEventHandlerParams struct {
 	fx.In
 
-	Logger      *zap.Logger
-	EventRoutes []SlackEventRoute `group:"slack_event_routes"`
-	SlackAPI    SlackAPI
+	Logger                   *zap.Logger
+	EventRoutes              []SlackEventRoute `group:"slack_event_routes"`
+	SlackAPI                 SlackAPI
+	ApplicationConfigService ApplicationConfigService
 }
 
 type SlackEventHandler struct {
-	log         *zap.Logger
-	eventRoutes []SlackEventRoute
-	slackAPI    SlackAPI
+	log                      *zap.Logger
+	eventRoutes              []SlackEventRoute
+	slackAPI                 SlackAPI
+	applicationConfigService ApplicationConfigService
 }
 
 func NewSlackEventHandler(params SlackEventHandlerParams) *SlackEventHandler {
 	return &SlackEventHandler{
-		log:         params.Logger,
-		eventRoutes: params.EventRoutes,
-		slackAPI:    params.SlackAPI,
+		log:                      params.Logger,
+		eventRoutes:              params.EventRoutes,
+		slackAPI:                 params.SlackAPI,
+		applicationConfigService: params.ApplicationConfigService,
 	}
 }
 
@@ -54,32 +56,6 @@ func (h *SlackEventHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queryParams := r.URL.Query()
-	ghInstallationIDStr := queryParams.Get("gh_installation_id")
-	ghOwner := queryParams.Get("gh_owner")
-	ghRepo := queryParams.Get("gh_repo")
-	ghDefaultBranch := queryParams.Get("gh_default_branch")
-	if ghInstallationIDStr == "" || ghOwner == "" || ghRepo == "" {
-		h.log.Warn("GitHub installation ID, owner, or repo is missing")
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	if ghDefaultBranch == "" {
-		ghDefaultBranch = "main"
-	}
-	ghInstallationID, err := strconv.ParseInt(ghInstallationIDStr, 10, 64)
-	if err != nil {
-		h.log.Warn("Failed to parse GitHub installation ID", zap.Error(err))
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	gitHubAppParams := GitHubAppParams{
-		InstallationID: ghInstallationID,
-		Owner:          ghOwner,
-		Repo:           ghRepo,
-		DefaultBranch:  ghDefaultBranch,
-	}
-
 	if err := sv.Ensure(); err != nil {
 		h.log.Warn("Failed to verify request", zap.Error(err))
 		w.WriteHeader(http.StatusUnauthorized)
@@ -90,6 +66,18 @@ func (h *SlackEventHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.log.Warn("Failed to parse event", zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	workspace, err := h.applicationConfigService.GetWorkspaceBySlackWorkspaceID(event.TeamID)
+	if err != nil {
+		if err == ErrWorkspaceNotFound {
+			h.log.Warn("Unknown Slack workspace ID", zap.String("slack_workspace_id", event.TeamID))
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		h.log.Error("Failed to get workspace", zap.Error(err))
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -127,7 +115,7 @@ func (h *SlackEventHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		for _, route := range h.eventRoutes {
 			if innerEvent.Type == route.EventType() {
-				go route.ConsumeEvent(innerEvent, gitHubAppParams)
+				go route.ConsumeEvent(innerEvent, workspace)
 				return
 			}
 		}

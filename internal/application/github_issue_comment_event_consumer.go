@@ -15,25 +15,28 @@ import (
 type GitHubIssueCommentEventConsumerParams struct {
 	fx.In
 
-	ChatModel       domain.ChatModel
-	Logger          *zap.Logger
-	ServiceProvider GitHubServiceProvider
-	RAGService      domain.RAGService
+	ChatModel                domain.ChatModel
+	Logger                   *zap.Logger
+	ServiceProvider          GitHubServiceProvider
+	RAGService               domain.RAGService
+	ApplicationConfigService ApplicationConfigService
 }
 
 type GitHubIssueCommentEventConsumer struct {
-	chatModel       domain.ChatModel
-	logger          *zap.Logger
-	serviceProvider GitHubServiceProvider
-	ragService      domain.RAGService
+	chatModel                domain.ChatModel
+	logger                   *zap.Logger
+	serviceProvider          GitHubServiceProvider
+	ragService               domain.RAGService
+	applicationConfigService ApplicationConfigService
 }
 
 func NewGitHubIssueCommentEventConsumer(params GitHubIssueCommentEventConsumerParams) *GitHubIssueCommentEventConsumer {
 	return &GitHubIssueCommentEventConsumer{
-		chatModel:       params.ChatModel,
-		logger:          params.Logger,
-		serviceProvider: params.ServiceProvider,
-		ragService:      params.RAGService,
+		chatModel:                params.ChatModel,
+		logger:                   params.Logger,
+		serviceProvider:          params.ServiceProvider,
+		ragService:               params.RAGService,
+		applicationConfigService: params.ApplicationConfigService,
 	}
 }
 
@@ -55,6 +58,16 @@ func (c *GitHubIssueCommentEventConsumer) ConsumeEvent(event interface{}) {
 	defaultBranch := repo.GetDefaultBranch()
 	ownerName := repo.GetOwner().GetLogin()
 	issueNumber := strconv.Itoa(ev.Issue.GetNumber())
+
+	workspace, err := c.applicationConfigService.GetWorkspaceByGitHubInstallationID(installationID)
+	if err != nil {
+		if err == ErrWorkspaceNotFound {
+			c.logger.Warn("Unknown GitHub installation ID", zap.Int64("installation_id", installationID))
+			return
+		}
+		c.logger.Error("Failed to get workspace", zap.Error(err))
+		return
+	}
 
 	// Skip if this is not a pull request
 	if ev.Issue.PullRequestLinks == nil {
@@ -99,15 +112,15 @@ func (c *GitHubIssueCommentEventConsumer) ConsumeEvent(event interface{}) {
 
 	// Create workflow instance
 	workflow := workflow.NewProposalRefineWorkflow(
-		c.chatModel,                // AI interaction
-		conversationService,        // Comment management
-		fileQueryService,           // File operations
-		fileChangeService,          // File operations
-		proposalService,            // PR management
-		c.ragService.GetCorpus(""), // RAG corpus
+		c.chatModel,         // AI interaction
+		conversationService, // Comment management
+		fileQueryService,    // File operations
+		fileChangeService,   // File operations
+		proposalService,     // PR management
+		c.ragService.GetCorpus(workspace.VertexAICorpusID), // RAG corpus
 	)
 
-	// Process feedback
+	// Process feedbacks
 	handle := proposalService.NewProposalHandle(strconv.Itoa(ev.Issue.GetNumber()))
 	if err := workflow.Refine(handle, ev.Comment.GetBody()); err != nil {
 		c.logger.Error("Refinement failed", zap.Error(err))

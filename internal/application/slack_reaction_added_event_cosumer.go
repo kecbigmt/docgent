@@ -17,31 +17,34 @@ import (
 type SlackReactionAddedEventConsumerParams struct {
 	fx.In
 
-	Logger                *zap.Logger
-	SlackAPI              SlackAPI
-	GitHubServiceProvider GitHubServiceProvider
-	SlackServiceProvider  SlackServiceProvider
-	ChatModel             domain.ChatModel
-	RAGService            domain.RAGService
+	Logger                   *zap.Logger
+	SlackAPI                 SlackAPI
+	GitHubServiceProvider    GitHubServiceProvider
+	SlackServiceProvider     SlackServiceProvider
+	ChatModel                domain.ChatModel
+	RAGService               domain.RAGService
+	ApplicationConfigService ApplicationConfigService
 }
 
 type SlackReactionAddedEventConsumer struct {
-	logger                *zap.Logger
-	slackAPI              SlackAPI
-	githubServiceProvider GitHubServiceProvider
-	slackServiceProvider  SlackServiceProvider
-	chatModel             domain.ChatModel
-	ragService            domain.RAGService
+	logger                   *zap.Logger
+	slackAPI                 SlackAPI
+	githubServiceProvider    GitHubServiceProvider
+	slackServiceProvider     SlackServiceProvider
+	chatModel                domain.ChatModel
+	ragService               domain.RAGService
+	applicationConfigService ApplicationConfigService
 }
 
 func NewSlackReactionAddedEventConsumer(params SlackReactionAddedEventConsumerParams) *SlackReactionAddedEventConsumer {
 	return &SlackReactionAddedEventConsumer{
-		logger:                params.Logger,
-		slackAPI:              params.SlackAPI,
-		githubServiceProvider: params.GitHubServiceProvider,
-		slackServiceProvider:  params.SlackServiceProvider,
-		chatModel:             params.ChatModel,
-		ragService:            params.RAGService,
+		logger:                   params.Logger,
+		slackAPI:                 params.SlackAPI,
+		githubServiceProvider:    params.GitHubServiceProvider,
+		slackServiceProvider:     params.SlackServiceProvider,
+		chatModel:                params.ChatModel,
+		ragService:               params.RAGService,
+		applicationConfigService: params.ApplicationConfigService,
 	}
 }
 
@@ -49,7 +52,7 @@ func (h *SlackReactionAddedEventConsumer) EventType() string {
 	return "reaction_added"
 }
 
-func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsAPIInnerEvent, githubAppParams GitHubAppParams) {
+func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsAPIInnerEvent, workspace Workspace) {
 	ev, ok := event.Data.(*slackevents.ReactionAddedEvent)
 	if !ok {
 		h.logger.Error("Failed to convert event data to ReactionAddedEvent")
@@ -73,10 +76,10 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 	}
 
 	ctx := context.Background()
-	baseBranchName := githubAppParams.DefaultBranch
+	baseBranchName := workspace.GitHubDefaultBranch
 	newBranchName := fmt.Sprintf("docgent/%d", time.Now().Unix())
 
-	branchService := h.githubServiceProvider.NewBranchService(githubAppParams.InstallationID, githubAppParams.Owner, githubAppParams.Repo)
+	branchService := h.githubServiceProvider.NewBranchService(workspace.GitHubInstallationID, workspace.GitHubOwner, workspace.GitHubRepo)
 	err = branchService.CreateBranch(ctx, baseBranchName, newBranchName)
 	if err != nil {
 		h.logger.Error("Failed to create branch", zap.Error(err))
@@ -84,10 +87,10 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 		return
 	}
 
-	fileQueryService := h.githubServiceProvider.NewFileQueryService(githubAppParams.InstallationID, githubAppParams.Owner, githubAppParams.Repo, newBranchName)
-	fileChangeService := h.githubServiceProvider.NewFileChangeService(githubAppParams.InstallationID, githubAppParams.Owner, githubAppParams.Repo, newBranchName)
+	fileQueryService := h.githubServiceProvider.NewFileQueryService(workspace.GitHubInstallationID, workspace.GitHubOwner, workspace.GitHubRepo, newBranchName)
+	fileChangeService := h.githubServiceProvider.NewFileChangeService(workspace.GitHubInstallationID, workspace.GitHubOwner, workspace.GitHubRepo, newBranchName)
 
-	githubPullRequestAPI := h.githubServiceProvider.NewPullRequestAPI(githubAppParams.InstallationID, githubAppParams.Owner, githubAppParams.Repo, baseBranchName, newBranchName)
+	githubPullRequestAPI := h.githubServiceProvider.NewPullRequestAPI(workspace.GitHubInstallationID, workspace.GitHubOwner, workspace.GitHubRepo, baseBranchName, newBranchName)
 
 	var chatMessages []workflow.ChatMessage
 	for _, msg := range messages {
@@ -104,7 +107,7 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 		fileQueryService,
 		fileChangeService,
 		githubPullRequestAPI,
-		h.ragService.GetCorpus(""),
+		h.ragService.GetCorpus(workspace.VertexAICorpusID),
 	)
 	proposalHandle, err := proposalGenerateWorkflow.Execute(ctx, chatMessages)
 	if err != nil {
@@ -116,8 +119,8 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 	// 成功メッセージを投稿
 	conversationService.Reply(fmt.Sprintf(
 		"ドキュメントを生成しました！\nPR: https://github.com/%s/%s/pull/%s",
-		githubAppParams.Owner,
-		githubAppParams.Repo,
+		workspace.GitHubOwner,
+		workspace.GitHubRepo,
 		proposalHandle.Value,
 	))
 }
