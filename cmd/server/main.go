@@ -34,8 +34,6 @@ func main() {
 				NewServeMux,
 				fx.ParamTags(`group:"routes"`),
 			),
-			AsRoute(application.NewEchoHandler),
-			AsRoute(application.NewHelloHandler),
 			AsRoute(application.NewHealthHandler),
 			AsRoute(application.NewSlackEventHandler),
 			AsRoute(application.NewGitHubWebhookHandler),
