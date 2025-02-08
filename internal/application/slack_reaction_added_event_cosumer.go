@@ -22,6 +22,7 @@ type SlackReactionAddedEventConsumerParams struct {
 	GitHubServiceProvider GitHubServiceProvider
 	SlackServiceProvider  SlackServiceProvider
 	ChatModel             domain.ChatModel
+	RAGService            domain.RAGService
 }
 
 type SlackReactionAddedEventConsumer struct {
@@ -30,6 +31,7 @@ type SlackReactionAddedEventConsumer struct {
 	githubServiceProvider GitHubServiceProvider
 	slackServiceProvider  SlackServiceProvider
 	chatModel             domain.ChatModel
+	ragService            domain.RAGService
 }
 
 func NewSlackReactionAddedEventConsumer(params SlackReactionAddedEventConsumerParams) *SlackReactionAddedEventConsumer {
@@ -39,6 +41,7 @@ func NewSlackReactionAddedEventConsumer(params SlackReactionAddedEventConsumerPa
 		githubServiceProvider: params.GitHubServiceProvider,
 		slackServiceProvider:  params.SlackServiceProvider,
 		chatModel:             params.ChatModel,
+		ragService:            params.RAGService,
 	}
 }
 
@@ -101,6 +104,7 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 		fileQueryService,
 		fileChangeService,
 		githubPullRequestAPI,
+		h.ragService.GetCorpus(""),
 	)
 	proposalHandle, err := proposalGenerateWorkflow.Execute(ctx, chatMessages)
 	if err != nil {

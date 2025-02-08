@@ -18,12 +18,14 @@ type GitHubIssueCommentEventConsumerParams struct {
 	ChatModel       domain.ChatModel
 	Logger          *zap.Logger
 	ServiceProvider GitHubServiceProvider
+	RAGService      domain.RAGService
 }
 
 type GitHubIssueCommentEventConsumer struct {
 	chatModel       domain.ChatModel
 	logger          *zap.Logger
 	serviceProvider GitHubServiceProvider
+	ragService      domain.RAGService
 }
 
 func NewGitHubIssueCommentEventConsumer(params GitHubIssueCommentEventConsumerParams) *GitHubIssueCommentEventConsumer {
@@ -31,6 +33,7 @@ func NewGitHubIssueCommentEventConsumer(params GitHubIssueCommentEventConsumerPa
 		chatModel:       params.ChatModel,
 		logger:          params.Logger,
 		serviceProvider: params.ServiceProvider,
+		ragService:      params.RAGService,
 	}
 }
 
@@ -96,11 +99,12 @@ func (c *GitHubIssueCommentEventConsumer) ConsumeEvent(event interface{}) {
 
 	// Create workflow instance
 	workflow := workflow.NewProposalRefineWorkflow(
-		c.chatModel,         // AI interaction
-		conversationService, // Comment management
-		fileQueryService,    // File operations
-		fileChangeService,   // File operations
-		proposalService,     // PR management
+		c.chatModel,                // AI interaction
+		conversationService,        // Comment management
+		fileQueryService,           // File operations
+		fileChangeService,          // File operations
+		proposalService,            // PR management
+		c.ragService.GetCorpus(""), // RAG corpus
 	)
 
 	// Process feedback

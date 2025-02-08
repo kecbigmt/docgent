@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"os"
 
+	"docgent-backend/internal/domain"
 	"docgent-backend/internal/infrastructure/google/vertexai/genai"
+	"docgent-backend/internal/infrastructure/google/vertexai/rag"
 	raglib "docgent-backend/internal/infrastructure/google/vertexai/rag/lib"
 
 	"golang.org/x/oauth2/google"
@@ -34,7 +36,7 @@ func NewGenAIConfig() genai.Config {
 	}
 }
 
-func NewRAGClient() *raglib.Client {
+func NewRAGService() domain.RAGService {
 	projectID := os.Getenv("GOOGLE_PROJECT_ID")
 	if projectID == "" {
 		panic("GOOGLE_PROJECT_ID environment variable is not set")
@@ -51,5 +53,5 @@ func NewRAGClient() *raglib.Client {
 		panic(fmt.Sprintf("Failed to find default credentials: %v", err))
 	}
 
-	return raglib.NewClientWithCredentials(creds, projectID, location)
+	return rag.NewService(raglib.NewClientWithCredentials(creds, projectID, location))
 }

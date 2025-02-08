@@ -13,7 +13,6 @@ import (
 	"docgent-backend/internal/domain"
 	"docgent-backend/internal/infrastructure/github"
 	"docgent-backend/internal/infrastructure/google/vertexai/genai"
-	"docgent-backend/internal/infrastructure/google/vertexai/rag"
 	"docgent-backend/internal/infrastructure/slack"
 )
 
@@ -27,7 +26,7 @@ func main() {
 			NewGitHubAPI,
 			NewGitHubWebhookRequestParser,
 			NewGenAIConfig,
-			NewRAGClient,
+			NewRAGService,
 			NewHTTPServer,
 			slack.NewServiceProvider,
 			fx.Annotate(
@@ -42,7 +41,6 @@ func main() {
 			AsGitHubEventRoute(application.NewGitHubIssueCommentEventConsumer),
 			AsChatModel(genai.NewChatModel),
 			AsGitHubServiceProvider(github.NewServiceProvider),
-			rag.NewService,
 			zap.NewExample,
 		),
 		fx.Invoke(func(*http.Server) {}),
