@@ -3,3 +3,5 @@
 .clinerules
 .cursorrules
 /docs/tmp
+config.json
+config.*.json
