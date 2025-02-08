@@ -12,7 +12,7 @@ import (
 	"docgent-backend/internal/application"
 	"docgent-backend/internal/domain"
 	"docgent-backend/internal/infrastructure/github"
-	"docgent-backend/internal/infrastructure/google/vertexai"
+	"docgent-backend/internal/infrastructure/google/vertexai/genai"
 	"docgent-backend/internal/infrastructure/slack"
 )
 
@@ -38,7 +38,7 @@ func main() {
 			AsRoute(application.NewGitHubWebhookHandler),
 			AsSlackEventRoute(application.NewSlackReactionAddedEventConsumer),
 			AsGitHubEventRoute(application.NewGitHubIssueCommentEventConsumer),
-			AsChatModel(vertexai.NewChatModel),
+			AsChatModel(genai.NewChatModel),
 			AsGitHubServiceProvider(github.NewServiceProvider),
 			zap.NewExample,
 		),

@@ -1,4 +1,4 @@
-package vertexai
+package genai
 
 import (
 	"context"

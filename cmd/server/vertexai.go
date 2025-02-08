@@ -3,10 +3,10 @@ package main
 import (
 	"os"
 
-	"docgent-backend/internal/infrastructure/google/vertexai"
+	"docgent-backend/internal/infrastructure/google/vertexai/genai"
 )
 
-func NewVertexAIConfig() vertexai.Config {
+func NewVertexAIConfig() genai.Config {
 	projectID := os.Getenv("GOOGLE_PROJECT_ID")
 	if projectID == "" {
 		panic("GOOGLE_PROJECT_ID environment variable is not set")
@@ -22,7 +22,7 @@ func NewVertexAIConfig() vertexai.Config {
 		panic("GOOGLE_MODEL_NAME environment variable is not set")
 	}
 
-	return vertexai.Config{
+	return genai.Config{
 		ProjectID: projectID,
 		Location:  location,
 		ModelName: modelName,
