@@ -10,10 +10,10 @@ import (
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 
+	"docgent-backend/internal/application"
 	"docgent-backend/internal/domain"
 	"docgent-backend/internal/infrastructure/github"
 	infraslack "docgent-backend/internal/infrastructure/slack"
-	"docgent-backend/internal/workflow"
 )
 
 type SlackReactionAddedEventConsumerParams struct {
@@ -94,16 +94,16 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 
 	githubPullRequestAPI := h.githubServiceProvider.NewPullRequestAPI(workspace.GitHubInstallationID, workspace.GitHubOwner, workspace.GitHubRepo, baseBranchName, newBranchName)
 
-	var chatMessages []workflow.ChatMessage
+	var chatMessages []application.ChatMessage
 	for _, msg := range messages {
-		chatMessages = append(chatMessages, workflow.ChatMessage{
+		chatMessages = append(chatMessages, application.ChatMessage{
 			Author:  msg.User,
 			Content: msg.Text,
 		})
 	}
 
 	// ドキュメントを生成
-	proposalGenerateWorkflow := workflow.NewProposalGenerateWorkflow(
+	proposalGenerateWorkflow := application.NewProposalGenerateWorkflow(
 		h.chatModel,
 		conversationService,
 		fileQueryService,

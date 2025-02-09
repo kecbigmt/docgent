@@ -1,4 +1,4 @@
-package workflow
+package application
 
 import (
 	"context"
@@ -10,12 +10,7 @@ import (
 	"docgent-backend/internal/domain/tooluse"
 )
 
-type ChatMessage struct {
-	Author  string
-	Content string
-}
-
-type ProposalGenerateWorkflow struct {
+type ProposalRefineWorkflow struct {
 	chatModel           domain.ChatModel
 	conversationService domain.ConversationService
 	fileQueryService    domain.FileQueryService
@@ -25,18 +20,18 @@ type ProposalGenerateWorkflow struct {
 	remainingStepCount  int
 }
 
-type NewProposalGenerateWorkflowOption func(*ProposalGenerateWorkflow)
+type NewProposalRefineWorkflowOption func(*ProposalRefineWorkflow)
 
-func NewProposalGenerateWorkflow(
+func NewProposalRefineWorkflow(
 	chatModel domain.ChatModel,
 	conversationService domain.ConversationService,
 	fileQueryService domain.FileQueryService,
 	fileChangeService domain.FileChangeService,
 	proposalRepository domain.ProposalRepository,
 	ragCorpus domain.RAGCorpus,
-	options ...NewProposalGenerateWorkflowOption,
-) *ProposalGenerateWorkflow {
-	workflow := &ProposalGenerateWorkflow{
+	options ...NewProposalRefineWorkflowOption,
+) *ProposalRefineWorkflow {
+	workflow := &ProposalRefineWorkflow{
 		chatModel:           chatModel,
 		conversationService: conversationService,
 		fileQueryService:    fileQueryService,
@@ -53,16 +48,26 @@ func NewProposalGenerateWorkflow(
 	return workflow
 }
 
-func (w *ProposalGenerateWorkflow) Execute(
-	ctx context.Context,
-	chatHistory []ChatMessage,
-) (domain.ProposalHandle, error) {
-	var proposalHandle domain.ProposalHandle
-	var fileChanged bool
+func WithRemainingStepCount(remainingStepCount int) NewProposalRefineWorkflowOption {
+	return func(w *ProposalRefineWorkflow) {
+		w.remainingStepCount = remainingStepCount
+	}
+}
+
+func (w *ProposalRefineWorkflow) Refine(proposalHandle domain.ProposalHandle, userFeedback string) error {
+	ctx := context.Background()
+
+	proposal, err := w.proposalRepository.GetProposal(proposalHandle)
+	if err != nil {
+		if err := w.conversationService.Reply("Failed to retrieve proposal"); err != nil {
+			return fmt.Errorf("failed to reply error message: %w", err)
+		}
+		return fmt.Errorf("failed to retrieve proposal: %w", err)
+	}
 
 	agent := domain.NewAgent(
 		w.chatModel,
-		buildSystemInstructionToGenerateProposal(),
+		buildSystemInstructionToRefineProposal(proposal),
 		tooluse.Cases{
 			AttemptComplete: func(toolUse tooluse.AttemptComplete) (string, bool, error) {
 				if err := w.conversationService.Reply(toolUse.Message); err != nil {
@@ -88,7 +93,6 @@ func (w *ProposalGenerateWorkflow) Execute(
 						if err != nil {
 							return "", false, err
 						}
-						fileChanged = true
 						return "<success>File created</success>", false, nil
 					},
 					ModifyFile: func(c tooluse.ModifyFile) (string, bool, error) {
@@ -96,7 +100,6 @@ func (w *ProposalGenerateWorkflow) Execute(
 						if err != nil {
 							return "", false, err
 						}
-						fileChanged = true
 						return "<success>File modified</success>", false, nil
 					},
 					RenameFile: func(c tooluse.RenameFile) (string, bool, error) {
@@ -104,7 +107,6 @@ func (w *ProposalGenerateWorkflow) Execute(
 						if err != nil {
 							return "", false, err
 						}
-						fileChanged = true
 						return "<success>File renamed</success>", false, nil
 					},
 					DeleteFile: func(c tooluse.DeleteFile) (string, bool, error) {
@@ -112,23 +114,10 @@ func (w *ProposalGenerateWorkflow) Execute(
 						if err != nil {
 							return "", false, err
 						}
-						fileChanged = true
 						return "<success>File deleted</success>", false, nil
 					},
 				}
 				return change.Match(cases)
-			},
-			CreateProposal: func(toolUse tooluse.CreateProposal) (string, bool, error) {
-				if !fileChanged {
-					return "<error>No file changes. You should change files before creating a proposal.</error>", false, nil
-				}
-				content := domain.NewProposalContent(toolUse.Title, toolUse.Description)
-				handle, err := w.proposalRepository.CreateProposal(domain.Diffs{}, content)
-				if err != nil {
-					return "", false, err
-				}
-				proposalHandle = handle
-				return fmt.Sprintf("<success>Proposal created: %s</success>", handle.Value), false, nil
 			},
 			QueryRAG: func(toolUse tooluse.QueryRAG) (string, bool, error) {
 				docs, err := w.ragCorpus.Query(ctx, toolUse.Query, 10, 0.7)
@@ -149,49 +138,44 @@ func (w *ProposalGenerateWorkflow) Execute(
 		},
 	)
 
-	var chatHistoryStr strings.Builder
-	for _, msg := range chatHistory {
-		chatHistoryStr.WriteString(fmt.Sprintf("%s: %s\n", msg.Author, msg.Content))
-	}
-
 	task := fmt.Sprintf(`<task>
-1. Analyze the chat history. Use query_rag to find relevant existing documents and find_file to check the file content.
-2. Use create_file, modify_file, rename_file, delete_file to change files for the best documentation.
-3. Use create_proposal to create a proposal based on the document file changes. You should contain the chat history in the proposal description as a reference.
-4. Use attempt_complete to complete the task.
-
-You should use create_proposal only after you changed files.
+You submitted a proposal to create/update documents.
+Now, you are given a user feedback.
+Use query_rag to find relevant existing documents and refine the proposal based on the user feedback.
 </task>
-<chat_history>
+<user_feedback>
 %s
-</chat_history>
-`, chatHistoryStr.String())
+</user_feedback>
+`, userFeedback)
 
-	err := agent.InitiateTaskLoop(ctx, task, w.remainingStepCount)
+	err = agent.InitiateTaskLoop(ctx, task, w.remainingStepCount)
 	if err != nil {
-		if err := w.conversationService.Reply("Something went wrong while generating the proposal"); err != nil {
-			return domain.ProposalHandle{}, fmt.Errorf("failed to reply error message: %w", err)
+		if err := w.conversationService.Reply("Something went wrong while refining the proposal"); err != nil {
+			return fmt.Errorf("failed to reply error message: %w", err)
 		}
-		return domain.ProposalHandle{}, fmt.Errorf("failed to initiate task loop: %w", err)
+		return fmt.Errorf("failed to initiate task loop: %w", err)
 	}
 
-	if proposalHandle == (domain.ProposalHandle{}) {
-		return domain.ProposalHandle{}, fmt.Errorf("proposal was not created")
-	}
-
-	return proposalHandle, nil
+	return nil
 }
 
-func buildSystemInstructionToGenerateProposal() *domain.SystemInstruction {
+func buildSystemInstructionToRefineProposal(proposal domain.Proposal) *domain.SystemInstruction {
+	var newFiles []string
+	for _, diff := range proposal.Diffs {
+		newFiles = append(newFiles, "- "+diff.NewName)
+	}
+	newFilesStr := strings.Join(newFiles, "\n")
+
 	systemInstruction := domain.NewSystemInstruction(
-		[]domain.EnvironmentContext{},
+		[]domain.EnvironmentContext{
+			domain.NewEnvironmentContext("Current proposal files", newFilesStr),
+		},
 		[]tooluse.Usage{
 			tooluse.CreateFileUsage,
 			tooluse.ModifyFileUsage,
 			tooluse.DeleteFileUsage,
 			tooluse.RenameFileUsage,
 			tooluse.FindFileUsage,
-			tooluse.CreateProposalUsage,
 			tooluse.QueryRAGUsage,
 			tooluse.AttemptCompleteUsage,
 		},
