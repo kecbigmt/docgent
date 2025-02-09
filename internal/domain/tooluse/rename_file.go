@@ -2,7 +2,7 @@ package tooluse
 
 import "encoding/xml"
 
-var RenameFileUsage = NewUsage("rename_file", "Rename a file. Make sure to check the file content with find_file before rename_file.", []Parameter{
+var RenameFileUsage = NewUsage("rename_file", "Rename a file. You can also use this to move a file to another directory. Make sure to check the file content with find_file before rename_file.", []Parameter{
 	NewParameter("old_path", "The exact path to the existing file to rename", true),
 	NewParameter("new_path", "The new path to the file", true),
 	NewParameter("hunk", "The hunk to apply to the file. The hunk is a pair of search and replace strings. Search string must be exactly matched with the content of the file. Multiple hunks can be applied to the file.", false),
