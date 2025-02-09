@@ -7,22 +7,22 @@ import (
 	"docgent-backend/internal/domain"
 )
 
-type ProposalCommentWorkflow struct {
+type ProposalCommentUsecase struct {
 	proposalAgent      domain.ProposalAgent
 	proposalRepository domain.ProposalRepository
 }
 
-func NewProposalCommentWorkflow(
+func NewProposalCommentUsecase(
 	proposalAgent domain.ProposalAgent,
 	proposalRepository domain.ProposalRepository,
-) *ProposalCommentWorkflow {
-	return &ProposalCommentWorkflow{
+) *ProposalCommentUsecase {
+	return &ProposalCommentUsecase{
 		proposalAgent:      proposalAgent,
 		proposalRepository: proposalRepository,
 	}
 }
 
-func (w *ProposalCommentWorkflow) Execute(
+func (w *ProposalCommentUsecase) Execute(
 	ctx context.Context,
 	proposalHandle domain.ProposalHandle,
 	commentBody string,

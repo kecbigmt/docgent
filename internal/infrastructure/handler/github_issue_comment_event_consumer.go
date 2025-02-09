@@ -113,7 +113,7 @@ func (c *GitHubIssueCommentEventConsumer) ConsumeEvent(event interface{}) {
 	proposalService := c.githubServiceProvider.NewPullRequestAPI(installationID, ownerName, repoName, defaultBranch, "")
 
 	// Create workflow instance
-	workflow := application.NewProposalRefineWorkflow(
+	workflow := application.NewProposalRefineUsecase(
 		c.chatModel,         // AI interaction
 		conversationService, // Comment management
 		fileQueryService,    // File operations

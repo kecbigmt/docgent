@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestProposalRefineWorkflow_Refine(t *testing.T) {
+func TestProposalRefineUsecase_Refine(t *testing.T) {
 	tests := []struct {
 		name           string
 		proposalHandle domain.ProposalHandle
@@ -88,7 +88,7 @@ func TestProposalRefineWorkflow_Refine(t *testing.T) {
 			tt.setupMocks(chatModel, conversationService, fileQueryService, fileChangeService, proposalRepository, ragCorpus)
 
 			// ワークフローの作成
-			workflow := NewProposalRefineWorkflow(
+			workflow := NewProposalRefineUsecase(
 				chatModel,
 				conversationService,
 				fileQueryService,

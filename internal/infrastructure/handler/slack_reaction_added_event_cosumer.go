@@ -82,7 +82,7 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 	githubPullRequestAPI := h.githubServiceProvider.NewPullRequestAPI(workspace.GitHubInstallationID, workspace.GitHubOwner, workspace.GitHubRepo, baseBranchName, newBranchName)
 
 	// ドキュメントを生成
-	proposalGenerateWorkflow := application.NewProposalGenerateWorkflow(
+	proposalGenerateUsecase := application.NewProposalGenerateUsecase(
 		h.chatModel,
 		conversationService,
 		fileQueryService,
@@ -90,7 +90,7 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 		githubPullRequestAPI,
 		h.ragService.GetCorpus(workspace.VertexAICorpusID),
 	)
-	proposalHandle, err := proposalGenerateWorkflow.Execute(ctx)
+	proposalHandle, err := proposalGenerateUsecase.Execute(ctx)
 	if err != nil {
 		h.logger.Error("Failed to generate increment", zap.Error(err))
 		conversationService.Reply(":warning: エラー: ドキュメントの生成に失敗しました")

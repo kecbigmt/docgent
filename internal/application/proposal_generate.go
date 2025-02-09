@@ -10,7 +10,7 @@ import (
 	"docgent-backend/internal/domain/tooluse"
 )
 
-type ProposalGenerateWorkflow struct {
+type ProposalGenerateUsecase struct {
 	chatModel           domain.ChatModel
 	conversationService domain.ConversationService
 	fileQueryService    domain.FileQueryService
@@ -20,18 +20,18 @@ type ProposalGenerateWorkflow struct {
 	remainingStepCount  int
 }
 
-type NewProposalGenerateWorkflowOption func(*ProposalGenerateWorkflow)
+type NewProposalGenerateUsecaseOption func(*ProposalGenerateUsecase)
 
-func NewProposalGenerateWorkflow(
+func NewProposalGenerateUsecase(
 	chatModel domain.ChatModel,
 	conversationService domain.ConversationService,
 	fileQueryService domain.FileQueryService,
 	fileChangeService domain.FileChangeService,
 	proposalRepository domain.ProposalRepository,
 	ragCorpus domain.RAGCorpus,
-	options ...NewProposalGenerateWorkflowOption,
-) *ProposalGenerateWorkflow {
-	workflow := &ProposalGenerateWorkflow{
+	options ...NewProposalGenerateUsecaseOption,
+) *ProposalGenerateUsecase {
+	workflow := &ProposalGenerateUsecase{
 		chatModel:           chatModel,
 		conversationService: conversationService,
 		fileQueryService:    fileQueryService,
@@ -48,7 +48,7 @@ func NewProposalGenerateWorkflow(
 	return workflow
 }
 
-func (w *ProposalGenerateWorkflow) Execute(ctx context.Context) (domain.ProposalHandle, error) {
+func (w *ProposalGenerateUsecase) Execute(ctx context.Context) (domain.ProposalHandle, error) {
 	chatHistory, err := w.conversationService.GetHistory()
 	if err != nil {
 		return domain.ProposalHandle{}, fmt.Errorf("failed to get chat history: %w", err)

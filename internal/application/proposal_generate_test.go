@@ -121,7 +121,7 @@ func (m *MockRAGCorpus) Query(ctx context.Context, query string, similarityTopK 
 	return args.Get(0).([]domain.RAGDocument), args.Error(1)
 }
 
-func TestProposalGenerateWorkflow_Execute(t *testing.T) {
+func TestProposalGenerateUsecase_Execute(t *testing.T) {
 	tests := []struct {
 		name           string
 		setupMocks     func(*MockChatModel, *MockConversationService, *MockFileQueryService, *MockFileChangeService, *MockProposalRepository, *MockRAGCorpus)
@@ -215,7 +215,7 @@ func TestProposalGenerateWorkflow_Execute(t *testing.T) {
 			tt.setupMocks(chatModel, conversationService, fileQueryService, fileChangeService, proposalRepository, ragCorpus)
 
 			// ワークフローの作成
-			workflow := NewProposalGenerateWorkflow(
+			workflow := NewProposalGenerateUsecase(
 				chatModel,
 				conversationService,
 				fileQueryService,
