@@ -20,7 +20,7 @@ func TestClient_UploadFile(t *testing.T) {
 		setup           func(*mockTransport)
 		errorExpected   bool
 		expectedReqs    []mockRequest
-		expectedRagFile RagFile
+		expectedRagFile File
 	}{
 		{
 			name:     "Success: Upload file with options",
@@ -35,16 +35,16 @@ func TestClient_UploadFile(t *testing.T) {
 					"POST /upload/v1/projects/test-project/locations/test-location/ragCorpora/1/ragFiles:upload": {
 						statusCode: http.StatusOK,
 						body: map[string]interface{}{
-							"rag_file": map[string]interface{}{
-								"name":         "test-project/test-location/ragCorpora/1/ragFiles/123",
-								"display_name": "test.md",
-								"description":  "test description",
+							"ragFile": map[string]interface{}{
+								"name":        "test-project/test-location/ragCorpora/1/ragFiles/123",
+								"displayName": "test.md",
+								"description": "test description",
 							},
 						},
 					},
 				}
 			},
-			expectedRagFile: RagFile{
+			expectedRagFile: File{
 				Name:        "test-project/test-location/ragCorpora/1/ragFiles/123",
 				DisplayName: "test.md",
 				Description: "test description",
@@ -95,17 +95,17 @@ func TestClient_UploadFile(t *testing.T) {
 					"POST /upload/v1/projects/test-project/locations/test-location/ragCorpora/1/ragFiles:upload": {
 						statusCode: http.StatusOK,
 						body: map[string]interface{}{
-							"rag_file": map[string]interface{}{
-								"name":         "test-project/test-location/ragCorpora/1/ragFiles/123",
-								"display_name": "test.md",
-								"description":  "",
+							"ragFile": map[string]interface{}{
+								"name":        "test-project/test-location/ragCorpora/1/ragFiles/123",
+								"displayName": "test.md",
+								"description": "",
 							},
 						},
 					},
 				}
 			},
 			errorExpected: false,
-			expectedRagFile: RagFile{
+			expectedRagFile: File{
 				Name:        "test-project/test-location/ragCorpora/1/ragFiles/123",
 				DisplayName: "test.md",
 				Description: "",
@@ -155,7 +155,7 @@ func TestClient_UploadFile(t *testing.T) {
 				}
 			},
 			errorExpected:   true,
-			expectedRagFile: RagFile{},
+			expectedRagFile: File{},
 			expectedReqs: []mockRequest{
 				{
 					method: "POST",

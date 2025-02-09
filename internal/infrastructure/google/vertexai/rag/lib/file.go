@@ -5,12 +5,6 @@ import (
 	"fmt"
 )
 
-type RagFile struct {
-	Name        string `json:"name"`
-	DisplayName string `json:"display_name"`
-	Description string `json:"description,omitempty"`
-}
-
 type File struct {
 	Name        string     `json:"name"`
 	DisplayName string     `json:"displayName"`

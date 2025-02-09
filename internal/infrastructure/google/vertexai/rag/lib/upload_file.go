@@ -38,14 +38,14 @@ type FixedLengthChunking struct {
 }
 
 type UploadFileResponse struct {
-	RagFile *RagFile `json:"rag_file"`
+	RagFile File `json:"ragFile"`
 }
 
 // UploadFile uploads a file to a RAG corpus.
 // References:
 // - Example: https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/rag-api-v1#upload-a-rag-file-example-api
 // - Parameters: https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/rag-api-v1#parameters-list
-func (c *Client) UploadFile(ctx context.Context, corpusId int64, file io.Reader, fileName string, options ...UploadFileOption) (RagFile, error) {
+func (c *Client) UploadFile(ctx context.Context, corpusId int64, file io.Reader, fileName string, options ...UploadFileOption) (File, error) {
 	uploadFileOptions := &UploadFileOptions{}
 	for _, option := range options {
 		option(uploadFileOptions)
@@ -76,33 +76,33 @@ func (c *Client) UploadFile(ctx context.Context, corpusId int64, file io.Reader,
 
 	metadataBytes, err := json.Marshal(metadata)
 	if err != nil {
-		return RagFile{}, err
+		return File{}, err
 	}
 
 	var requestBody bytes.Buffer
 	writer := multipart.NewWriter(&requestBody)
 
 	if err := writer.WriteField("metadata", string(metadataBytes)); err != nil {
-		return RagFile{}, err
+		return File{}, err
 	}
 
 	filePart, err := writer.CreateFormFile("file", fileName)
 	if err != nil {
-		return RagFile{}, err
+		return File{}, err
 	}
 
 	if _, err := io.Copy(filePart, file); err != nil {
-		return RagFile{}, err
+		return File{}, err
 	}
 
 	if err := writer.Close(); err != nil {
-		return RagFile{}, err
+		return File{}, err
 	}
 
 	url := fmt.Sprintf("https://%s-aiplatform.googleapis.com/upload/v1/projects/%s/locations/%s/ragCorpora/%d/ragFiles:upload", c.location, c.projectID, c.location, corpusId)
 	req, err := http.NewRequestWithContext(ctx, "POST", url, &requestBody)
 	if err != nil {
-		return RagFile{}, err
+		return File{}, err
 	}
 
 	req.Header.Set("Content-Type", writer.FormDataContentType())
@@ -110,13 +110,13 @@ func (c *Client) UploadFile(ctx context.Context, corpusId int64, file io.Reader,
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return RagFile{}, err
+		return File{}, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return RagFile{}, fmt.Errorf("failed to upload file: %w", &HTTPError{
+		return File{}, fmt.Errorf("failed to upload file: %w", &HTTPError{
 			StatusCode: resp.StatusCode,
 			Status:     resp.Status,
 			RawBody:    string(body),
@@ -125,10 +125,10 @@ func (c *Client) UploadFile(ctx context.Context, corpusId int64, file io.Reader,
 
 	var responseBody UploadFileResponse
 	if err := json.NewDecoder(resp.Body).Decode(&responseBody); err != nil {
-		return RagFile{}, err
+		return File{}, err
 	}
 
-	return *responseBody.RagFile, nil
+	return responseBody.RagFile, nil
 }
 
 type UploadFileOption func(*UploadFileOptions)
