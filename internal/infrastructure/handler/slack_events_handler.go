@@ -53,21 +53,9 @@ func (h *SlackEventHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	workspace, err := h.applicationConfigService.GetWorkspaceBySlackWorkspaceID(event.TeamID)
-	if err != nil {
-		if err == ErrWorkspaceNotFound {
-			h.log.Warn("Unknown Slack workspace ID", zap.String("slack_workspace_id", event.TeamID))
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-		h.log.Error("Failed to get workspace", zap.Error(err))
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
 	// URLの検証チャレンジに応答
 	if event.Type == slackevents.URLVerification {
-		ev, ok := event.Data.(*slackevents.ChallengeResponse)
+		ev, ok := event.Data.(*slackevents.EventsAPIURLVerificationEvent)
 		if !ok {
 			h.log.Error("Failed to convert event data to ChallengeResponse")
 			w.WriteHeader(http.StatusInternalServerError)
@@ -77,6 +65,18 @@ func (h *SlackEventHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(map[string]string{
 			"challenge": ev.Challenge,
 		})
+		return
+	}
+
+	workspace, err := h.applicationConfigService.GetWorkspaceBySlackWorkspaceID(event.TeamID)
+	if err != nil {
+		if err == ErrWorkspaceNotFound {
+			h.log.Warn("Unknown Slack workspace ID", zap.String("slack_workspace_id", event.TeamID))
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		h.log.Error("Failed to get workspace", zap.Error(err))
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
