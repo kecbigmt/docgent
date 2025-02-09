@@ -128,6 +128,16 @@ func (m *MockRAGCorpus) UploadFile(ctx context.Context, file io.Reader, fileName
 	return args.Error(0)
 }
 
+func (m *MockRAGCorpus) ListFiles(ctx context.Context) ([]port.RAGFile, error) {
+	args := m.Called(ctx)
+	return args.Get(0).([]port.RAGFile), args.Error(1)
+}
+
+func (m *MockRAGCorpus) DeleteFile(ctx context.Context, fileID int64) error {
+	args := m.Called(ctx, fileID)
+	return args.Error(0)
+}
+
 func TestProposalGenerateUsecase_Execute(t *testing.T) {
 	tests := []struct {
 		name           string
