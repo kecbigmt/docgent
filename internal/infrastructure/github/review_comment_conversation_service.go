@@ -26,6 +26,10 @@ func NewReviewCommentConversationService(client *github.Client, owner, repo stri
 	}
 }
 
+func (s *ReviewCommentConversationService) GetHistory() ([]domain.ConversationMessage, error) {
+	panic("not implemented")
+}
+
 func (s *ReviewCommentConversationService) Reply(input string) error {
 	ctx := context.Background()
 

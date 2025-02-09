@@ -10,11 +10,6 @@ import (
 	"docgent-backend/internal/domain/tooluse"
 )
 
-type ChatMessage struct {
-	Author  string
-	Content string
-}
-
 type ProposalGenerateWorkflow struct {
 	chatModel           domain.ChatModel
 	conversationService domain.ConversationService
@@ -53,10 +48,12 @@ func NewProposalGenerateWorkflow(
 	return workflow
 }
 
-func (w *ProposalGenerateWorkflow) Execute(
-	ctx context.Context,
-	chatHistory []ChatMessage,
-) (domain.ProposalHandle, error) {
+func (w *ProposalGenerateWorkflow) Execute(ctx context.Context) (domain.ProposalHandle, error) {
+	chatHistory, err := w.conversationService.GetHistory()
+	if err != nil {
+		return domain.ProposalHandle{}, fmt.Errorf("failed to get chat history: %w", err)
+	}
+
 	var proposalHandle domain.ProposalHandle
 	var fileChanged bool
 
@@ -167,7 +164,7 @@ You should use create_proposal only after you changed files.
 </chat_history>
 `, chatHistoryStr.String())
 
-	err := agent.InitiateTaskLoop(ctx, task, w.remainingStepCount)
+	err = agent.InitiateTaskLoop(ctx, task, w.remainingStepCount)
 	if err != nil {
 		if err := w.conversationService.Reply("Something went wrong while generating the proposal"); err != nil {
 			return domain.ProposalHandle{}, fmt.Errorf("failed to reply error message: %w", err)
