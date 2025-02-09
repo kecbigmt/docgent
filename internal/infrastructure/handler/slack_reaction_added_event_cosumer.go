@@ -63,7 +63,7 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 
 	threadTimestamp := ev.Item.Timestamp
 
-	conversationService := h.slackServiceProvider.NewConversationService(ev.Item.Channel, threadTimestamp)
+	conversationService := h.slackServiceProvider.NewConversationService(ev.Item.Channel, threadTimestamp, threadTimestamp)
 
 	ctx := context.Background()
 	baseBranchName := workspace.GitHubDefaultBranch

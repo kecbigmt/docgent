@@ -51,7 +51,7 @@ func (c *SlackMentionEventConsumer) ConsumeEvent(event slackevents.EventsAPIInne
 	question := appMentionEvent.Text
 
 	// 会話サービスを初期化
-	conversationService := c.slackServiceProvider.NewConversationService(appMentionEvent.Channel, appMentionEvent.TimeStamp)
+	conversationService := c.slackServiceProvider.NewConversationService(appMentionEvent.Channel, appMentionEvent.ThreadTimeStamp, appMentionEvent.TimeStamp)
 
 	ragCorpus := c.ragService.GetCorpus(workspace.VertexAICorpusID)
 
