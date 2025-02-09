@@ -9,19 +9,19 @@ import (
 )
 
 type Corpus struct {
-	client     *lib.Client
-	corpusName string
+	client   *lib.Client
+	corpusId int64
 }
 
-func NewCorpus(client *lib.Client, corpusName string) port.RAGCorpus {
+func NewCorpus(client *lib.Client, corpusId int64) port.RAGCorpus {
 	return &Corpus{
-		client:     client,
-		corpusName: corpusName,
+		client:   client,
+		corpusId: corpusId,
 	}
 }
 
 func (c *Corpus) Query(ctx context.Context, query string, similarityTopK int32, vectorDistanceThreshold float64) ([]port.RAGDocument, error) {
-	response, err := c.client.RetrieveContexts(ctx, c.corpusName, query, similarityTopK, vectorDistanceThreshold)
+	response, err := c.client.RetrieveContexts(ctx, c.corpusId, query, similarityTopK, vectorDistanceThreshold)
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve contexts: %w", err)
 	}

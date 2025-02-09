@@ -8,7 +8,7 @@ type Workspace struct {
 	GitHubOwner          string `json:"github_owner"`
 	GitHubRepo           string `json:"github_repo"`
 	GitHubDefaultBranch  string `json:"github_default_branch"`
-	VertexAICorpusID     string `json:"vertexai_rag_corpus_id"`
+	VertexAICorpusID     int64  `json:"vertexai_rag_corpus_id"`
 }
 
 var ErrWorkspaceNotFound = errors.New("workspace not found")

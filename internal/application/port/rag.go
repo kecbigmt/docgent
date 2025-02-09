@@ -5,7 +5,7 @@ import (
 )
 
 type RAGService interface {
-	GetCorpus(corpusName string) RAGCorpus
+	GetCorpus(corpusId int64) RAGCorpus
 }
 
 // RAGCorpus is an interface for searching for related information from existing documents.

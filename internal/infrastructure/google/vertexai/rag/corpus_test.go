@@ -152,7 +152,7 @@ func TestCorpus_Query(t *testing.T) {
 					body: map[string]interface{}{
 						"vertex_rag_store": map[string]interface{}{
 							"rag_resources": map[string]interface{}{
-								"rag_corpus": "projects/test-project/locations/test-location/ragCorpora/test-corpus",
+								"rag_corpus": "projects/test-project/locations/test-location/ragCorpora/1",
 							},
 							"vector_distance_threshold": 0.8,
 						},
@@ -188,7 +188,7 @@ func TestCorpus_Query(t *testing.T) {
 					body: map[string]interface{}{
 						"vertex_rag_store": map[string]interface{}{
 							"rag_resources": map[string]interface{}{
-								"rag_corpus": "projects/test-project/locations/test-location/ragCorpora/test-corpus",
+								"rag_corpus": "projects/test-project/locations/test-location/ragCorpora/1",
 							},
 							"vector_distance_threshold": 0.8,
 						},
@@ -228,7 +228,7 @@ func TestCorpus_Query(t *testing.T) {
 					body: map[string]interface{}{
 						"vertex_rag_store": map[string]interface{}{
 							"rag_resources": map[string]interface{}{
-								"rag_corpus": "projects/test-project/locations/test-location/ragCorpora/test-corpus",
+								"rag_corpus": "projects/test-project/locations/test-location/ragCorpora/1",
 							},
 							"vector_distance_threshold": 0.8,
 						},
@@ -255,7 +255,7 @@ func TestCorpus_Query(t *testing.T) {
 
 			// テスト対象のインスタンスを作成
 			client := lib.NewClient(&http.Client{Transport: mt}, "test-project", "test-location")
-			corpus := NewCorpus(client, "test-corpus")
+			corpus := NewCorpus(client, 1)
 
 			// テスト実行
 			documents, err := corpus.Query(

@@ -47,9 +47,9 @@ type RetrievalContext struct {
 	Score             float64 `json:"score"`
 }
 
-func (c *Client) RetrieveContexts(ctx context.Context, corpusName string, query string, similarityTopK int32, vectorDistanceThreshold float64) (RetrieveContextsResponse, error) {
+func (c *Client) RetrieveContexts(ctx context.Context, corpusId int64, query string, similarityTopK int32, vectorDistanceThreshold float64) (RetrieveContextsResponse, error) {
 	url := fmt.Sprintf("https://%s-aiplatform.googleapis.com/v1/projects/%s/locations/%s:retrieveContexts", c.location, c.projectID, c.location)
-	corpus := fmt.Sprintf("projects/%s/locations/%s/ragCorpora/%s", c.projectID, c.location, corpusName)
+	corpus := fmt.Sprintf("projects/%s/locations/%s/ragCorpora/%d", c.projectID, c.location, corpusId)
 
 	reqBody := RetrieveContextsRequest{
 		VertexRagStore: VertexRagStore{

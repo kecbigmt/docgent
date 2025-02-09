@@ -15,6 +15,6 @@ func NewService(client *lib.Client) port.RAGService {
 	}
 }
 
-func (s *Service) GetCorpus(corpusName string) port.RAGCorpus {
-	return NewCorpus(s.client, corpusName)
+func (s *Service) GetCorpus(corpusId int64) port.RAGCorpus {
+	return NewCorpus(s.client, corpusId)
 }
