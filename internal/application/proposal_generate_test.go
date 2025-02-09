@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	"errors"
+	"io"
 	"testing"
 
 	"docgent-backend/internal/application/port"
@@ -120,6 +121,11 @@ type MockRAGCorpus struct {
 func (m *MockRAGCorpus) Query(ctx context.Context, query string, similarityTopK int32, vectorDistanceThreshold float64) ([]port.RAGDocument, error) {
 	args := m.Called(ctx, query, similarityTopK, vectorDistanceThreshold)
 	return args.Get(0).([]port.RAGDocument), args.Error(1)
+}
+
+func (m *MockRAGCorpus) UploadFile(ctx context.Context, file io.Reader, fileName string, options ...port.RAGCorpusUploadFileOption) error {
+	args := m.Called(ctx, file, fileName, options)
+	return args.Error(0)
 }
 
 func TestProposalGenerateUsecase_Execute(t *testing.T) {

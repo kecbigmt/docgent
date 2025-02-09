@@ -2,6 +2,7 @@ package port
 
 import (
 	"context"
+	"io"
 )
 
 type RAGService interface {
@@ -13,6 +14,35 @@ type RAGCorpus interface {
 	// Query is a method to search for related information from existing documents.
 	// It returns up to 10 documents in order of relevance to the query.
 	Query(ctx context.Context, query string, similarityTopK int32, vectorDistanceThreshold float64) ([]RAGDocument, error)
+
+	UploadFile(ctx context.Context, file io.Reader, fileName string, options ...RAGCorpusUploadFileOption) error
+}
+
+type RAGCorpusUploadFileOption func(*RAGCorpusUploadFileOptions)
+
+type RAGCorpusUploadFileOptions struct {
+	Description    string
+	ChunkingConfig ChunkingConfig
+}
+
+func WithRagFileDescription(description string) RAGCorpusUploadFileOption {
+	return func(o *RAGCorpusUploadFileOptions) {
+		o.Description = description
+	}
+}
+
+func WithRagFileChunkingConfig(chunkSize int, chunkOverlap int) RAGCorpusUploadFileOption {
+	return func(o *RAGCorpusUploadFileOptions) {
+		o.ChunkingConfig = ChunkingConfig{
+			ChunkSize:    chunkSize,
+			ChunkOverlap: chunkOverlap,
+		}
+	}
+}
+
+type ChunkingConfig struct {
+	ChunkSize    int
+	ChunkOverlap int
 }
 
 // RAGDocument is a document returned from the RAG service.

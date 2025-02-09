@@ -1,0 +1,135 @@
+package lib
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"mime/multipart"
+	"net/http"
+)
+
+type UploadFileMetadata struct {
+	RagFile             *UploadFileMetadataRagFile `json:"rag_file"`
+	UploadRagFileConfig *UploadRagFileConfig       `json:"upload_rag_file_config"`
+}
+
+type UploadFileMetadataRagFile struct {
+	DisplayName string `json:"display_name"`
+	Description string `json:"description"`
+}
+
+type UploadRagFileConfig struct {
+	RagFileTransformationConfig *RagFileTransformationConfig `json:"rag_file_transformation_config"`
+}
+
+type RagFileTransformationConfig struct {
+	RagFileChunkingConfig *RagFileChunkingConfig `json:"rag_file_chunking_config"`
+}
+
+type RagFileChunkingConfig struct {
+	ChunkSize    int32 `json:"chunk_size"`
+	ChunkOverlap int32 `json:"chunk_overlap"`
+}
+
+func (c *Client) UploadFile(ctx context.Context, corpusId int64, file io.Reader, fileName string, options ...UploadFileOption) error {
+	uploadFileOptions := &UploadFileOptions{}
+	for _, option := range options {
+		option(uploadFileOptions)
+	}
+
+	metadata := &UploadFileMetadata{
+		RagFile: &UploadFileMetadataRagFile{
+			DisplayName: fileName,
+		},
+	}
+
+	if uploadFileOptions.Description != "" {
+		metadata.RagFile.Description = uploadFileOptions.Description
+	}
+
+	if uploadFileOptions.ChunkingConfig != (ChunkingConfig{}) {
+		metadata.UploadRagFileConfig = &UploadRagFileConfig{
+			RagFileTransformationConfig: &RagFileTransformationConfig{
+				RagFileChunkingConfig: &RagFileChunkingConfig{
+					ChunkSize:    int32(uploadFileOptions.ChunkingConfig.ChunkSize),
+					ChunkOverlap: int32(uploadFileOptions.ChunkingConfig.ChunkOverlap),
+				},
+			},
+		}
+	}
+
+	metadataBytes, err := json.Marshal(metadata)
+	if err != nil {
+		return err
+	}
+
+	var requestBody bytes.Buffer
+	writer := multipart.NewWriter(&requestBody)
+
+	if err := writer.WriteField("metadata", string(metadataBytes)); err != nil {
+		return err
+	}
+
+	filePart, err := writer.CreateFormFile("file", fileName)
+	if err != nil {
+		return err
+	}
+
+	if _, err := io.Copy(filePart, file); err != nil {
+		return err
+	}
+
+	if err := writer.Close(); err != nil {
+		return err
+	}
+
+	url := fmt.Sprintf("https://%s-aiplatform.googleapis.com/upload/v1/projects/%s/locations/%s/ragCorpora/%d/ragFiles:upload", c.location, c.projectID, c.location, corpusId)
+	req, err := http.NewRequestWithContext(ctx, "POST", url, &requestBody)
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.Header.Set("X-Goog-Upload-Protocol", "multipart")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to upload file: %s", resp.Status)
+	}
+
+	return nil
+}
+
+type UploadFileOption func(*UploadFileOptions)
+
+type UploadFileOptions struct {
+	Description    string
+	ChunkingConfig ChunkingConfig
+}
+
+func WithUploadFileDescription(description string) UploadFileOption {
+	return func(o *UploadFileOptions) {
+		o.Description = description
+	}
+}
+
+func WithUploadFileChunkingConfig(chunkSize int, chunkOverlap int) UploadFileOption {
+	return func(o *UploadFileOptions) {
+		o.ChunkingConfig = ChunkingConfig{
+			ChunkSize:    chunkSize,
+			ChunkOverlap: chunkOverlap,
+		}
+	}
+}
+
+type ChunkingConfig struct {
+	ChunkSize    int
+	ChunkOverlap int
+}
