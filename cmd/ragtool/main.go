@@ -33,6 +33,8 @@ func main() {
 		cmdErr = cli.HandleFileUpload(ctx, &CLI, client)
 	case "file delete":
 		cmdErr = cli.HandleFileDelete(ctx, &CLI, client)
+	case "file list":
+		cmdErr = cli.HandleFileList(ctx, &CLI, client)
 	case "corpus create":
 		cmdErr = cli.HandleCorpusCreate(ctx, &CLI, client)
 	case "corpus list":

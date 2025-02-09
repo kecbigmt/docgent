@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -68,5 +69,33 @@ func HandleFileDelete(ctx context.Context, cli *CLI, client *lib.Client) error {
 	}
 
 	fmt.Printf("Successfully deleted file from corpus %d\n", corpusID)
+	return nil
+}
+
+func HandleFileList(ctx context.Context, cli *CLI, client *lib.Client) error {
+	corpusID, err := strconv.ParseInt(cli.File.List.CorpusID, 10, 64)
+	if err != nil {
+		return fmt.Errorf("invalid corpus ID: %v", err)
+	}
+
+	var options []lib.ListFilesOption
+	if cli.File.List.PageSize > 0 {
+		options = append(options, lib.WithListFilesPageSize(cli.File.List.PageSize))
+	}
+	if cli.File.List.PageToken != "" {
+		options = append(options, lib.WithListFilesPageToken(cli.File.List.PageToken))
+	}
+
+	result, err := client.ListFiles(ctx, corpusID, options...)
+	if err != nil {
+		return fmt.Errorf("failed to list files: %v", err)
+	}
+
+	encoder := json.NewEncoder(os.Stdout)
+	encoder.SetIndent("", "  ")
+	if err := encoder.Encode(result); err != nil {
+		return fmt.Errorf("failed to encode output as JSON: %v", err)
+	}
+
 	return nil
 }
