@@ -17,7 +17,7 @@ type ProposalRefineUsecase struct {
 	fileQueryService    domain.FileQueryService
 	fileChangeService   domain.FileChangeService
 	proposalRepository  domain.ProposalRepository
-	ragCorpus           domain.RAGCorpus
+	ragCorpus           port.RAGCorpus
 	remainingStepCount  int
 }
 
@@ -29,7 +29,7 @@ func NewProposalRefineUsecase(
 	fileQueryService domain.FileQueryService,
 	fileChangeService domain.FileChangeService,
 	proposalRepository domain.ProposalRepository,
-	ragCorpus domain.RAGCorpus,
+	ragCorpus port.RAGCorpus,
 	options ...NewProposalRefineUsecaseOption,
 ) *ProposalRefineUsecase {
 	workflow := &ProposalRefineUsecase{

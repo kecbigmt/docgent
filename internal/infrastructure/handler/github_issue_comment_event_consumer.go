@@ -10,6 +10,7 @@ import (
 	"go.uber.org/zap"
 
 	"docgent-backend/internal/application"
+	"docgent-backend/internal/application/port"
 	"docgent-backend/internal/domain"
 	infragithub "docgent-backend/internal/infrastructure/github"
 )
@@ -20,7 +21,7 @@ type GitHubIssueCommentEventConsumerParams struct {
 	ChatModel                domain.ChatModel
 	Logger                   *zap.Logger
 	GitHubServiceProvider    *infragithub.ServiceProvider
-	RAGService               domain.RAGService
+	RAGService               port.RAGService
 	ApplicationConfigService ApplicationConfigService
 }
 
@@ -28,7 +29,7 @@ type GitHubIssueCommentEventConsumer struct {
 	chatModel                domain.ChatModel
 	logger                   *zap.Logger
 	githubServiceProvider    *infragithub.ServiceProvider
-	ragService               domain.RAGService
+	ragService               port.RAGService
 	applicationConfigService ApplicationConfigService
 }
 

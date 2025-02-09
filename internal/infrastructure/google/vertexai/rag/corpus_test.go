@@ -3,7 +3,7 @@ package rag
 import (
 	"bytes"
 	"context"
-	"docgent-backend/internal/domain"
+	"docgent-backend/internal/application/port"
 	"docgent-backend/internal/infrastructure/google/vertexai/rag/lib"
 	"encoding/json"
 	"fmt"
@@ -100,7 +100,7 @@ func TestCorpus_Query(t *testing.T) {
 		similarityTopK          int32
 		vectorDistanceThreshold float64
 		setup                   func(*mockTransport)
-		expectedDocuments       []domain.RAGDocument
+		expectedDocuments       []port.RAGDocument
 		errorExpected           bool
 		expectedReqs            []mockRequest
 	}{
@@ -132,7 +132,7 @@ func TestCorpus_Query(t *testing.T) {
 					},
 				}
 			},
-			expectedDocuments: []domain.RAGDocument{
+			expectedDocuments: []port.RAGDocument{
 				{
 					Content: "test content 1",
 					Source:  "source1.md",
@@ -219,7 +219,7 @@ func TestCorpus_Query(t *testing.T) {
 					},
 				}
 			},
-			expectedDocuments: []domain.RAGDocument{},
+			expectedDocuments: []port.RAGDocument{},
 			errorExpected:     false,
 			expectedReqs: []mockRequest{
 				{

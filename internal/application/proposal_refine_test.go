@@ -4,6 +4,7 @@ import (
 	"errors"
 	"testing"
 
+	"docgent-backend/internal/application/port"
 	"docgent-backend/internal/domain"
 
 	"github.com/stretchr/testify/assert"
@@ -36,7 +37,7 @@ func TestProposalRefineUsecase_Refine(t *testing.T) {
 				// 1回目のメッセージ：RAGクエリを実行
 				chatModel.On("SendMessage", mock.Anything, mock.Anything).Return(`<query_rag><query>APIドキュメント エンドポイント 詳細</query></query_rag>`, nil).Once()
 				// RAGクエリの結果を設定
-				ragCorpus.On("Query", mock.Anything, "APIドキュメント エンドポイント 詳細", int32(10), float64(0.7)).Return([]domain.RAGDocument{
+				ragCorpus.On("Query", mock.Anything, "APIドキュメント エンドポイント 詳細", int32(10), float64(0.7)).Return([]port.RAGDocument{
 					{
 						Content: "既存のAPIドキュメント",
 						Source:  "docs/api.md",

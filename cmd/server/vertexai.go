@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"docgent-backend/internal/domain"
+	"docgent-backend/internal/application/port"
 	"docgent-backend/internal/infrastructure/google/vertexai/genai"
 	"docgent-backend/internal/infrastructure/google/vertexai/rag"
 	raglib "docgent-backend/internal/infrastructure/google/vertexai/rag/lib"
@@ -36,7 +36,7 @@ func newGenAIConfig() genai.Config {
 	}
 }
 
-func newRAGService() domain.RAGService {
+func newRAGService() port.RAGService {
 	projectID := os.Getenv("GOOGLE_PROJECT_ID")
 	if projectID == "" {
 		panic("GOOGLE_PROJECT_ID environment variable is not set")

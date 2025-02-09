@@ -10,6 +10,7 @@ import (
 	"go.uber.org/zap"
 
 	"docgent-backend/internal/application"
+	"docgent-backend/internal/application/port"
 	"docgent-backend/internal/domain"
 	"docgent-backend/internal/infrastructure/github"
 	"docgent-backend/internal/infrastructure/slack"
@@ -23,7 +24,7 @@ type SlackReactionAddedEventConsumerParams struct {
 	GitHubServiceProvider    *github.ServiceProvider
 	SlackServiceProvider     *slack.ServiceProvider
 	ChatModel                domain.ChatModel
-	RAGService               domain.RAGService
+	RAGService               port.RAGService
 	ApplicationConfigService ApplicationConfigService
 }
 
@@ -33,7 +34,7 @@ type SlackReactionAddedEventConsumer struct {
 	githubServiceProvider    *github.ServiceProvider
 	slackServiceProvider     *slack.ServiceProvider
 	chatModel                domain.ChatModel
-	ragService               domain.RAGService
+	ragService               port.RAGService
 	applicationConfigService ApplicationConfigService
 }
 

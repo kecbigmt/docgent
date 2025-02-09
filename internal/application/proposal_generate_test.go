@@ -117,9 +117,9 @@ type MockRAGCorpus struct {
 	mock.Mock
 }
 
-func (m *MockRAGCorpus) Query(ctx context.Context, query string, similarityTopK int32, vectorDistanceThreshold float64) ([]domain.RAGDocument, error) {
+func (m *MockRAGCorpus) Query(ctx context.Context, query string, similarityTopK int32, vectorDistanceThreshold float64) ([]port.RAGDocument, error) {
 	args := m.Called(ctx, query, similarityTopK, vectorDistanceThreshold)
-	return args.Get(0).([]domain.RAGDocument), args.Error(1)
+	return args.Get(0).([]port.RAGDocument), args.Error(1)
 }
 
 func TestProposalGenerateUsecase_Execute(t *testing.T) {
@@ -143,7 +143,7 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 				// 1回目のメッセージ：RAGクエリを実行
 				chatModel.On("SendMessage", mock.Anything, mock.Anything).Return(`<query_rag><query>APIドキュメント 仕様書 エンドポイント</query></query_rag>`, nil).Once()
 				// RAGクエリの結果を設定
-				ragCorpus.On("Query", mock.Anything, "APIドキュメント 仕様書 エンドポイント", int32(10), float64(0.7)).Return([]domain.RAGDocument{
+				ragCorpus.On("Query", mock.Anything, "APIドキュメント 仕様書 エンドポイント", int32(10), float64(0.7)).Return([]port.RAGDocument{
 					{
 						Content: "既存のAPIドキュメント",
 						Source:  "docs/api.md",
