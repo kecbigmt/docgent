@@ -24,6 +24,9 @@ func TestProposalRefineUsecase_Refine(t *testing.T) {
 			proposalHandle: domain.NewProposalHandle("github", "123"),
 			userFeedback:   "エンドポイントの説明をもう少し詳しくしてください",
 			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileChangeService *MockFileChangeService, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus) {
+				conversationService.On("MarkEyes").Return(nil)
+				conversationService.On("RemoveEyes").Return(nil)
+
 				proposal := domain.Proposal{
 					Handle: domain.NewProposalHandle("github", "123"),
 					Diffs: domain.Diffs{
@@ -56,6 +59,7 @@ func TestProposalRefineUsecase_Refine(t *testing.T) {
 				// 3回目のメッセージ：タスクを完了
 				chatSession.On("SendMessage", mock.Anything, mock.Anything).Return(`<attempt_complete><message>提案を更新しました</message></attempt_complete>`, nil).Once()
 				conversationService.On("Reply", "提案を更新しました").Return(nil)
+
 			},
 			expectedError: nil,
 		},
@@ -64,6 +68,9 @@ func TestProposalRefineUsecase_Refine(t *testing.T) {
 			proposalHandle: domain.NewProposalHandle("github", "123"),
 			userFeedback:   "エンドポイントの説明をもう少し詳しくしてください",
 			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileChangeService *MockFileChangeService, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus) {
+				conversationService.On("MarkEyes").Return(nil)
+				conversationService.On("RemoveEyes").Return(nil)
+
 				proposal := domain.Proposal{
 					Handle: domain.NewProposalHandle("github", "123"),
 					Diffs: domain.Diffs{

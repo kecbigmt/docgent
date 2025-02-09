@@ -50,6 +50,9 @@ func NewProposalGenerateUsecase(
 }
 
 func (w *ProposalGenerateUsecase) Execute(ctx context.Context) (domain.ProposalHandle, error) {
+	go w.conversationService.MarkEyes()
+	defer w.conversationService.RemoveEyes()
+
 	chatHistory, err := w.conversationService.GetHistory()
 	if err != nil {
 		return domain.ProposalHandle{}, fmt.Errorf("failed to get chat history: %w", err)

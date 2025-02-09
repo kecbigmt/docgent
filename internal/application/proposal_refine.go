@@ -56,6 +56,9 @@ func WithRemainingStepCount(remainingStepCount int) NewProposalRefineUsecaseOpti
 }
 
 func (w *ProposalRefineUsecase) Refine(proposalHandle domain.ProposalHandle, userFeedback string) error {
+	go w.conversationService.MarkEyes()
+	defer w.conversationService.RemoveEyes()
+
 	ctx := context.Background()
 
 	proposal, err := w.proposalRepository.GetProposal(proposalHandle)

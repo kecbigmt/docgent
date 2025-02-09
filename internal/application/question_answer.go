@@ -23,6 +23,9 @@ func NewQuestionAnswerUsecase(chatModel domain.ChatModel, ragCorpus port.RAGCorp
 }
 
 func (u *QuestionAnswerUsecase) Execute(question string) error {
+	go u.conversationService.MarkEyes()
+	defer u.conversationService.RemoveEyes()
+
 	ctx := context.Background()
 
 	docs, err := u.ragCorpus.Query(ctx, question, 10, 0.5)

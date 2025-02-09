@@ -51,6 +51,16 @@ func (m *MockConversationService) GetHistory() ([]port.ConversationMessage, erro
 	return args.Get(0).([]port.ConversationMessage), args.Error(1)
 }
 
+func (m *MockConversationService) MarkEyes() error {
+	args := m.Called()
+	return args.Error(0)
+}
+
+func (m *MockConversationService) RemoveEyes() error {
+	args := m.Called()
+	return args.Error(0)
+}
+
 type MockFileQueryService struct {
 	mock.Mock
 }
@@ -157,6 +167,9 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 		{
 			name: "正常系：RAGを使用して提案が正常に生成される",
 			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileChangeService *MockFileChangeService, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus) {
+				conversationService.On("MarkEyes").Return(nil)
+				conversationService.On("RemoveEyes").Return(nil)
+
 				conversationService.On("GetHistory").Return([]port.ConversationMessage{
 					{Author: "user", Content: "APIの仕様書を作成してください"},
 					{Author: "assistant", Content: "承知しました。どのような内容を含めるべきでしょうか？"},
@@ -201,6 +214,8 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 		{
 			name: "エラー系：エージェントの実行に失敗する",
 			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileChangeService *MockFileChangeService, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus) {
+				conversationService.On("MarkEyes").Return(nil)
+				conversationService.On("RemoveEyes").Return(nil)
 				conversationService.On("GetHistory").Return([]port.ConversationMessage{
 					{Author: "user", Content: "APIの仕様書を作成してください"},
 					{Author: "assistant", Content: "承知しました。どのような内容を含めるべきでしょうか？"},
@@ -219,6 +234,9 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 		{
 			name: "エラー系：提案の作成に失敗する",
 			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileChangeService *MockFileChangeService, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus) {
+				conversationService.On("MarkEyes").Return(nil)
+				conversationService.On("RemoveEyes").Return(nil)
+
 				conversationService.On("GetHistory").Return([]port.ConversationMessage{
 					{Author: "user", Content: "APIの仕様書を作成してください"},
 					{Author: "assistant", Content: "承知しました。どのような内容を含めるべきでしょうか？"},

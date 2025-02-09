@@ -37,6 +37,8 @@ func TestQuestionAnswerUsecase_Execute(t *testing.T) {
 				chatSession.On("SendMessage", mock.Anything, "How do I use the API?").Return("Let me explain how to use the API.", nil)
 
 				// Setup conversation service
+				conversationService.On("MarkEyes").Return(nil)
+				conversationService.On("RemoveEyes").Return(nil)
 				conversationService.On("Reply", "Let me explain how to use the API.").Return(nil)
 			},
 			expectedError: nil,
@@ -45,6 +47,8 @@ func TestQuestionAnswerUsecase_Execute(t *testing.T) {
 			name:     "error: RAG query fails",
 			question: "How do I use the API?",
 			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, ragCorpus *MockRAGCorpus) {
+				conversationService.On("MarkEyes").Return(nil)
+				conversationService.On("RemoveEyes").Return(nil)
 				ragCorpus.On("Query", mock.Anything, "How do I use the API?", int32(10), float64(0.5)).Return([]port.RAGDocument{}, errors.New("failed to query RAG corpus"))
 			},
 			expectedError: errors.New("failed to query RAG corpus"),
@@ -53,6 +57,9 @@ func TestQuestionAnswerUsecase_Execute(t *testing.T) {
 			name:     "error: chat model response fails",
 			question: "How do I use the API?",
 			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, ragCorpus *MockRAGCorpus) {
+				conversationService.On("MarkEyes").Return(nil)
+				conversationService.On("RemoveEyes").Return(nil)
+
 				ragCorpus.On("Query", mock.Anything, "How do I use the API?", int32(10), float64(0.5)).Return([]port.RAGDocument{
 					{
 						Content: "API usage documentation",
@@ -81,6 +88,8 @@ func TestQuestionAnswerUsecase_Execute(t *testing.T) {
 				chatModel.On("StartChat", mock.Anything).Return(chatSession)
 				chatSession.On("SendMessage", mock.Anything, "How do I use the API?").Return("Let me explain how to use the API.", nil)
 
+				conversationService.On("MarkEyes").Return(nil)
+				conversationService.On("RemoveEyes").Return(nil)
 				conversationService.On("Reply", "Let me explain how to use the API.").Return(errors.New("failed to reply"))
 			},
 			expectedError: errors.New("failed to reply"),
