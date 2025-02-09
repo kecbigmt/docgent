@@ -1,4 +1,4 @@
-package rag
+package lib
 
 import (
 	"bytes"
@@ -42,13 +42,13 @@ func newMockTransport(t *testing.T, expectedReqs []mockRequest) *mockTransport {
 func (m *mockTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	key := req.Method + " " + req.URL.Path
 
-	// リクエストを記録
+	// Record request
 	request := mockRequest{
 		method: req.Method,
 		path:   req.URL.Path,
 	}
 
-	// multipart/form-dataの場合は特別な処理
+	// Special handling for multipart/form-data
 	if strings.HasPrefix(req.Header.Get("Content-Type"), "multipart/form-data") {
 		for _, expected := range m.expectedReqs {
 			if expected.method == req.Method && expected.path == req.URL.Path && expected.validateMultipartForm != nil {
@@ -56,7 +56,7 @@ func (m *mockTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 			}
 		}
 	} else {
-		// 通常のJSONリクエストの場合
+		// Handle regular JSON request
 		if req.Body != nil {
 			body, err := io.ReadAll(req.Body)
 			if err != nil {
@@ -93,17 +93,17 @@ func (m *mockTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 }
 
 func (m *mockTransport) verify(t *testing.T) {
-	assert.Equal(t, len(m.expectedReqs), len(m.requests), "リクエスト数が一致しません")
+	assert.Equal(t, len(m.expectedReqs), len(m.requests), "Number of requests does not match")
 	for i, expected := range m.expectedReqs {
 		if i >= len(m.requests) {
-			t.Errorf("期待されるリクエスト %d が実行されませんでした: %+v", i, expected)
+			t.Errorf("Expected request %d was not executed: %+v", i, expected)
 			continue
 		}
 		actual := m.requests[i]
-		assert.Equal(t, expected.method, actual.method, fmt.Sprintf("リクエスト %d のメソッドが一致しません", i))
-		assert.Equal(t, expected.path, actual.path, fmt.Sprintf("リクエスト %d のパスが一致しません", i))
+		assert.Equal(t, expected.method, actual.method, fmt.Sprintf("Method does not match for request %d", i))
+		assert.Equal(t, expected.path, actual.path, fmt.Sprintf("Path does not match for request %d", i))
 		if expected.body != nil {
-			assert.Equal(t, expected.body, actual.body, fmt.Sprintf("リクエスト %d のボディが一致しません", i))
+			assert.Equal(t, expected.body, actual.body, fmt.Sprintf("Body does not match for request %d", i))
 		}
 	}
 }

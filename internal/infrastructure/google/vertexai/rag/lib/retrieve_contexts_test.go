@@ -1,28 +1,26 @@
-package rag
+package lib
 
 import (
 	"context"
-	"docgent-backend/internal/application/port"
-	"docgent-backend/internal/infrastructure/google/vertexai/rag/lib"
 	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCorpus_Query(t *testing.T) {
+func TestClient_RetrieveContexts(t *testing.T) {
 	tests := []struct {
 		name                    string
 		query                   string
 		similarityTopK          int32
 		vectorDistanceThreshold float64
 		setup                   func(*mockTransport)
-		expectedDocuments       []port.RAGDocument
+		expectedResponse        RetrieveContextsResponse
 		errorExpected           bool
 		expectedReqs            []mockRequest
 	}{
 		{
-			name:                    "正常系: 検索結果が返ってくる場合",
+			name:                    "Success: Returns search results",
 			query:                   "test query",
 			similarityTopK:          3,
 			vectorDistanceThreshold: 0.8,
@@ -30,9 +28,9 @@ func TestCorpus_Query(t *testing.T) {
 				mt.responses = map[string]mockResponse{
 					"POST /v1/projects/test-project/locations/test-location:retrieveContexts": {
 						statusCode: http.StatusOK,
-						body: lib.RetrieveContextsResponse{
-							Contexts: lib.RetrieveContexts{
-								Contexts: []*lib.RetrievalContext{
+						body: RetrieveContextsResponse{
+							Contexts: RetrieveContexts{
+								Contexts: []*RetrievalContext{
 									{
 										Text:      "test content 1",
 										SourceUri: "source1.md",
@@ -49,16 +47,20 @@ func TestCorpus_Query(t *testing.T) {
 					},
 				}
 			},
-			expectedDocuments: []port.RAGDocument{
-				{
-					Content: "test content 1",
-					Source:  "source1.md",
-					Score:   0.9,
-				},
-				{
-					Content: "test content 2",
-					Source:  "source2.md",
-					Score:   0.8,
+			expectedResponse: RetrieveContextsResponse{
+				Contexts: RetrieveContexts{
+					Contexts: []*RetrievalContext{
+						{
+							Text:      "test content 1",
+							SourceUri: "source1.md",
+							Score:     0.9,
+						},
+						{
+							Text:      "test content 2",
+							SourceUri: "source2.md",
+							Score:     0.8,
+						},
+					},
 				},
 			},
 			errorExpected: false,
@@ -84,7 +86,7 @@ func TestCorpus_Query(t *testing.T) {
 			},
 		},
 		{
-			name:                    "異常系: APIエラーの場合",
+			name:                    "Error: API returns error",
 			query:                   "test query",
 			similarityTopK:          3,
 			vectorDistanceThreshold: 0.8,
@@ -96,8 +98,8 @@ func TestCorpus_Query(t *testing.T) {
 					},
 				}
 			},
-			expectedDocuments: nil,
-			errorExpected:     true,
+			expectedResponse: RetrieveContextsResponse{},
+			errorExpected:    true,
 			expectedReqs: []mockRequest{
 				{
 					method: "POST",
@@ -120,7 +122,7 @@ func TestCorpus_Query(t *testing.T) {
 			},
 		},
 		{
-			name:                    "正常系: 検索結果が0件の場合",
+			name:                    "Success: Returns empty results",
 			query:                   "test query",
 			similarityTopK:          3,
 			vectorDistanceThreshold: 0.8,
@@ -128,16 +130,20 @@ func TestCorpus_Query(t *testing.T) {
 				mt.responses = map[string]mockResponse{
 					"POST /v1/projects/test-project/locations/test-location:retrieveContexts": {
 						statusCode: http.StatusOK,
-						body: lib.RetrieveContextsResponse{
-							Contexts: lib.RetrieveContexts{
-								Contexts: []*lib.RetrievalContext{},
+						body: RetrieveContextsResponse{
+							Contexts: RetrieveContexts{
+								Contexts: []*RetrievalContext{},
 							},
 						},
 					},
 				}
 			},
-			expectedDocuments: []port.RAGDocument{},
-			errorExpected:     false,
+			expectedResponse: RetrieveContextsResponse{
+				Contexts: RetrieveContexts{
+					Contexts: []*RetrievalContext{},
+				},
+			},
+			errorExpected: false,
 			expectedReqs: []mockRequest{
 				{
 					method: "POST",
@@ -163,31 +169,31 @@ func TestCorpus_Query(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// モックトランスポーターの準備
+			// Prepare mock transport
 			mt := newMockTransport(t, tt.expectedReqs)
 			tt.setup(mt)
 
-			// テスト対象のインスタンスを作成
-			client := lib.NewClient(&http.Client{Transport: mt}, "test-project", "test-location")
-			corpus := NewCorpus(client, 1)
+			// Create test target
+			client := NewClient(&http.Client{Transport: mt}, "test-project", "test-location")
 
-			// テスト実行
-			documents, err := corpus.Query(
+			// Execute test
+			response, err := client.RetrieveContexts(
 				context.Background(),
+				1,
 				tt.query,
 				tt.similarityTopK,
 				tt.vectorDistanceThreshold,
 			)
 
-			// アサーション
+			// Assert results
 			if tt.errorExpected {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
-				assert.Equal(t, tt.expectedDocuments, documents)
+				assert.Equal(t, tt.expectedResponse, response)
 			}
 
-			// リクエストの検証
+			// Verify requests
 			mt.verify(t)
 		})
 	}
