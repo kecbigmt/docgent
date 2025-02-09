@@ -8,11 +8,6 @@ import (
 	"docgent-backend/internal/infrastructure/github"
 )
 
-type GitHubEventRoute interface {
-	ConsumeEvent(event interface{})
-	EventType() string
-}
-
 func NewGitHubAPI() *github.API {
 	appIDStr := os.Getenv("GITHUB_APP_ID")
 	if appIDStr == "" {

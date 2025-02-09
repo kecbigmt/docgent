@@ -1,4 +1,4 @@
-package main
+package handler
 
 import (
 	"context"
@@ -21,7 +21,7 @@ type GitHubIssueCommentEventConsumerParams struct {
 	Logger                   *zap.Logger
 	GitHubServiceProvider    *infragithub.ServiceProvider
 	RAGService               domain.RAGService
-	ApplicationConfigService *ApplicationConfigService
+	ApplicationConfigService ApplicationConfigService
 }
 
 type GitHubIssueCommentEventConsumer struct {
@@ -29,7 +29,7 @@ type GitHubIssueCommentEventConsumer struct {
 	logger                   *zap.Logger
 	githubServiceProvider    *infragithub.ServiceProvider
 	ragService               domain.RAGService
-	applicationConfigService *ApplicationConfigService
+	applicationConfigService ApplicationConfigService
 }
 
 func NewGitHubIssueCommentEventConsumer(params GitHubIssueCommentEventConsumerParams) *GitHubIssueCommentEventConsumer {

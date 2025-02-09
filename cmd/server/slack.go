@@ -4,14 +4,7 @@ import (
 	"os"
 
 	"docgent-backend/internal/infrastructure/slack"
-
-	"github.com/slack-go/slack/slackevents"
 )
-
-type SlackEventRoute interface {
-	ConsumeEvent(event slackevents.EventsAPIInnerEvent, workspace Workspace)
-	EventType() string
-}
 
 func NewSlackAPI() *slack.API {
 	token := os.Getenv("SLACK_BOT_TOKEN")

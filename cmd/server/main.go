@@ -12,6 +12,7 @@ import (
 	"docgent-backend/internal/domain"
 	"docgent-backend/internal/infrastructure/github"
 	"docgent-backend/internal/infrastructure/google/vertexai/genai"
+	"docgent-backend/internal/infrastructure/handler"
 	"docgent-backend/internal/infrastructure/slack"
 )
 
@@ -33,11 +34,11 @@ func main() {
 				NewServeMux,
 				fx.ParamTags(`group:"routes"`),
 			),
-			AsRoute(NewHealthHandler),
-			AsRoute(NewSlackEventHandler),
-			AsRoute(NewGitHubWebhookHandler),
-			AsSlackEventRoute(NewSlackReactionAddedEventConsumer),
-			AsGitHubEventRoute(NewGitHubIssueCommentEventConsumer),
+			AsRoute(handler.NewHealthHandler),
+			AsRoute(handler.NewSlackEventHandler),
+			AsRoute(handler.NewGitHubWebhookHandler),
+			AsSlackEventRoute(handler.NewSlackReactionAddedEventConsumer),
+			AsGitHubEventRoute(handler.NewGitHubIssueCommentEventConsumer),
 			AsChatModel(genai.NewChatModel),
 			github.NewServiceProvider,
 			zap.NewExample,
@@ -79,12 +80,12 @@ func AsRoute(f any, anns ...fx.Annotation) any {
 }
 
 func AsSlackEventRoute(f any, anns ...fx.Annotation) any {
-	anns = append([]fx.Annotation{fx.As(new(SlackEventRoute)), fx.ResultTags(`group:"slack_event_routes"`)}, anns...)
+	anns = append([]fx.Annotation{fx.As(new(handler.SlackEventRoute)), fx.ResultTags(`group:"slack_event_routes"`)}, anns...)
 	return fx.Annotate(f, anns...)
 }
 
 func AsGitHubEventRoute(f any, anns ...fx.Annotation) any {
-	anns = append([]fx.Annotation{fx.As(new(GitHubEventRoute)), fx.ResultTags(`group:"github_event_routes"`)}, anns...)
+	anns = append([]fx.Annotation{fx.As(new(handler.GitHubEventRoute)), fx.ResultTags(`group:"github_event_routes"`)}, anns...)
 	return fx.Annotate(f, anns...)
 }
 

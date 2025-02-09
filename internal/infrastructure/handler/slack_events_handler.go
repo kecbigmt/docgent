@@ -1,4 +1,4 @@
-package main
+package handler
 
 import (
 	"encoding/json"
@@ -17,14 +17,14 @@ type SlackEventHandlerParams struct {
 	Logger                   *zap.Logger
 	EventRoutes              []SlackEventRoute `group:"slack_event_routes"`
 	SlackAPI                 *slack.API
-	ApplicationConfigService *ApplicationConfigService
+	ApplicationConfigService ApplicationConfigService
 }
 
 type SlackEventHandler struct {
 	log                      *zap.Logger
 	eventRoutes              []SlackEventRoute
 	slackAPI                 *slack.API
-	applicationConfigService *ApplicationConfigService
+	applicationConfigService ApplicationConfigService
 }
 
 func NewSlackEventHandler(params SlackEventHandlerParams) *SlackEventHandler {

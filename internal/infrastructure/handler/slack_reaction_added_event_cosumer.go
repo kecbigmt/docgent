@@ -1,4 +1,4 @@
-package main
+package handler
 
 import (
 	"context"
@@ -24,7 +24,7 @@ type SlackReactionAddedEventConsumerParams struct {
 	SlackServiceProvider     *slack.ServiceProvider
 	ChatModel                domain.ChatModel
 	RAGService               domain.RAGService
-	ApplicationConfigService *ApplicationConfigService
+	ApplicationConfigService ApplicationConfigService
 }
 
 type SlackReactionAddedEventConsumer struct {
@@ -34,7 +34,7 @@ type SlackReactionAddedEventConsumer struct {
 	slackServiceProvider     *slack.ServiceProvider
 	chatModel                domain.ChatModel
 	ragService               domain.RAGService
-	applicationConfigService *ApplicationConfigService
+	applicationConfigService ApplicationConfigService
 }
 
 func NewSlackReactionAddedEventConsumer(params SlackReactionAddedEventConsumerParams) *SlackReactionAddedEventConsumer {
