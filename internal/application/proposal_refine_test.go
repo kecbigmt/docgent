@@ -32,6 +32,10 @@ func TestProposalRefineUsecase_Refine(t *testing.T) {
 				}
 				proposalRepository.On("GetProposal", proposal.Handle).Return(proposal, nil)
 
+				fileQueryService.On("GetTree", mock.Anything, mock.AnythingOfType("[]port.GetTreeOption")).Return([]port.TreeMetadata{
+					{Path: "docs/api.md", Type: port.NodeTypeFile, Size: 100},
+				}, nil)
+
 				chatModel.On("StartChat", mock.Anything).Return(chatSession)
 
 				// 1回目のメッセージ：RAGクエリを実行
@@ -67,6 +71,10 @@ func TestProposalRefineUsecase_Refine(t *testing.T) {
 					},
 				}
 				proposalRepository.On("GetProposal", proposal.Handle).Return(proposal, nil)
+
+				fileQueryService.On("GetTree", mock.Anything, mock.AnythingOfType("[]port.GetTreeOption")).Return([]port.TreeMetadata{
+					{Path: "docs/api.md", Type: port.NodeTypeFile, Size: 100},
+				}, nil)
 
 				chatModel.On("StartChat", mock.Anything).Return(chatSession)
 				chatSession.On("SendMessage", mock.Anything, mock.Anything).Return("", errors.New("failed to generate response"))

@@ -55,3 +55,33 @@ func (s *FileQueryService) FindFile(ctx context.Context, path string) (port.File
 		Content: content,
 	}, nil
 }
+
+func (s *FileQueryService) GetTree(ctx context.Context, options ...port.GetTreeOption) ([]port.TreeMetadata, error) {
+	treeOptions := &port.GetTreeOptions{
+		Recursive: false,
+		TreeSHA:   "refs/heads/" + s.branch,
+	}
+	for _, option := range options {
+		option(treeOptions)
+	}
+
+	tree, _, err := s.client.Git.GetTree(ctx, s.owner, s.repo, treeOptions.TreeSHA, treeOptions.Recursive)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tree: %w", err)
+	}
+
+	treeMetadata := make([]port.TreeMetadata, 0)
+	for _, entry := range tree.Entries {
+		treeType := port.NodeTypeFile
+		if entry.GetType() == "tree" {
+			treeType = port.NodeTypeDirectory
+		}
+		treeMetadata = append(treeMetadata, port.TreeMetadata{
+			Type: treeType,
+			SHA:  entry.GetSHA(),
+			Path: entry.GetPath(),
+			Size: entry.GetSize(),
+		})
+	}
+	return treeMetadata, nil
+}

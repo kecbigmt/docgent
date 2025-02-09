@@ -60,6 +60,11 @@ func (m *MockFileQueryService) FindFile(ctx context.Context, path string) (port.
 	return args.Get(0).(port.File), args.Error(1)
 }
 
+func (m *MockFileQueryService) GetTree(ctx context.Context, options ...port.GetTreeOption) ([]port.TreeMetadata, error) {
+	args := m.Called(ctx, options)
+	return args.Get(0).([]port.TreeMetadata), args.Error(1)
+}
+
 type MockFileChangeService struct {
 	mock.Mock
 }
@@ -158,6 +163,10 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 					{Author: "user", Content: "エンドポイント、リクエスト、レスポンスの形式を含めてください"},
 				}, nil)
 
+				fileQueryService.On("GetTree", mock.Anything, mock.AnythingOfType("[]port.GetTreeOption")).Return([]port.TreeMetadata{
+					{Path: "docs/api.md", Type: port.NodeTypeFile, Size: 100},
+				}, nil)
+
 				chatModel.On("StartChat", mock.Anything).Return(chatSession)
 
 				// 1回目のメッセージ：RAGクエリを実行
@@ -197,6 +206,9 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 					{Author: "assistant", Content: "承知しました。どのような内容を含めるべきでしょうか？"},
 					{Author: "user", Content: "エンドポイント、リクエスト、レスポンスの形式を含めてください"},
 				}, nil)
+				fileQueryService.On("GetTree", mock.Anything, mock.AnythingOfType("[]port.GetTreeOption")).Return([]port.TreeMetadata{
+					{Path: "docs/api.md", Type: port.NodeTypeFile, Size: 100},
+				}, nil)
 				chatModel.On("StartChat", mock.Anything).Return(chatSession)
 				chatSession.On("SendMessage", mock.Anything, mock.Anything).Return("", errors.New("failed to generate response"))
 				conversationService.On("Reply", "Something went wrong while generating the proposal").Return(nil)
@@ -211,6 +223,9 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 					{Author: "user", Content: "APIの仕様書を作成してください"},
 					{Author: "assistant", Content: "承知しました。どのような内容を含めるべきでしょうか？"},
 					{Author: "user", Content: "エンドポイント、リクエスト、レスポンスの形式を含めてください"},
+				}, nil)
+				fileQueryService.On("GetTree", mock.Anything, mock.AnythingOfType("[]port.GetTreeOption")).Return([]port.TreeMetadata{
+					{Path: "docs/api.md", Type: port.NodeTypeFile, Size: 100},
 				}, nil)
 
 				chatModel.On("StartChat", mock.Anything).Return(chatSession)
