@@ -1,4 +1,4 @@
-package application
+package handler
 
 import "github.com/slack-go/slack/slackevents"
 

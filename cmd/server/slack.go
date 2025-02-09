@@ -3,11 +3,10 @@ package main
 import (
 	"os"
 
-	appslack "docgent-backend/internal/application/slack"
 	"docgent-backend/internal/infrastructure/slack"
 )
 
-func NewSlackAPI() appslack.API {
+func newSlackAPI() *slack.API {
 	token := os.Getenv("SLACK_BOT_TOKEN")
 	if token == "" {
 		panic("SLACK_BOT_TOKEN is not set")

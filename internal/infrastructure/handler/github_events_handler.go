@@ -1,10 +1,12 @@
-package application
+package handler
 
 import (
 	"net/http"
 
 	"go.uber.org/fx"
 	"go.uber.org/zap"
+
+	"docgent-backend/internal/infrastructure/github"
 )
 
 type GitHubWebhookHandlerParams struct {
@@ -12,13 +14,13 @@ type GitHubWebhookHandlerParams struct {
 
 	Logger                     *zap.Logger
 	EventRoutes                []GitHubEventRoute `group:"github_event_routes"`
-	GitHubWebhookRequestParser GitHubWebhookRequestParser
+	GitHubWebhookRequestParser *github.WebhookRequestParser
 }
 
 type GitHubWebhookHandler struct {
 	logger                     *zap.Logger
 	eventRoutes                []GitHubEventRoute
-	githubWebhookRequestParser GitHubWebhookRequestParser
+	githubWebhookRequestParser *github.WebhookRequestParser
 }
 
 func NewGitHubWebhookHandler(params GitHubWebhookHandlerParams) *GitHubWebhookHandler {

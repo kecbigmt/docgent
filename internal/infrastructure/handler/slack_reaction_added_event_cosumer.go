@@ -1,29 +1,27 @@
-package application
+package handler
 
 import (
 	"context"
 	"fmt"
 	"time"
 
-	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 
+	"docgent-backend/internal/application"
 	"docgent-backend/internal/domain"
-	"docgent-backend/internal/workflow"
-
-	appgithub "docgent-backend/internal/application/github"
-	appslack "docgent-backend/internal/application/slack"
+	"docgent-backend/internal/infrastructure/github"
+	"docgent-backend/internal/infrastructure/slack"
 )
 
 type SlackReactionAddedEventConsumerParams struct {
 	fx.In
 
 	Logger                   *zap.Logger
-	SlackAPI                 appslack.API
-	GitHubServiceProvider    appgithub.ServiceProvider
-	SlackServiceProvider     appslack.ServiceProvider
+	SlackAPI                 *slack.API
+	GitHubServiceProvider    *github.ServiceProvider
+	SlackServiceProvider     *slack.ServiceProvider
 	ChatModel                domain.ChatModel
 	RAGService               domain.RAGService
 	ApplicationConfigService ApplicationConfigService
@@ -31,9 +29,9 @@ type SlackReactionAddedEventConsumerParams struct {
 
 type SlackReactionAddedEventConsumer struct {
 	logger                   *zap.Logger
-	slackAPI                 appslack.API
-	githubServiceProvider    appgithub.ServiceProvider
-	slackServiceProvider     appslack.ServiceProvider
+	slackAPI                 *slack.API
+	githubServiceProvider    *github.ServiceProvider
+	slackServiceProvider     *slack.ServiceProvider
 	chatModel                domain.ChatModel
 	ragService               domain.RAGService
 	applicationConfigService ApplicationConfigService
@@ -64,26 +62,14 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 
 	threadTimestamp := ev.Item.Timestamp
 
-	slackClient := h.slackAPI.GetClient()
 	conversationService := h.slackServiceProvider.NewConversationService(ev.Item.Channel, threadTimestamp)
-
-	// スレッドのメッセージを取得
-	messages, _, _, err := slackClient.GetConversationReplies(&slack.GetConversationRepliesParameters{
-		ChannelID: ev.Item.Channel,
-		Timestamp: threadTimestamp,
-	})
-	if err != nil {
-		h.logger.Error("Failed to get thread messages", zap.Error(err))
-		conversationService.Reply(":warning: エラー: スレッドの取得に失敗しました")
-		return
-	}
 
 	ctx := context.Background()
 	baseBranchName := workspace.GitHubDefaultBranch
 	newBranchName := fmt.Sprintf("docgent/%d", time.Now().Unix())
 
 	branchService := h.githubServiceProvider.NewBranchService(workspace.GitHubInstallationID, workspace.GitHubOwner, workspace.GitHubRepo)
-	err = branchService.CreateBranch(ctx, baseBranchName, newBranchName)
+	err := branchService.CreateBranch(ctx, baseBranchName, newBranchName)
 	if err != nil {
 		h.logger.Error("Failed to create branch", zap.Error(err))
 		conversationService.Reply(":warning: エラー: ブランチの作成に失敗しました")
@@ -95,16 +81,8 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 
 	githubPullRequestAPI := h.githubServiceProvider.NewPullRequestAPI(workspace.GitHubInstallationID, workspace.GitHubOwner, workspace.GitHubRepo, baseBranchName, newBranchName)
 
-	var chatMessages []workflow.ChatMessage
-	for _, msg := range messages {
-		chatMessages = append(chatMessages, workflow.ChatMessage{
-			Author:  msg.User,
-			Content: msg.Text,
-		})
-	}
-
 	// ドキュメントを生成
-	proposalGenerateWorkflow := workflow.NewProposalGenerateWorkflow(
+	proposalGenerateUsecase := application.NewProposalGenerateUsecase(
 		h.chatModel,
 		conversationService,
 		fileQueryService,
@@ -112,7 +90,7 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 		githubPullRequestAPI,
 		h.ragService.GetCorpus(workspace.VertexAICorpusID),
 	)
-	proposalHandle, err := proposalGenerateWorkflow.Execute(ctx, chatMessages)
+	proposalHandle, err := proposalGenerateUsecase.Execute(ctx)
 	if err != nil {
 		h.logger.Error("Failed to generate increment", zap.Error(err))
 		conversationService.Reply(":warning: エラー: ドキュメントの生成に失敗しました")

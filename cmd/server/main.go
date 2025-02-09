@@ -9,10 +9,9 @@ import (
 	"go.uber.org/fx/fxevent"
 	"go.uber.org/zap"
 
-	"docgent-backend/internal/application"
-	"docgent-backend/internal/domain"
 	"docgent-backend/internal/infrastructure/github"
 	"docgent-backend/internal/infrastructure/google/vertexai/genai"
+	"docgent-backend/internal/infrastructure/handler"
 	"docgent-backend/internal/infrastructure/slack"
 )
 
@@ -22,24 +21,24 @@ func main() {
 			return &fxevent.ZapLogger{Logger: log}
 		}),
 		fx.Provide(
-			NewApplicationConfigServiceFromEnv,
-			NewSlackAPI,
-			NewGitHubAPI,
-			NewGitHubWebhookRequestParser,
-			NewGenAIConfig,
-			NewRAGService,
-			NewHTTPServer,
+			newApplicationConfigServiceFromEnv,
+			newSlackAPI,
+			newGitHubAPI,
+			newGitHubWebhookRequestParser,
+			newGenAIConfig,
+			newRAGService,
+			newHTTPServer,
 			slack.NewServiceProvider,
 			fx.Annotate(
-				NewServeMux,
+				newServeMux,
 				fx.ParamTags(`group:"routes"`),
 			),
-			AsRoute(application.NewHealthHandler),
-			AsRoute(application.NewSlackEventHandler),
-			AsRoute(application.NewGitHubWebhookHandler),
-			AsSlackEventRoute(application.NewSlackReactionAddedEventConsumer),
-			AsGitHubEventRoute(application.NewGitHubIssueCommentEventConsumer),
-			AsChatModel(genai.NewChatModel),
+			asRoute(handler.NewHealthHandler),
+			asRoute(handler.NewSlackEventHandler),
+			asRoute(handler.NewGitHubWebhookHandler),
+			asSlackEventRoute(handler.NewSlackReactionAddedEventConsumer),
+			asGitHubEventRoute(handler.NewGitHubIssueCommentEventConsumer),
+			genai.NewChatModel,
 			github.NewServiceProvider,
 			zap.NewExample,
 		),
@@ -47,7 +46,7 @@ func main() {
 	).Run()
 }
 
-func NewHTTPServer(lc fx.Lifecycle, mux *http.ServeMux, log *zap.Logger) *http.Server {
+func newHTTPServer(lc fx.Lifecycle, mux *http.ServeMux, log *zap.Logger) *http.Server {
 	srv := &http.Server{Addr: ":8080", Handler: mux}
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
@@ -66,7 +65,7 @@ func NewHTTPServer(lc fx.Lifecycle, mux *http.ServeMux, log *zap.Logger) *http.S
 	return srv
 }
 
-func NewServeMux(routes []application.Route) *http.ServeMux {
+func newServeMux(routes []route) *http.ServeMux {
 	mux := http.NewServeMux()
 	for _, route := range routes {
 		mux.Handle(route.Pattern(), route)
@@ -74,22 +73,17 @@ func NewServeMux(routes []application.Route) *http.ServeMux {
 	return mux
 }
 
-func AsRoute(f any, anns ...fx.Annotation) any {
-	anns = append([]fx.Annotation{fx.As(new(application.Route)), fx.ResultTags(`group:"routes"`)}, anns...)
+func asRoute(f any, anns ...fx.Annotation) any {
+	anns = append([]fx.Annotation{fx.As(new(route)), fx.ResultTags(`group:"routes"`)}, anns...)
 	return fx.Annotate(f, anns...)
 }
 
-func AsSlackEventRoute(f any, anns ...fx.Annotation) any {
-	anns = append([]fx.Annotation{fx.As(new(application.SlackEventRoute)), fx.ResultTags(`group:"slack_event_routes"`)}, anns...)
+func asSlackEventRoute(f any, anns ...fx.Annotation) any {
+	anns = append([]fx.Annotation{fx.As(new(handler.SlackEventRoute)), fx.ResultTags(`group:"slack_event_routes"`)}, anns...)
 	return fx.Annotate(f, anns...)
 }
 
-func AsGitHubEventRoute(f any, anns ...fx.Annotation) any {
-	anns = append([]fx.Annotation{fx.As(new(application.GitHubEventRoute)), fx.ResultTags(`group:"github_event_routes"`)}, anns...)
-	return fx.Annotate(f, anns...)
-}
-
-func AsChatModel(f any, anns ...fx.Annotation) any {
-	anns = append([]fx.Annotation{fx.As(new(domain.ChatModel))}, anns...)
+func asGitHubEventRoute(f any, anns ...fx.Annotation) any {
+	anns = append([]fx.Annotation{fx.As(new(handler.GitHubEventRoute)), fx.ResultTags(`group:"github_event_routes"`)}, anns...)
 	return fx.Annotate(f, anns...)
 }

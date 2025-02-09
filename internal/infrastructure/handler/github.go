@@ -1,4 +1,4 @@
-package application
+package handler
 
 type GitHubEventRoute interface {
 	ConsumeEvent(event interface{})

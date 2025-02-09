@@ -1,8 +1,8 @@
-package application
+package main
 
 import "net/http"
 
-type Route interface {
+type route interface {
 	http.Handler
 
 	Pattern() string

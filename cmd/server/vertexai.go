@@ -13,7 +13,7 @@ import (
 	"golang.org/x/oauth2/google"
 )
 
-func NewGenAIConfig() genai.Config {
+func newGenAIConfig() genai.Config {
 	projectID := os.Getenv("GOOGLE_PROJECT_ID")
 	if projectID == "" {
 		panic("GOOGLE_PROJECT_ID environment variable is not set")
@@ -36,7 +36,7 @@ func NewGenAIConfig() genai.Config {
 	}
 }
 
-func NewRAGService() domain.RAGService {
+func newRAGService() domain.RAGService {
 	projectID := os.Getenv("GOOGLE_PROJECT_ID")
 	if projectID == "" {
 		panic("GOOGLE_PROJECT_ID environment variable is not set")

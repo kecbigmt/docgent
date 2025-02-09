@@ -24,6 +24,24 @@ func NewIssueCommentConversationService(client *github.Client, owner, repo strin
 	}
 }
 
+func (s *IssueCommentConversationService) GetHistory() ([]domain.ConversationMessage, error) {
+	ctx := context.Background()
+	comments, _, err := s.client.PullRequests.ListComments(ctx, s.owner, s.repo, s.prNumber, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list review comments: %w", err)
+	}
+
+	conversationMessages := make([]domain.ConversationMessage, 0, len(comments))
+	for _, comment := range comments {
+		conversationMessages = append(conversationMessages, domain.ConversationMessage{
+			Author:  *comment.User.Login,
+			Content: *comment.Body,
+		})
+	}
+
+	return conversationMessages, nil
+}
+
 func (s *IssueCommentConversationService) Reply(input string) error {
 	ctx := context.Background()
 

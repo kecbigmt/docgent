@@ -1,4 +1,4 @@
-package workflow
+package application
 
 import (
 	"context"
@@ -10,12 +10,7 @@ import (
 	"docgent-backend/internal/domain/tooluse"
 )
 
-type ChatMessage struct {
-	Author  string
-	Content string
-}
-
-type ProposalGenerateWorkflow struct {
+type ProposalGenerateUsecase struct {
 	chatModel           domain.ChatModel
 	conversationService domain.ConversationService
 	fileQueryService    domain.FileQueryService
@@ -25,18 +20,18 @@ type ProposalGenerateWorkflow struct {
 	remainingStepCount  int
 }
 
-type NewProposalGenerateWorkflowOption func(*ProposalGenerateWorkflow)
+type NewProposalGenerateUsecaseOption func(*ProposalGenerateUsecase)
 
-func NewProposalGenerateWorkflow(
+func NewProposalGenerateUsecase(
 	chatModel domain.ChatModel,
 	conversationService domain.ConversationService,
 	fileQueryService domain.FileQueryService,
 	fileChangeService domain.FileChangeService,
 	proposalRepository domain.ProposalRepository,
 	ragCorpus domain.RAGCorpus,
-	options ...NewProposalGenerateWorkflowOption,
-) *ProposalGenerateWorkflow {
-	workflow := &ProposalGenerateWorkflow{
+	options ...NewProposalGenerateUsecaseOption,
+) *ProposalGenerateUsecase {
+	workflow := &ProposalGenerateUsecase{
 		chatModel:           chatModel,
 		conversationService: conversationService,
 		fileQueryService:    fileQueryService,
@@ -53,10 +48,12 @@ func NewProposalGenerateWorkflow(
 	return workflow
 }
 
-func (w *ProposalGenerateWorkflow) Execute(
-	ctx context.Context,
-	chatHistory []ChatMessage,
-) (domain.ProposalHandle, error) {
+func (w *ProposalGenerateUsecase) Execute(ctx context.Context) (domain.ProposalHandle, error) {
+	chatHistory, err := w.conversationService.GetHistory()
+	if err != nil {
+		return domain.ProposalHandle{}, fmt.Errorf("failed to get chat history: %w", err)
+	}
+
 	var proposalHandle domain.ProposalHandle
 	var fileChanged bool
 
@@ -167,7 +164,7 @@ You should use create_proposal only after you changed files.
 </chat_history>
 `, chatHistoryStr.String())
 
-	err := agent.InitiateTaskLoop(ctx, task, w.remainingStepCount)
+	err = agent.InitiateTaskLoop(ctx, task, w.remainingStepCount)
 	if err != nil {
 		if err := w.conversationService.Reply("Something went wrong while generating the proposal"); err != nil {
 			return domain.ProposalHandle{}, fmt.Errorf("failed to reply error message: %w", err)

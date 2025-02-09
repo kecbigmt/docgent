@@ -1,4 +1,4 @@
-package application
+package handler
 
 import (
 	"context"
@@ -9,9 +9,9 @@ import (
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 
-	appgithub "docgent-backend/internal/application/github"
+	"docgent-backend/internal/application"
 	"docgent-backend/internal/domain"
-	"docgent-backend/internal/workflow"
+	infragithub "docgent-backend/internal/infrastructure/github"
 )
 
 type GitHubIssueCommentEventConsumerParams struct {
@@ -19,7 +19,7 @@ type GitHubIssueCommentEventConsumerParams struct {
 
 	ChatModel                domain.ChatModel
 	Logger                   *zap.Logger
-	GitHubServiceProvider    appgithub.ServiceProvider
+	GitHubServiceProvider    *infragithub.ServiceProvider
 	RAGService               domain.RAGService
 	ApplicationConfigService ApplicationConfigService
 }
@@ -27,7 +27,7 @@ type GitHubIssueCommentEventConsumerParams struct {
 type GitHubIssueCommentEventConsumer struct {
 	chatModel                domain.ChatModel
 	logger                   *zap.Logger
-	githubServiceProvider    appgithub.ServiceProvider
+	githubServiceProvider    *infragithub.ServiceProvider
 	ragService               domain.RAGService
 	applicationConfigService ApplicationConfigService
 }
@@ -113,7 +113,7 @@ func (c *GitHubIssueCommentEventConsumer) ConsumeEvent(event interface{}) {
 	proposalService := c.githubServiceProvider.NewPullRequestAPI(installationID, ownerName, repoName, defaultBranch, "")
 
 	// Create workflow instance
-	workflow := workflow.NewProposalRefineWorkflow(
+	workflow := application.NewProposalRefineUsecase(
 		c.chatModel,         // AI interaction
 		conversationService, // Comment management
 		fileQueryService,    // File operations

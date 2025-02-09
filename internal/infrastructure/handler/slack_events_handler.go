@@ -1,15 +1,14 @@
-package application
+package handler
 
 import (
 	"encoding/json"
-	"io"
 	"net/http"
 
 	"github.com/slack-go/slack/slackevents"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 
-	appslack "docgent-backend/internal/application/slack"
+	"docgent-backend/internal/infrastructure/slack"
 )
 
 type SlackEventHandlerParams struct {
@@ -17,14 +16,14 @@ type SlackEventHandlerParams struct {
 
 	Logger                   *zap.Logger
 	EventRoutes              []SlackEventRoute `group:"slack_event_routes"`
-	SlackAPI                 appslack.API
+	SlackAPI                 *slack.API
 	ApplicationConfigService ApplicationConfigService
 }
 
 type SlackEventHandler struct {
 	log                      *zap.Logger
 	eventRoutes              []SlackEventRoute
-	slackAPI                 appslack.API
+	slackAPI                 *slack.API
 	applicationConfigService ApplicationConfigService
 }
 
@@ -42,31 +41,14 @@ func (h *SlackEventHandler) Pattern() string {
 }
 
 func (h *SlackEventHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Slackからのリクエストを検証
-	sv, err := h.slackAPI.NewSecretsVerifier(r.Header)
-	if err != nil {
-		h.log.Warn("Failed to create secrets verifier", zap.Error(err))
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	requestParser := slack.NewWebhookRequestParser(h.slackAPI, h.log)
 
-	bodyReader := io.TeeReader(r.Body, &sv)
-	body, err := io.ReadAll(bodyReader)
+	event, err := requestParser.ParseRequest(r)
 	if err != nil {
-		h.log.Warn("Failed to read request", zap.Error(err))
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	if err := sv.Ensure(); err != nil {
-		h.log.Warn("Failed to verify request", zap.Error(err))
-		w.WriteHeader(http.StatusUnauthorized)
-		return
-	}
-
-	event, err := slackevents.ParseEvent(body, slackevents.OptionNoVerifyToken())
-	if err != nil {
-		h.log.Warn("Failed to parse event", zap.Error(err))
+		if err == slack.ErrUnauthorizedRequest {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -85,20 +67,15 @@ func (h *SlackEventHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// URLの検証チャレンジに応答
 	if event.Type == slackevents.URLVerification {
-		var res *slackevents.ChallengeResponse
-		if err := json.Unmarshal(body, &res); err != nil {
-			h.log.Error("Failed to unmarshal challenge", zap.Error(err))
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		if res == nil {
-			h.log.Error("Challenge response is nil")
+		ev, ok := event.Data.(*slackevents.ChallengeResponse)
+		if !ok {
+			h.log.Error("Failed to convert event data to ChallengeResponse")
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]string{
-			"challenge": res.Challenge,
+			"challenge": ev.Challenge,
 		})
 		return
 	}

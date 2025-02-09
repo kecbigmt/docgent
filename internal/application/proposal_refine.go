@@ -1,4 +1,4 @@
-package workflow
+package application
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 	"docgent-backend/internal/domain/tooluse"
 )
 
-type ProposalRefineWorkflow struct {
+type ProposalRefineUsecase struct {
 	chatModel           domain.ChatModel
 	conversationService domain.ConversationService
 	fileQueryService    domain.FileQueryService
@@ -20,18 +20,18 @@ type ProposalRefineWorkflow struct {
 	remainingStepCount  int
 }
 
-type NewProposalRefineWorkflowOption func(*ProposalRefineWorkflow)
+type NewProposalRefineUsecaseOption func(*ProposalRefineUsecase)
 
-func NewProposalRefineWorkflow(
+func NewProposalRefineUsecase(
 	chatModel domain.ChatModel,
 	conversationService domain.ConversationService,
 	fileQueryService domain.FileQueryService,
 	fileChangeService domain.FileChangeService,
 	proposalRepository domain.ProposalRepository,
 	ragCorpus domain.RAGCorpus,
-	options ...NewProposalRefineWorkflowOption,
-) *ProposalRefineWorkflow {
-	workflow := &ProposalRefineWorkflow{
+	options ...NewProposalRefineUsecaseOption,
+) *ProposalRefineUsecase {
+	workflow := &ProposalRefineUsecase{
 		chatModel:           chatModel,
 		conversationService: conversationService,
 		fileQueryService:    fileQueryService,
@@ -48,13 +48,13 @@ func NewProposalRefineWorkflow(
 	return workflow
 }
 
-func WithRemainingStepCount(remainingStepCount int) NewProposalRefineWorkflowOption {
-	return func(w *ProposalRefineWorkflow) {
+func WithRemainingStepCount(remainingStepCount int) NewProposalRefineUsecaseOption {
+	return func(w *ProposalRefineUsecase) {
 		w.remainingStepCount = remainingStepCount
 	}
 }
 
-func (w *ProposalRefineWorkflow) Refine(proposalHandle domain.ProposalHandle, userFeedback string) error {
+func (w *ProposalRefineUsecase) Refine(proposalHandle domain.ProposalHandle, userFeedback string) error {
 	ctx := context.Background()
 
 	proposal, err := w.proposalRepository.GetProposal(proposalHandle)
