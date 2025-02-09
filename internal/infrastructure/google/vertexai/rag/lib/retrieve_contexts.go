@@ -47,6 +47,10 @@ type RetrievalContext struct {
 	Score             float64 `json:"score"`
 }
 
+// RetrieveContexts retrieves contexts from a RAG corpus.
+// References:
+// - Example: https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/rag-api-v1#retrieval-query-api
+// - Parameters: https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/rag-api-v1#retrieval-and-prediction-params-api
 func (c *Client) RetrieveContexts(ctx context.Context, corpusId int64, query string, similarityTopK int32, vectorDistanceThreshold float64) (RetrieveContextsResponse, error) {
 	url := fmt.Sprintf("https://%s-aiplatform.googleapis.com/v1/projects/%s/locations/%s:retrieveContexts", c.location, c.projectID, c.location)
 	corpus := fmt.Sprintf("projects/%s/locations/%s/ragCorpora/%d", c.projectID, c.location, corpusId)

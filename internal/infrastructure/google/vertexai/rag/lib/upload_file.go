@@ -37,7 +37,10 @@ type FixedLengthChunking struct {
 	ChunkOverlap int32 `json:"chunk_overlap"`
 }
 
-// UploadFile uploads a file to a RAG corpus. Reference: https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/rag-api-v1#upload-a-rag-file-example-api
+// UploadFile uploads a file to a RAG corpus.
+// References:
+// - Example: https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/rag-api-v1#upload-a-rag-file-example-api
+// - Parameters: https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/rag-api-v1#parameters-list
 func (c *Client) UploadFile(ctx context.Context, corpusId int64, file io.Reader, fileName string, options ...UploadFileOption) error {
 	uploadFileOptions := &UploadFileOptions{}
 	for _, option := range options {
