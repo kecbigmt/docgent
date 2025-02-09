@@ -13,13 +13,14 @@ import (
 
 func TestClient_UploadFile(t *testing.T) {
 	tests := []struct {
-		name          string
-		file          io.Reader
-		fileName      string
-		options       []UploadFileOption
-		setup         func(*mockTransport)
-		errorExpected bool
-		expectedReqs  []mockRequest
+		name            string
+		file            io.Reader
+		fileName        string
+		options         []UploadFileOption
+		setup           func(*mockTransport)
+		errorExpected   bool
+		expectedReqs    []mockRequest
+		expectedRagFile RagFile
 	}{
 		{
 			name:     "Success: Upload file with options",
@@ -33,9 +34,20 @@ func TestClient_UploadFile(t *testing.T) {
 				mt.responses = map[string]mockResponse{
 					"POST /upload/v1/projects/test-project/locations/test-location/ragCorpora/1/ragFiles:upload": {
 						statusCode: http.StatusOK,
-						body:       map[string]interface{}{},
+						body: map[string]interface{}{
+							"rag_file": map[string]interface{}{
+								"name":         "test-project/test-location/ragCorpora/1/ragFiles/123",
+								"display_name": "test.md",
+								"description":  "test description",
+							},
+						},
 					},
 				}
+			},
+			expectedRagFile: RagFile{
+				Name:        "test-project/test-location/ragCorpora/1/ragFiles/123",
+				DisplayName: "test.md",
+				Description: "test description",
 			},
 			errorExpected: false,
 			expectedReqs: []mockRequest{
@@ -82,11 +94,22 @@ func TestClient_UploadFile(t *testing.T) {
 				mt.responses = map[string]mockResponse{
 					"POST /upload/v1/projects/test-project/locations/test-location/ragCorpora/1/ragFiles:upload": {
 						statusCode: http.StatusOK,
-						body:       map[string]interface{}{},
+						body: map[string]interface{}{
+							"rag_file": map[string]interface{}{
+								"name":         "test-project/test-location/ragCorpora/1/ragFiles/123",
+								"display_name": "test.md",
+								"description":  "",
+							},
+						},
 					},
 				}
 			},
 			errorExpected: false,
+			expectedRagFile: RagFile{
+				Name:        "test-project/test-location/ragCorpora/1/ragFiles/123",
+				DisplayName: "test.md",
+				Description: "",
+			},
 			expectedReqs: []mockRequest{
 				{
 					method: "POST",
@@ -131,7 +154,8 @@ func TestClient_UploadFile(t *testing.T) {
 					},
 				}
 			},
-			errorExpected: true,
+			errorExpected:   true,
+			expectedRagFile: RagFile{},
 			expectedReqs: []mockRequest{
 				{
 					method: "POST",
@@ -155,7 +179,7 @@ func TestClient_UploadFile(t *testing.T) {
 			client := NewClient(&http.Client{Transport: mt}, "test-project", "test-location")
 
 			// Execute test
-			err := client.UploadFile(
+			ragFile, err := client.UploadFile(
 				context.Background(),
 				1,
 				tt.file,
@@ -168,6 +192,7 @@ func TestClient_UploadFile(t *testing.T) {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
+				assert.Equal(t, tt.expectedRagFile, ragFile)
 			}
 
 			// Verify requests

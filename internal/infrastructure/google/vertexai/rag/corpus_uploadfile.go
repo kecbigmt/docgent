@@ -14,7 +14,7 @@ func (c *Corpus) UploadFile(ctx context.Context, file io.Reader, fileName string
 		option(uploadFileOptions)
 	}
 
-	return c.client.UploadFile(ctx, c.corpusId, file, fileName, func(o *lib.UploadFileOptions) {
+	_, err := c.client.UploadFile(ctx, c.corpusId, file, fileName, func(o *lib.UploadFileOptions) {
 		if uploadFileOptions.Description != "" {
 			o.Description = uploadFileOptions.Description
 		}
@@ -25,4 +25,6 @@ func (c *Corpus) UploadFile(ctx context.Context, file io.Reader, fileName string
 			}
 		}
 	})
+
+	return err
 }
