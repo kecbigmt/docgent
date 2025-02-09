@@ -50,11 +50,11 @@ func (h *GitHubWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	for _, route := range h.eventRoutes {
 		if route.EventType() == ev.EventType() {
-			route.ConsumeEvent(ev.InnerEvent())
-			return
+			go route.ConsumeEvent(ev.InnerEvent())
+			break
 		}
 	}
 
-	// Slackイベントには即座に200 OKを返す
+	// Githubイベントには即座に200 OKを返す
 	w.WriteHeader(http.StatusOK)
 }

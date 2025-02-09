@@ -95,7 +95,7 @@ func (h *SlackEventHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		for _, route := range h.eventRoutes {
 			if innerEvent.Type == route.EventType() {
 				go route.ConsumeEvent(innerEvent, workspace)
-				return
+				break
 			}
 		}
 	}
