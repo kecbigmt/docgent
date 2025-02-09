@@ -52,7 +52,7 @@ func main() {
 
 	fileName := filepath.Base(CLI.File)
 
-	err = client.UploadFile(ctx, corpusID, file, fileName, func(o *lib.UploadFileOptions) {
+	createdFile, err := client.UploadFile(ctx, corpusID, file, fileName, func(o *lib.UploadFileOptions) {
 		if CLI.Description != "" {
 			o.Description = CLI.Description
 		}
@@ -72,5 +72,5 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Printf("Successfully uploaded file '%s'\n", fileName)
+	fmt.Printf("Successfully uploaded file '%s'\n", createdFile.Name)
 }
