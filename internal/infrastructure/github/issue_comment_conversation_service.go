@@ -9,18 +9,21 @@ import (
 )
 
 type IssueCommentConversationService struct {
-	client   *github.Client
-	owner    string
-	repo     string
-	prNumber int
+	client          *github.Client
+	owner           string
+	repo            string
+	prNumber        int
+	sourceCommentID int64
+	eyesReactionID  int64
 }
 
-func NewIssueCommentConversationService(client *github.Client, owner, repo string, prNumber int) port.ConversationService {
+func NewIssueCommentConversationService(client *github.Client, owner, repo string, prNumber int, sourceCommentID int64) port.ConversationService {
 	return &IssueCommentConversationService{
-		client:   client,
-		owner:    owner,
-		repo:     repo,
-		prNumber: prNumber,
+		client:          client,
+		owner:           owner,
+		repo:            repo,
+		prNumber:        prNumber,
+		sourceCommentID: sourceCommentID,
 	}
 }
 
@@ -52,6 +55,32 @@ func (s *IssueCommentConversationService) Reply(input string) error {
 	_, _, err := s.client.Issues.CreateComment(ctx, s.owner, s.repo, s.prNumber, comment)
 	if err != nil {
 		return fmt.Errorf("failed to create issue comment: %w", err)
+	}
+
+	return nil
+}
+
+func (s *IssueCommentConversationService) MarkEyes() error {
+	ctx := context.Background()
+	reaction, _, err := s.client.Reactions.CreateIssueCommentReaction(ctx, s.owner, s.repo, s.sourceCommentID, "eyes")
+	if err != nil {
+		return fmt.Errorf("failed to add eyes reaction to issue comment: %w", err)
+	}
+
+	s.eyesReactionID = reaction.GetID()
+
+	return nil
+}
+
+func (s *IssueCommentConversationService) RemoveEyes() error {
+	if s.eyesReactionID == 0 {
+		return nil
+	}
+
+	ctx := context.Background()
+	_, err := s.client.Reactions.DeleteIssueCommentReaction(ctx, s.owner, s.repo, s.sourceCommentID, s.eyesReactionID)
+	if err != nil {
+		return fmt.Errorf("failed to remove eyes reaction from issue comment: %w", err)
 	}
 
 	return nil
