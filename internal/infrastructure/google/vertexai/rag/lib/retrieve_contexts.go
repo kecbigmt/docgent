@@ -84,9 +84,11 @@ func (c *Client) RetrieveContexts(ctx context.Context, corpusId int64, query str
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		resBody, _ := io.ReadAll(resp.Body)
 		return RetrieveContextsResponse{}, &HTTPError{
 			StatusCode: resp.StatusCode,
 			Status:     http.StatusText(resp.StatusCode),
+			RawBody:    string(resBody),
 		}
 	}
 
