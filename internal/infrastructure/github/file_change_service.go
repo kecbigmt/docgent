@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/go-github/v68/github"
 
-	"docgent-backend/internal/domain"
+	"docgent-backend/internal/application/port"
 	"docgent-backend/internal/domain/tooluse"
 )
 
@@ -20,7 +20,7 @@ type FileChangeService struct {
 func NewFileChangeService(
 	client *github.Client,
 	owner, repo, branchName string,
-) domain.FileChangeService {
+) port.FileChangeService {
 	return &FileChangeService{
 		client:     client,
 		owner:      owner,

@@ -41,12 +41,12 @@ func (p *ServiceProvider) NewReviewCommentConversationService(installationID int
 }
 
 // NewFileQueryService creates a file query service with the proper context
-func (p *ServiceProvider) NewFileQueryService(installationID int64, owner, repo, branch string) domain.FileQueryService {
+func (p *ServiceProvider) NewFileQueryService(installationID int64, owner, repo, branch string) port.FileQueryService {
 	return NewFileQueryService(p.api.NewClient(installationID), owner, repo, branch)
 }
 
 // NewFileChangeService creates a file change service with the proper context
-func (p *ServiceProvider) NewFileChangeService(installationID int64, owner, repo, branch string) domain.FileChangeService {
+func (p *ServiceProvider) NewFileChangeService(installationID int64, owner, repo, branch string) port.FileChangeService {
 	return NewFileChangeService(p.api.NewClient(installationID), owner, repo, branch)
 }
 

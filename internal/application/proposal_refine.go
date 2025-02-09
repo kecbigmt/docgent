@@ -14,8 +14,8 @@ import (
 type ProposalRefineUsecase struct {
 	chatModel           domain.ChatModel
 	conversationService port.ConversationService
-	fileQueryService    domain.FileQueryService
-	fileChangeService   domain.FileChangeService
+	fileQueryService    port.FileQueryService
+	fileChangeService   port.FileChangeService
 	proposalRepository  domain.ProposalRepository
 	ragCorpus           port.RAGCorpus
 	remainingStepCount  int
@@ -26,8 +26,8 @@ type NewProposalRefineUsecaseOption func(*ProposalRefineUsecase)
 func NewProposalRefineUsecase(
 	chatModel domain.ChatModel,
 	conversationService port.ConversationService,
-	fileQueryService domain.FileQueryService,
-	fileChangeService domain.FileChangeService,
+	fileQueryService port.FileQueryService,
+	fileChangeService port.FileChangeService,
 	proposalRepository domain.ProposalRepository,
 	ragCorpus port.RAGCorpus,
 	options ...NewProposalRefineUsecaseOption,

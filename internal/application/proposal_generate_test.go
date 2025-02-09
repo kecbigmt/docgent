@@ -50,9 +50,9 @@ type MockFileQueryService struct {
 	mock.Mock
 }
 
-func (m *MockFileQueryService) FindFile(ctx context.Context, path string) (domain.File, error) {
+func (m *MockFileQueryService) FindFile(ctx context.Context, path string) (port.File, error) {
 	args := m.Called(ctx, path)
-	return args.Get(0).(domain.File), args.Error(1)
+	return args.Get(0).(port.File), args.Error(1)
 }
 
 type MockFileChangeService struct {
