@@ -37,6 +37,7 @@ func main() {
 			asRoute(handler.NewSlackEventHandler),
 			asRoute(handler.NewGitHubWebhookHandler),
 			asSlackEventRoute(handler.NewSlackReactionAddedEventConsumer),
+			asSlackEventRoute(handler.NewSlackMentionEventConsumer),
 			asGitHubEventRoute(handler.NewGitHubIssueCommentEventConsumer),
 			asGitHubEventRoute(handler.NewGitHubPushEventConsumer),
 			genai.NewChatModel,
