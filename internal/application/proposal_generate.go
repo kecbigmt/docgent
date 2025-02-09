@@ -55,12 +55,17 @@ func (w *ProposalGenerateUsecase) Execute(ctx context.Context) (domain.ProposalH
 		return domain.ProposalHandle{}, fmt.Errorf("failed to get chat history: %w", err)
 	}
 
+	tree, err := w.fileQueryService.GetTree(ctx, port.WithGetTreeRecursive())
+	if err != nil {
+		return domain.ProposalHandle{}, fmt.Errorf("failed to get tree metadata: %w", err)
+	}
+
 	var proposalHandle domain.ProposalHandle
 	var fileChanged bool
 
 	agent := domain.NewAgent(
 		w.chatModel,
-		buildSystemInstructionToGenerateProposal(),
+		buildSystemInstructionToGenerateProposal(tree),
 		tooluse.Cases{
 			AttemptComplete: func(toolUse tooluse.AttemptComplete) (string, bool, error) {
 				if err := w.conversationService.Reply(toolUse.Message); err != nil {
@@ -180,9 +185,19 @@ You should use create_proposal only after you changed files.
 	return proposalHandle, nil
 }
 
-func buildSystemInstructionToGenerateProposal() *domain.SystemInstruction {
+func buildSystemInstructionToGenerateProposal(fileTree []port.TreeMetadata) *domain.SystemInstruction {
+	var fileTreeStr strings.Builder
+	for _, metadata := range fileTree {
+		fileTreeStr.WriteString(fmt.Sprintf("- %s\n", metadata.Path))
+	}
+
 	systemInstruction := domain.NewSystemInstruction(
-		[]domain.EnvironmentContext{},
+		[]domain.EnvironmentContext{
+			{
+				Name:  "File tree",
+				Value: fileTreeStr.String(),
+			},
+		},
 		[]tooluse.Usage{
 			tooluse.CreateFileUsage,
 			tooluse.ModifyFileUsage,

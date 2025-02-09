@@ -66,9 +66,14 @@ func (w *ProposalRefineUsecase) Refine(proposalHandle domain.ProposalHandle, use
 		return fmt.Errorf("failed to retrieve proposal: %w", err)
 	}
 
+	tree, err := w.fileQueryService.GetTree(ctx, port.WithGetTreeRecursive())
+	if err != nil {
+		return fmt.Errorf("failed to get tree metadata: %w", err)
+	}
+
 	agent := domain.NewAgent(
 		w.chatModel,
-		buildSystemInstructionToRefineProposal(proposal),
+		buildSystemInstructionToRefineProposal(tree, proposal),
 		tooluse.Cases{
 			AttemptComplete: func(toolUse tooluse.AttemptComplete) (string, bool, error) {
 				if err := w.conversationService.Reply(toolUse.Message); err != nil {
@@ -160,7 +165,12 @@ Use query_rag to find relevant existing documents and refine the proposal based 
 	return nil
 }
 
-func buildSystemInstructionToRefineProposal(proposal domain.Proposal) *domain.SystemInstruction {
+func buildSystemInstructionToRefineProposal(fileTree []port.TreeMetadata, proposal domain.Proposal) *domain.SystemInstruction {
+	var fileTreeStr strings.Builder
+	for _, metadata := range fileTree {
+		fileTreeStr.WriteString(fmt.Sprintf("- %s\n", metadata.Path))
+	}
+
 	var newFiles []string
 	for _, diff := range proposal.Diffs {
 		newFiles = append(newFiles, "- "+diff.NewName)
@@ -169,6 +179,7 @@ func buildSystemInstructionToRefineProposal(proposal domain.Proposal) *domain.Sy
 
 	systemInstruction := domain.NewSystemInstruction(
 		[]domain.EnvironmentContext{
+			domain.NewEnvironmentContext("File tree", fileTreeStr.String()),
 			domain.NewEnvironmentContext("Current proposal files", newFilesStr),
 		},
 		[]tooluse.Usage{
