@@ -4,7 +4,6 @@ go 1.23.4
 
 require (
 	cloud.google.com/go/vertexai v0.13.3
-	github.com/alecthomas/kong v1.7.0
 	github.com/bradleyfalzon/ghinstallation/v2 v2.13.0
 	github.com/google/go-github/v68 v68.0.0
 	github.com/sergi/go-diff v1.3.1
