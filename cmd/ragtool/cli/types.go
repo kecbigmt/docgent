@@ -23,7 +23,7 @@ type CLI struct {
 
 		Delete struct {
 			CorpusID string `required:"" help:"ID of the RAG corpus"`
-			FileID   string `required:"" help:"ID of the RAG file to delete"`
+			FileID   string `arg:"" required:"" help:"ID of the RAG file to delete"`
 		} `cmd:"" help:"Delete a file from the RAG corpus"`
 
 		List struct {
