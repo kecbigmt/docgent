@@ -21,11 +21,11 @@ func NewAgent(chatModel ChatModel, systemInstruction *SystemInstruction, tools t
 
 func (a *Agent) InitiateTaskLoop(ctx context.Context, task string, maxStepCount int) error {
 	currentStepCount := 0
-	nextMessage := NewMessage(UserRole, task)
-	a.chatModel.SetSystemInstruction(a.systemInstruction.String())
+	nextMessage := task
+	session := a.chatModel.StartChat(a.systemInstruction.String())
 
 	for currentStepCount <= maxStepCount {
-		rawResponse, err := a.chatModel.SendMessage(ctx, nextMessage)
+		rawResponse, err := session.SendMessage(ctx, nextMessage)
 		if err != nil {
 			return fmt.Errorf("failed to generate response: %w", err)
 		}
@@ -35,7 +35,7 @@ func (a *Agent) InitiateTaskLoop(ctx context.Context, task string, maxStepCount 
 
 		toolUse, err := tooluse.Parse(rawResponse)
 		if err != nil {
-			nextMessage = NewMessage(UserRole, fmt.Sprintf("<error>failed to parse response: %s</error>", err))
+			nextMessage = fmt.Sprintf("<error>failed to parse response: %s</error>", err)
 			continue
 		}
 
@@ -46,7 +46,7 @@ func (a *Agent) InitiateTaskLoop(ctx context.Context, task string, maxStepCount 
 		if completed {
 			return nil
 		}
-		nextMessage = NewMessage(UserRole, message)
+		nextMessage = message
 	}
 
 	return fmt.Errorf("max task count reached")

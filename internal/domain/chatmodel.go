@@ -5,7 +5,10 @@ import (
 )
 
 type ChatModel interface {
-	SetSystemInstruction(instruction string) error
-	SendMessage(ctx context.Context, message Message) (string, error)
+	StartChat(systemInstruction string) ChatSession
+}
+
+type ChatSession interface {
+	SendMessage(ctx context.Context, message string) (string, error)
 	GetHistory() ([]Message, error)
 }

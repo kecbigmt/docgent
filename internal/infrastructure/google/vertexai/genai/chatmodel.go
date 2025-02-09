@@ -5,6 +5,7 @@ import (
 	"docgent-backend/internal/domain"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"cloud.google.com/go/vertexai/genai"
 	"go.uber.org/fx"
@@ -19,20 +20,29 @@ type ChatModelParams struct {
 }
 
 type ChatModel struct {
-	logger  *zap.Logger
-	client  *genai.Client
-	model   *genai.GenerativeModel
-	history []domain.Message
+	logger *zap.Logger
+	client *genai.Client
+	config Config
 }
 
 func NewChatModel(params ChatModelParams) (domain.ChatModel, error) {
 	ctx := context.Background()
+
 	client, err := genai.NewClient(ctx, params.Config.ProjectID, params.Config.Location)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create genai client: %w", err)
 	}
 
-	model := client.GenerativeModel(params.Config.ModelName)
+	return &ChatModel{
+		logger: params.Logger,
+		client: client,
+		config: params.Config,
+	}, nil
+}
+
+func (c *ChatModel) StartChat(systemInstruction string) domain.ChatSession {
+	model := c.client.GenerativeModel(c.config.ModelName)
+	model.SystemInstruction = genai.NewUserContent(genai.Text(systemInstruction))
 	model.ResponseMIMEType = "application/json"
 	model.ResponseSchema = &genai.Schema{
 		Type: genai.TypeObject,
@@ -49,42 +59,34 @@ func NewChatModel(params ChatModelParams) (domain.ChatModel, error) {
 	model.TopP = &topP
 	model.TopK = &topK
 
-	return &ChatModel{
-		logger:  params.Logger,
-		client:  client,
-		model:   model,
-		history: []domain.Message{},
-	}, nil
-}
+	session := model.StartChat()
+	c.logger.Debug("created chat session", zap.String("model", c.config.ModelName), zap.String("system_instruction", systemInstruction))
 
-func (c *ChatModel) SetSystemInstruction(instruction string) error {
-	c.model.SystemInstruction = genai.NewUserContent(genai.Text(instruction))
-	c.logger.Debug("set system instruction", zap.String("instruction", instruction))
-	return nil
-}
-
-func (c *ChatModel) SendMessage(ctx context.Context, message domain.Message) (string, error) {
-	chat := c.model.StartChat()
-
-	// Set up conversation history
-	for _, msg := range c.history {
-		content := &genai.Content{
-			Parts: []genai.Part{genai.Text(msg.Content)},
-		}
-		if msg.Role == domain.UserRole {
-			content.Role = "user"
-		} else {
-			content.Role = "model"
-		}
-		chat.History = append(chat.History, content)
+	return &ChatSession{
+		logger: c.logger,
+		model:  model,
+		chat:   session,
 	}
+}
 
-	c.logger.Debug("sending message", zap.String("role", "user"), zap.String("content", message.Content))
+type ChatSession struct {
+	logger *zap.Logger
+	model  *genai.GenerativeModel
+	chat   *genai.ChatSession
+}
+
+func (s *ChatSession) SendMessage(ctx context.Context, message string) (string, error) {
+	s.chat.History = append(s.chat.History, &genai.Content{
+		Role:  "user",
+		Parts: []genai.Part{genai.Text(message)},
+	})
+
+	s.logger.Debug("sending message", zap.String("role", "user"), zap.String("content", message))
 
 	// Send message
-	resp, err := chat.SendMessage(ctx, genai.Text(message.Content))
+	resp, err := s.chat.SendMessage(ctx, genai.Text(message))
 	if err != nil {
-		c.logger.Debug("failed to send message", zap.Error(err))
+		s.logger.Debug("failed to send message", zap.Error(err))
 		return "", fmt.Errorf("failed to send message: %w", err)
 	}
 
@@ -107,18 +109,34 @@ func (c *ChatModel) SendMessage(ctx context.Context, message domain.Message) (st
 		return "", fmt.Errorf("failed to unmarshal response: %w", err)
 	}
 
-	c.logger.Debug("received response", zap.String("role", "agent"), zap.String("content", response.ToolUse))
+	s.logger.Debug("received response", zap.String("role", "agent"), zap.String("content", response.ToolUse))
 
 	// Update conversation history
-	c.history = append(c.history, message)
-	c.history = append(c.history, domain.Message{
-		Role:    domain.AssistantRole,
-		Content: response.ToolUse,
+	s.chat.History = append(s.chat.History, &genai.Content{
+		Role:  "model",
+		Parts: []genai.Part{genai.Text(response.ToolUse)},
 	})
 
 	return response.ToolUse, nil
 }
 
-func (c *ChatModel) GetHistory() ([]domain.Message, error) {
-	return c.history, nil
+func (s *ChatSession) GetHistory() ([]domain.Message, error) {
+	history := make([]domain.Message, len(s.chat.History))
+	for i, content := range s.chat.History {
+		role := domain.UserRole
+		if content.Role == "model" {
+			role = domain.AssistantRole
+		}
+		var contentString strings.Builder
+		for _, part := range content.Parts {
+			if text, ok := part.(genai.Text); ok {
+				contentString.WriteString(string(text))
+			}
+		}
+		history[i] = domain.Message{
+			Role:    role,
+			Content: contentString.String(),
+		}
+	}
+	return history, nil
 }
