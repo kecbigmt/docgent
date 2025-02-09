@@ -54,6 +54,8 @@ func (p *WebhookRequestParser) ParseRequest(r *http.Request) (*WebhookEvent, err
 	switch event := ev.(type) {
 	case *github.IssueCommentEvent:
 		return NewWebhookEvent("issue_comment", event), nil
+	case *github.PushEvent:
+		return NewWebhookEvent("push", event), nil
 	}
 
 	return nil, fmt.Errorf("unsupported event type: %T", ev)
