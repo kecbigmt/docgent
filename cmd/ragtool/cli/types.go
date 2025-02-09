@@ -6,6 +6,10 @@ type CLI struct {
 			DisplayName string `required:"" help:"Display name of the RAG corpus"`
 			Description string `help:"Description of the RAG corpus"`
 		} `cmd:"" help:"Create a new RAG corpus"`
+		List struct {
+			PageSize  int    `help:"Maximum number of corpora to return" default:"50"`
+			PageToken string `help:"Page token for the next page of results"`
+		} `cmd:"" help:"List RAG corpora"`
 	} `cmd:"" help:"Manage RAG corpus"`
 
 	File struct {

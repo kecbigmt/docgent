@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -24,5 +25,26 @@ func HandleCorpusCreate(ctx context.Context, cli *CLI, client *lib.Client) error
 	}
 
 	fmt.Printf("Successfully created corpus '%s'\n", cli.Corpus.Create.DisplayName)
+	return nil
+}
+
+func HandleCorpusList(ctx context.Context, cli *CLI, client *lib.Client) error {
+	var options []lib.ListCorpusOption
+	options = append(options, lib.WithListCorpusPageSize(cli.Corpus.List.PageSize))
+	if cli.Corpus.List.PageToken != "" {
+		options = append(options, lib.WithListCorpusPageToken(cli.Corpus.List.PageToken))
+	}
+
+	result, err := client.ListCorpora(ctx, options...)
+	if err != nil {
+		return fmt.Errorf("failed to list corpora: %w", err)
+	}
+
+	output, err := json.MarshalIndent(result, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal response: %w", err)
+	}
+
+	fmt.Println(string(output))
 	return nil
 }
