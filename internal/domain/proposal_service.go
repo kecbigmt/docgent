@@ -2,7 +2,6 @@ package domain
 
 type ProposalService struct {
 	repository ProposalRepository
-	agent      ProposalAgent
 }
 
 type ProposalRepository interface {
@@ -14,12 +13,8 @@ type ProposalRepository interface {
 	ApplyProposalDiffs(handle ProposalHandle, diffs Diffs) error
 }
 
-type ProposalAgent interface {
-	Generate(diffs Diffs, contextDescription string) (ProposalContent, error)
-}
-
-func NewProposalService(agent ProposalAgent, repository ProposalRepository) *ProposalService {
-	return &ProposalService{agent: agent, repository: repository}
+func NewProposalService(repository ProposalRepository) *ProposalService {
+	return &ProposalService{repository: repository}
 }
 
 func (s *ProposalService) Create(diffs Diffs, content ProposalContent) (ProposalHandle, error) {
@@ -28,10 +23,6 @@ func (s *ProposalService) Create(diffs Diffs, content ProposalContent) (Proposal
 
 func (s *ProposalService) GetProposal(handle ProposalHandle) (Proposal, error) {
 	return s.repository.GetProposal(handle)
-}
-
-func (s *ProposalService) GenerateContent(diffs Diffs, contextDescription string) (ProposalContent, error) {
-	return s.agent.Generate(diffs, contextDescription)
 }
 
 func (s *ProposalService) CreateComment(proposalHandle ProposalHandle, commentBody string) (Comment, error) {
