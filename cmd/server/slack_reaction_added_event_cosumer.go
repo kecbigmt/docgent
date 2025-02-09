@@ -1,4 +1,4 @@
-package application
+package main
 
 import (
 	"context"
@@ -11,32 +11,31 @@ import (
 	"go.uber.org/zap"
 
 	"docgent-backend/internal/domain"
+	"docgent-backend/internal/infrastructure/github"
+	infraslack "docgent-backend/internal/infrastructure/slack"
 	"docgent-backend/internal/workflow"
-
-	appgithub "docgent-backend/internal/application/github"
-	appslack "docgent-backend/internal/application/slack"
 )
 
 type SlackReactionAddedEventConsumerParams struct {
 	fx.In
 
 	Logger                   *zap.Logger
-	SlackAPI                 appslack.API
-	GitHubServiceProvider    appgithub.ServiceProvider
-	SlackServiceProvider     appslack.ServiceProvider
+	SlackAPI                 *infraslack.API
+	GitHubServiceProvider    *github.ServiceProvider
+	SlackServiceProvider     *infraslack.ServiceProvider
 	ChatModel                domain.ChatModel
 	RAGService               domain.RAGService
-	ApplicationConfigService ApplicationConfigService
+	ApplicationConfigService *ApplicationConfigService
 }
 
 type SlackReactionAddedEventConsumer struct {
 	logger                   *zap.Logger
-	slackAPI                 appslack.API
-	githubServiceProvider    appgithub.ServiceProvider
-	slackServiceProvider     appslack.ServiceProvider
+	slackAPI                 *infraslack.API
+	githubServiceProvider    *github.ServiceProvider
+	slackServiceProvider     *infraslack.ServiceProvider
 	chatModel                domain.ChatModel
 	ragService               domain.RAGService
-	applicationConfigService ApplicationConfigService
+	applicationConfigService *ApplicationConfigService
 }
 
 func NewSlackReactionAddedEventConsumer(params SlackReactionAddedEventConsumerParams) *SlackReactionAddedEventConsumer {

@@ -5,11 +5,8 @@ import (
 	"fmt"
 
 	"github.com/google/go-github/v68/github"
-
-	application "docgent-backend/internal/application/github"
 )
 
-// BranchService implements the application.BranchService interface using GitHub API.
 type BranchService struct {
 	client *github.Client
 	owner  string
@@ -20,7 +17,7 @@ type BranchService struct {
 func NewBranchService(
 	client *github.Client,
 	owner, repo string,
-) application.BranchService {
+) *BranchService {
 	return &BranchService{
 		client: client,
 		owner:  owner,

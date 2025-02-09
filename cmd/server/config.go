@@ -1,26 +1,37 @@
 package main
 
 import (
-	"docgent-backend/internal/application"
 	"encoding/json"
+	"errors"
 	"os"
 )
 
-type ApplicationConfigService struct {
-	workspaces []application.Workspace
+type Workspace struct {
+	SlackWorkspaceID     string `json:"slack_workspace_id"`
+	GitHubInstallationID int64  `json:"github_installation_id"`
+	GitHubOwner          string `json:"github_owner"`
+	GitHubRepo           string `json:"github_repo"`
+	GitHubDefaultBranch  string `json:"github_default_branch"`
+	VertexAICorpusID     string `json:"vertexai_rag_corpus_id"`
 }
 
-func NewApplicationConfigService(workspaces []application.Workspace) application.ApplicationConfigService {
+var ErrWorkspaceNotFound = errors.New("workspace not found")
+
+type ApplicationConfigService struct {
+	workspaces []Workspace
+}
+
+func NewApplicationConfigService(workspaces []Workspace) *ApplicationConfigService {
 	return &ApplicationConfigService{
 		workspaces: workspaces,
 	}
 }
 
 type Config struct {
-	Workspaces []application.Workspace `json:"workspaces"`
+	Workspaces []Workspace `json:"workspaces"`
 }
 
-func NewApplicationConfigServiceFromEnv() application.ApplicationConfigService {
+func NewApplicationConfigServiceFromEnv() *ApplicationConfigService {
 	configBytes, err := os.ReadFile("config.json")
 	if err != nil {
 		panic(err)
@@ -40,22 +51,22 @@ func NewApplicationConfigServiceFromEnv() application.ApplicationConfigService {
 	return NewApplicationConfigService(workspaces)
 }
 
-func (s *ApplicationConfigService) GetWorkspaceBySlackWorkspaceID(slackWorkspaceID string) (application.Workspace, error) {
+func (s *ApplicationConfigService) GetWorkspaceBySlackWorkspaceID(slackWorkspaceID string) (Workspace, error) {
 	for _, workspace := range s.workspaces {
 		if workspace.SlackWorkspaceID == slackWorkspaceID {
 			return workspace, nil
 		}
 	}
 
-	return application.Workspace{}, application.ErrWorkspaceNotFound
+	return Workspace{}, ErrWorkspaceNotFound
 }
 
-func (s *ApplicationConfigService) GetWorkspaceByGitHubInstallationID(githubInstallationID int64) (application.Workspace, error) {
+func (s *ApplicationConfigService) GetWorkspaceByGitHubInstallationID(githubInstallationID int64) (Workspace, error) {
 	for _, workspace := range s.workspaces {
 		if workspace.GitHubInstallationID == githubInstallationID {
 			return workspace, nil
 		}
 	}
 
-	return application.Workspace{}, application.ErrWorkspaceNotFound
+	return Workspace{}, ErrWorkspaceNotFound
 }

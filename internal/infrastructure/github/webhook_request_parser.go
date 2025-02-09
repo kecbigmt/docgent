@@ -5,8 +5,6 @@ import (
 	"net/http"
 
 	"github.com/google/go-github/v68/github"
-
-	"docgent-backend/internal/application"
 )
 
 /**
@@ -42,7 +40,7 @@ func NewWebhookRequestParser(webhookSecret string) *WebhookRequestParser {
 	return &WebhookRequestParser{webhookSecret: webhookSecret}
 }
 
-func (p *WebhookRequestParser) ParseRequest(r *http.Request) (application.GitHubWebhookEvent, error) {
+func (p *WebhookRequestParser) ParseRequest(r *http.Request) (*WebhookEvent, error) {
 	payload, err := github.ValidatePayload(r, []byte(p.webhookSecret))
 	if err != nil {
 		return nil, fmt.Errorf("failed to validate payload: %w", err)

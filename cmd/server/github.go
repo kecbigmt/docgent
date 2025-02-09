@@ -5,9 +5,13 @@ import (
 	"os"
 	"strconv"
 
-	"docgent-backend/internal/application"
 	"docgent-backend/internal/infrastructure/github"
 )
+
+type GitHubEventRoute interface {
+	ConsumeEvent(event interface{})
+	EventType() string
+}
 
 func NewGitHubAPI() *github.API {
 	appIDStr := os.Getenv("GITHUB_APP_ID")
@@ -27,7 +31,7 @@ func NewGitHubAPI() *github.API {
 	return github.NewAPI(appID, []byte(privateKey))
 }
 
-func NewGitHubWebhookRequestParser() application.GitHubWebhookRequestParser {
+func NewGitHubWebhookRequestParser() *github.WebhookRequestParser {
 	secret := os.Getenv("GITHUB_WEBHOOK_SECRET")
 	if secret == "" {
 		log.Fatal("GITHUB_WEBHOOK_SECRET is not set")

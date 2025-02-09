@@ -1,4 +1,4 @@
-package application
+package main
 
 import (
 	"context"
@@ -9,8 +9,8 @@ import (
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 
-	appgithub "docgent-backend/internal/application/github"
 	"docgent-backend/internal/domain"
+	infragithub "docgent-backend/internal/infrastructure/github"
 	"docgent-backend/internal/workflow"
 )
 
@@ -19,17 +19,17 @@ type GitHubIssueCommentEventConsumerParams struct {
 
 	ChatModel                domain.ChatModel
 	Logger                   *zap.Logger
-	GitHubServiceProvider    appgithub.ServiceProvider
+	GitHubServiceProvider    *infragithub.ServiceProvider
 	RAGService               domain.RAGService
-	ApplicationConfigService ApplicationConfigService
+	ApplicationConfigService *ApplicationConfigService
 }
 
 type GitHubIssueCommentEventConsumer struct {
 	chatModel                domain.ChatModel
 	logger                   *zap.Logger
-	githubServiceProvider    appgithub.ServiceProvider
+	githubServiceProvider    *infragithub.ServiceProvider
 	ragService               domain.RAGService
-	applicationConfigService ApplicationConfigService
+	applicationConfigService *ApplicationConfigService
 }
 
 func NewGitHubIssueCommentEventConsumer(params GitHubIssueCommentEventConsumerParams) *GitHubIssueCommentEventConsumer {

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	application "docgent-backend/internal/application/github"
 	"docgent-backend/internal/domain"
 )
 
@@ -13,7 +12,7 @@ type ServiceProvider struct {
 	api *API
 }
 
-func NewServiceProvider(api *API) application.ServiceProvider {
+func NewServiceProvider(api *API) *ServiceProvider {
 	return &ServiceProvider{
 		api: api,
 	}
@@ -51,7 +50,7 @@ func (p *ServiceProvider) NewFileChangeService(installationID int64, owner, repo
 }
 
 // NewBranchService creates a branch service with the proper context
-func (p *ServiceProvider) NewBranchService(installationID int64, owner, repo string) application.BranchService {
+func (p *ServiceProvider) NewBranchService(installationID int64, owner, repo string) *BranchService {
 	return NewBranchService(p.api.NewClient(installationID), owner, repo)
 }
 

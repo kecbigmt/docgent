@@ -3,11 +3,17 @@ package main
 import (
 	"os"
 
-	appslack "docgent-backend/internal/application/slack"
 	"docgent-backend/internal/infrastructure/slack"
+
+	"github.com/slack-go/slack/slackevents"
 )
 
-func NewSlackAPI() appslack.API {
+type SlackEventRoute interface {
+	ConsumeEvent(event slackevents.EventsAPIInnerEvent, workspace Workspace)
+	EventType() string
+}
+
+func NewSlackAPI() *slack.API {
 	token := os.Getenv("SLACK_BOT_TOKEN")
 	if token == "" {
 		panic("SLACK_BOT_TOKEN is not set")

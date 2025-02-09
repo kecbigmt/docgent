@@ -9,7 +9,6 @@ import (
 	"go.uber.org/fx/fxevent"
 	"go.uber.org/zap"
 
-	"docgent-backend/internal/application"
 	"docgent-backend/internal/domain"
 	"docgent-backend/internal/infrastructure/github"
 	"docgent-backend/internal/infrastructure/google/vertexai/genai"
@@ -34,11 +33,11 @@ func main() {
 				NewServeMux,
 				fx.ParamTags(`group:"routes"`),
 			),
-			AsRoute(application.NewHealthHandler),
-			AsRoute(application.NewSlackEventHandler),
-			AsRoute(application.NewGitHubWebhookHandler),
-			AsSlackEventRoute(application.NewSlackReactionAddedEventConsumer),
-			AsGitHubEventRoute(application.NewGitHubIssueCommentEventConsumer),
+			AsRoute(NewHealthHandler),
+			AsRoute(NewSlackEventHandler),
+			AsRoute(NewGitHubWebhookHandler),
+			AsSlackEventRoute(NewSlackReactionAddedEventConsumer),
+			AsGitHubEventRoute(NewGitHubIssueCommentEventConsumer),
 			AsChatModel(genai.NewChatModel),
 			github.NewServiceProvider,
 			zap.NewExample,
@@ -66,7 +65,7 @@ func NewHTTPServer(lc fx.Lifecycle, mux *http.ServeMux, log *zap.Logger) *http.S
 	return srv
 }
 
-func NewServeMux(routes []application.Route) *http.ServeMux {
+func NewServeMux(routes []Route) *http.ServeMux {
 	mux := http.NewServeMux()
 	for _, route := range routes {
 		mux.Handle(route.Pattern(), route)
@@ -75,17 +74,17 @@ func NewServeMux(routes []application.Route) *http.ServeMux {
 }
 
 func AsRoute(f any, anns ...fx.Annotation) any {
-	anns = append([]fx.Annotation{fx.As(new(application.Route)), fx.ResultTags(`group:"routes"`)}, anns...)
+	anns = append([]fx.Annotation{fx.As(new(Route)), fx.ResultTags(`group:"routes"`)}, anns...)
 	return fx.Annotate(f, anns...)
 }
 
 func AsSlackEventRoute(f any, anns ...fx.Annotation) any {
-	anns = append([]fx.Annotation{fx.As(new(application.SlackEventRoute)), fx.ResultTags(`group:"slack_event_routes"`)}, anns...)
+	anns = append([]fx.Annotation{fx.As(new(SlackEventRoute)), fx.ResultTags(`group:"slack_event_routes"`)}, anns...)
 	return fx.Annotate(f, anns...)
 }
 
 func AsGitHubEventRoute(f any, anns ...fx.Annotation) any {
-	anns = append([]fx.Annotation{fx.As(new(application.GitHubEventRoute)), fx.ResultTags(`group:"github_event_routes"`)}, anns...)
+	anns = append([]fx.Annotation{fx.As(new(GitHubEventRoute)), fx.ResultTags(`group:"github_event_routes"`)}, anns...)
 	return fx.Annotate(f, anns...)
 }
 
