@@ -29,10 +29,15 @@ type RagFileTransformationConfig struct {
 }
 
 type RagFileChunkingConfig struct {
+	FixedLengthChunking *FixedLengthChunking `json:"fixed_length_chunking"`
+}
+
+type FixedLengthChunking struct {
 	ChunkSize    int32 `json:"chunk_size"`
 	ChunkOverlap int32 `json:"chunk_overlap"`
 }
 
+// UploadFile uploads a file to a RAG corpus. Reference: https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/rag-api-v1#upload-a-rag-file-example-api
 func (c *Client) UploadFile(ctx context.Context, corpusId int64, file io.Reader, fileName string, options ...UploadFileOption) error {
 	uploadFileOptions := &UploadFileOptions{}
 	for _, option := range options {
@@ -53,8 +58,10 @@ func (c *Client) UploadFile(ctx context.Context, corpusId int64, file io.Reader,
 		metadata.UploadRagFileConfig = &UploadRagFileConfig{
 			RagFileTransformationConfig: &RagFileTransformationConfig{
 				RagFileChunkingConfig: &RagFileChunkingConfig{
-					ChunkSize:    int32(uploadFileOptions.ChunkingConfig.ChunkSize),
-					ChunkOverlap: int32(uploadFileOptions.ChunkingConfig.ChunkOverlap),
+					FixedLengthChunking: &FixedLengthChunking{
+						ChunkSize:    int32(uploadFileOptions.ChunkingConfig.ChunkSize),
+						ChunkOverlap: int32(uploadFileOptions.ChunkingConfig.ChunkOverlap),
+					},
 				},
 			},
 		}
@@ -101,7 +108,12 @@ func (c *Client) UploadFile(ctx context.Context, corpusId int64, file io.Reader,
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("failed to upload file: %s", resp.Status)
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("failed to upload file: %w", &HTTPError{
+			StatusCode: resp.StatusCode,
+			Status:     resp.Status,
+			RawBody:    string(body),
+		})
 	}
 
 	return nil

@@ -57,8 +57,8 @@ func TestClient_UploadFile(t *testing.T) {
 						assert.NotNil(t, metadataObj.UploadRagFileConfig)
 						assert.NotNil(t, metadataObj.UploadRagFileConfig.RagFileTransformationConfig)
 						assert.NotNil(t, metadataObj.UploadRagFileConfig.RagFileTransformationConfig.RagFileChunkingConfig)
-						assert.Equal(t, int32(100), metadataObj.UploadRagFileConfig.RagFileTransformationConfig.RagFileChunkingConfig.ChunkSize)
-						assert.Equal(t, int32(10), metadataObj.UploadRagFileConfig.RagFileTransformationConfig.RagFileChunkingConfig.ChunkOverlap)
+						assert.Equal(t, int32(100), metadataObj.UploadRagFileConfig.RagFileTransformationConfig.RagFileChunkingConfig.FixedLengthChunking.ChunkSize)
+						assert.Equal(t, int32(10), metadataObj.UploadRagFileConfig.RagFileTransformationConfig.RagFileChunkingConfig.FixedLengthChunking.ChunkOverlap)
 
 						// Validate file
 						file, header, err := r.FormFile("file")
