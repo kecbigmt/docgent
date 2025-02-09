@@ -39,7 +39,7 @@ func NewProposalRefineUsecase(
 		fileChangeService:   fileChangeService,
 		proposalRepository:  proposalRepository,
 		ragCorpus:           ragCorpus,
-		remainingStepCount:  5,
+		remainingStepCount:  10,
 	}
 
 	for _, option := range options {
