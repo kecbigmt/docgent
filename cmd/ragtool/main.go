@@ -29,7 +29,7 @@ func main() {
 
 	var cmdErr error
 	switch kongCtx.Command() {
-	case "file upload":
+	case "file upload <file>":
 		cmdErr = cli.HandleFileUpload(ctx, &CLI, client)
 	case "file delete":
 		cmdErr = cli.HandleFileDelete(ctx, &CLI, client)
@@ -39,6 +39,9 @@ func main() {
 		cmdErr = cli.HandleCorpusCreate(ctx, &CLI, client)
 	case "corpus list":
 		cmdErr = cli.HandleCorpusList(ctx, &CLI, client)
+	default:
+		fmt.Printf("invalid command: %s\n", kongCtx.Command())
+		os.Exit(1)
 	}
 
 	if cmdErr != nil {
