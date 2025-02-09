@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"docgent-backend/internal/application/port"
 	"docgent-backend/internal/domain"
 	"docgent-backend/internal/domain/tooluse"
 
@@ -40,9 +41,9 @@ func (m *MockConversationService) Reply(input string) error {
 	return args.Error(0)
 }
 
-func (m *MockConversationService) GetHistory() ([]domain.ConversationMessage, error) {
+func (m *MockConversationService) GetHistory() ([]port.ConversationMessage, error) {
 	args := m.Called()
-	return args.Get(0).([]domain.ConversationMessage), args.Error(1)
+	return args.Get(0).([]port.ConversationMessage), args.Error(1)
 }
 
 type MockFileQueryService struct {
@@ -131,7 +132,7 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 		{
 			name: "正常系：RAGを使用して提案が正常に生成される",
 			setupMocks: func(chatModel *MockChatModel, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileChangeService *MockFileChangeService, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus) {
-				conversationService.On("GetHistory").Return([]domain.ConversationMessage{
+				conversationService.On("GetHistory").Return([]port.ConversationMessage{
 					{Author: "user", Content: "APIの仕様書を作成してください"},
 					{Author: "assistant", Content: "承知しました。どのような内容を含めるべきでしょうか？"},
 					{Author: "user", Content: "エンドポイント、リクエスト、レスポンスの形式を含めてください"},
@@ -171,7 +172,7 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 		{
 			name: "エラー系：エージェントの実行に失敗する",
 			setupMocks: func(chatModel *MockChatModel, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileChangeService *MockFileChangeService, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus) {
-				conversationService.On("GetHistory").Return([]domain.ConversationMessage{
+				conversationService.On("GetHistory").Return([]port.ConversationMessage{
 					{Author: "user", Content: "APIの仕様書を作成してください"},
 				}, nil)
 				chatModel.On("SetSystemInstruction", mock.Anything).Return(nil)
@@ -184,7 +185,7 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 		{
 			name: "エラー系：提案の作成に失敗する",
 			setupMocks: func(chatModel *MockChatModel, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileChangeService *MockFileChangeService, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus) {
-				conversationService.On("GetHistory").Return([]domain.ConversationMessage{
+				conversationService.On("GetHistory").Return([]port.ConversationMessage{
 					{Author: "user", Content: "APIの仕様書を作成してください"},
 				}, nil)
 				chatModel.On("SetSystemInstruction", mock.Anything).Return(nil)

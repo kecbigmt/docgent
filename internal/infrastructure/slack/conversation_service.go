@@ -1,7 +1,7 @@
 package slack
 
 import (
-	"docgent-backend/internal/domain"
+	"docgent-backend/internal/application/port"
 	"fmt"
 
 	"github.com/slack-go/slack"
@@ -13,7 +13,7 @@ type ConversationService struct {
 	threadTimestamp string
 }
 
-func NewConversationService(slackAPI *API, channelID string, threadTimestamp string) domain.ConversationService {
+func NewConversationService(slackAPI *API, channelID string, threadTimestamp string) port.ConversationService {
 	return &ConversationService{
 		slackAPI:        slackAPI,
 		channelID:       channelID,
@@ -29,7 +29,7 @@ func (s *ConversationService) Reply(input string) error {
 	return nil
 }
 
-func (s *ConversationService) GetHistory() ([]domain.ConversationMessage, error) {
+func (s *ConversationService) GetHistory() ([]port.ConversationMessage, error) {
 	messages, _, _, err := s.slackAPI.GetClient().GetConversationReplies(&slack.GetConversationRepliesParameters{
 		ChannelID: s.channelID,
 		Timestamp: s.threadTimestamp,
@@ -38,9 +38,9 @@ func (s *ConversationService) GetHistory() ([]domain.ConversationMessage, error)
 		return nil, fmt.Errorf("failed to get thread messages: %w", err)
 	}
 
-	conversationMessages := make([]domain.ConversationMessage, 0, len(messages))
+	conversationMessages := make([]port.ConversationMessage, 0, len(messages))
 	for _, message := range messages {
-		conversationMessages = append(conversationMessages, domain.ConversationMessage{
+		conversationMessages = append(conversationMessages, port.ConversationMessage{
 			Author:  message.User,
 			Content: message.Text,
 		})

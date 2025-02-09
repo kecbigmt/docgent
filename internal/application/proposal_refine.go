@@ -6,13 +6,14 @@ import (
 	"fmt"
 	"strings"
 
+	"docgent-backend/internal/application/port"
 	"docgent-backend/internal/domain"
 	"docgent-backend/internal/domain/tooluse"
 )
 
 type ProposalRefineUsecase struct {
 	chatModel           domain.ChatModel
-	conversationService domain.ConversationService
+	conversationService port.ConversationService
 	fileQueryService    domain.FileQueryService
 	fileChangeService   domain.FileChangeService
 	proposalRepository  domain.ProposalRepository
@@ -24,7 +25,7 @@ type NewProposalRefineUsecaseOption func(*ProposalRefineUsecase)
 
 func NewProposalRefineUsecase(
 	chatModel domain.ChatModel,
-	conversationService domain.ConversationService,
+	conversationService port.ConversationService,
 	fileQueryService domain.FileQueryService,
 	fileChangeService domain.FileChangeService,
 	proposalRepository domain.ProposalRepository,

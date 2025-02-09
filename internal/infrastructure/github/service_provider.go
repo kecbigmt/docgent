@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"docgent-backend/internal/application/port"
 	"docgent-backend/internal/domain"
 )
 
@@ -19,7 +20,7 @@ func NewServiceProvider(api *API) *ServiceProvider {
 }
 
 // NewIssueCommentConversationService creates a conversation service with the proper context
-func (p *ServiceProvider) NewIssueCommentConversationService(installationID int64, owner, repo string, prNumber int) domain.ConversationService {
+func (p *ServiceProvider) NewIssueCommentConversationService(installationID int64, owner, repo string, prNumber int) port.ConversationService {
 	return NewIssueCommentConversationService(
 		p.api.NewClient(installationID),
 		owner,
@@ -29,7 +30,7 @@ func (p *ServiceProvider) NewIssueCommentConversationService(installationID int6
 }
 
 // NewReviewCommentConversationService creates a conversation service with the proper context
-func (p *ServiceProvider) NewReviewCommentConversationService(installationID int64, owner, repo string, prNumber int, parentCommentID int64) domain.ConversationService {
+func (p *ServiceProvider) NewReviewCommentConversationService(installationID int64, owner, repo string, prNumber int, parentCommentID int64) port.ConversationService {
 	return NewReviewCommentConversationService(
 		p.api.NewClient(installationID),
 		owner,

@@ -2,7 +2,7 @@ package github
 
 import (
 	"context"
-	"docgent-backend/internal/domain"
+	"docgent-backend/internal/application/port"
 	"fmt"
 
 	"github.com/google/go-github/v68/github"
@@ -16,7 +16,7 @@ type ReviewCommentConversationService struct {
 	parentCommentID int64
 }
 
-func NewReviewCommentConversationService(client *github.Client, owner, repo string, prNumber int, commentID int64) domain.ConversationService {
+func NewReviewCommentConversationService(client *github.Client, owner, repo string, prNumber int, commentID int64) port.ConversationService {
 	return &ReviewCommentConversationService{
 		client:          client,
 		owner:           owner,
@@ -26,7 +26,7 @@ func NewReviewCommentConversationService(client *github.Client, owner, repo stri
 	}
 }
 
-func (s *ReviewCommentConversationService) GetHistory() ([]domain.ConversationMessage, error) {
+func (s *ReviewCommentConversationService) GetHistory() ([]port.ConversationMessage, error) {
 	panic("not implemented")
 }
 

@@ -2,7 +2,7 @@ package github
 
 import (
 	"context"
-	"docgent-backend/internal/domain"
+	"docgent-backend/internal/application/port"
 	"fmt"
 
 	"github.com/google/go-github/v68/github"
@@ -15,7 +15,7 @@ type IssueCommentConversationService struct {
 	prNumber int
 }
 
-func NewIssueCommentConversationService(client *github.Client, owner, repo string, prNumber int) domain.ConversationService {
+func NewIssueCommentConversationService(client *github.Client, owner, repo string, prNumber int) port.ConversationService {
 	return &IssueCommentConversationService{
 		client:   client,
 		owner:    owner,
@@ -24,16 +24,16 @@ func NewIssueCommentConversationService(client *github.Client, owner, repo strin
 	}
 }
 
-func (s *IssueCommentConversationService) GetHistory() ([]domain.ConversationMessage, error) {
+func (s *IssueCommentConversationService) GetHistory() ([]port.ConversationMessage, error) {
 	ctx := context.Background()
 	comments, _, err := s.client.PullRequests.ListComments(ctx, s.owner, s.repo, s.prNumber, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list review comments: %w", err)
 	}
 
-	conversationMessages := make([]domain.ConversationMessage, 0, len(comments))
+	conversationMessages := make([]port.ConversationMessage, 0, len(comments))
 	for _, comment := range comments {
-		conversationMessages = append(conversationMessages, domain.ConversationMessage{
+		conversationMessages = append(conversationMessages, port.ConversationMessage{
 			Author:  *comment.User.Login,
 			Content: *comment.Body,
 		})
