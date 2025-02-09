@@ -96,16 +96,8 @@ func (c *Client) RetrieveContexts(ctx context.Context, corpusId int64, query str
 		}
 	}
 
-	resBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return RetrieveContextsResponse{}, err
-	}
-
-	fmt.Println(string(resBody))
-
 	var responseBody RetrieveContextsResponse
-	err = json.Unmarshal(resBody, &responseBody)
-	if err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&responseBody); err != nil {
 		return RetrieveContextsResponse{}, err
 	}
 
