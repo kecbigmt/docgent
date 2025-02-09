@@ -8,7 +8,7 @@ import (
 	"docgent-backend/internal/infrastructure/github"
 )
 
-func NewGitHubAPI() *github.API {
+func newGitHubAPI() *github.API {
 	appIDStr := os.Getenv("GITHUB_APP_ID")
 	if appIDStr == "" {
 		log.Fatal("GITHUB_APP_ID is not set")
@@ -26,7 +26,7 @@ func NewGitHubAPI() *github.API {
 	return github.NewAPI(appID, []byte(privateKey))
 }
 
-func NewGitHubWebhookRequestParser() *github.WebhookRequestParser {
+func newGitHubWebhookRequestParser() *github.WebhookRequestParser {
 	secret := os.Getenv("GITHUB_WEBHOOK_SECRET")
 	if secret == "" {
 		log.Fatal("GITHUB_WEBHOOK_SECRET is not set")

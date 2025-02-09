@@ -6,7 +6,7 @@ import (
 	"docgent-backend/internal/infrastructure/slack"
 )
 
-func NewSlackAPI() *slack.API {
+func newSlackAPI() *slack.API {
 	token := os.Getenv("SLACK_BOT_TOKEN")
 	if token == "" {
 		panic("SLACK_BOT_TOKEN is not set")

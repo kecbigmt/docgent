@@ -6,27 +6,27 @@ import (
 	"os"
 )
 
-type ApplicationConfigService struct {
+type applicationConfigService struct {
 	workspaces []handler.Workspace
 }
 
-func NewApplicationConfigService(workspaces []handler.Workspace) handler.ApplicationConfigService {
-	return &ApplicationConfigService{
+func newApplicationConfigService(workspaces []handler.Workspace) handler.ApplicationConfigService {
+	return &applicationConfigService{
 		workspaces: workspaces,
 	}
 }
 
-type Config struct {
+type config struct {
 	Workspaces []handler.Workspace `json:"workspaces"`
 }
 
-func NewApplicationConfigServiceFromEnv() handler.ApplicationConfigService {
+func newApplicationConfigServiceFromEnv() handler.ApplicationConfigService {
 	configBytes, err := os.ReadFile("config.json")
 	if err != nil {
 		panic(err)
 	}
 
-	var config Config
+	var config config
 	json.Unmarshal(configBytes, &config)
 
 	workspaces := config.Workspaces
@@ -37,10 +37,10 @@ func NewApplicationConfigServiceFromEnv() handler.ApplicationConfigService {
 		}
 	}
 
-	return NewApplicationConfigService(workspaces)
+	return newApplicationConfigService(workspaces)
 }
 
-func (s *ApplicationConfigService) GetWorkspaceBySlackWorkspaceID(slackWorkspaceID string) (handler.Workspace, error) {
+func (s *applicationConfigService) GetWorkspaceBySlackWorkspaceID(slackWorkspaceID string) (handler.Workspace, error) {
 	for _, workspace := range s.workspaces {
 		if workspace.SlackWorkspaceID == slackWorkspaceID {
 			return workspace, nil
@@ -50,7 +50,7 @@ func (s *ApplicationConfigService) GetWorkspaceBySlackWorkspaceID(slackWorkspace
 	return handler.Workspace{}, handler.ErrWorkspaceNotFound
 }
 
-func (s *ApplicationConfigService) GetWorkspaceByGitHubInstallationID(githubInstallationID int64) (handler.Workspace, error) {
+func (s *applicationConfigService) GetWorkspaceByGitHubInstallationID(githubInstallationID int64) (handler.Workspace, error) {
 	for _, workspace := range s.workspaces {
 		if workspace.GitHubInstallationID == githubInstallationID {
 			return workspace, nil
