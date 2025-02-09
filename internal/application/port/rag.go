@@ -16,6 +16,10 @@ type RAGCorpus interface {
 	Query(ctx context.Context, query string, similarityTopK int32, vectorDistanceThreshold float64) ([]RAGDocument, error)
 
 	UploadFile(ctx context.Context, file io.Reader, fileName string, options ...RAGCorpusUploadFileOption) error
+
+	ListFiles(ctx context.Context) ([]RAGFile, error)
+
+	DeleteFile(ctx context.Context, fileID int64) error
 }
 
 type RAGCorpusUploadFileOption func(*RAGCorpusUploadFileOptions)
@@ -54,4 +58,10 @@ type RAGDocument struct {
 	// Score is the relevance of the document to the query.
 	// It ranges from 0.0 to 1.0, where 1.0 is the highest relevance.
 	Score float64
+}
+
+type RAGFile struct {
+	ID          int64
+	FileName    string
+	Description string
 }
