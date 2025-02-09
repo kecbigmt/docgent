@@ -8,16 +8,18 @@ import (
 )
 
 type ConversationService struct {
-	slackAPI        *API
-	channelID       string
-	threadTimestamp string
+	slackAPI               *API
+	channelID              string
+	threadTimestamp        string
+	sourceMessageTimestamp string
 }
 
-func NewConversationService(slackAPI *API, channelID string, threadTimestamp string) port.ConversationService {
+func NewConversationService(slackAPI *API, channelID string, threadTimestamp string, sourceMessageTimestamp string) port.ConversationService {
 	return &ConversationService{
-		slackAPI:        slackAPI,
-		channelID:       channelID,
-		threadTimestamp: threadTimestamp,
+		slackAPI:               slackAPI,
+		channelID:              channelID,
+		threadTimestamp:        threadTimestamp,
+		sourceMessageTimestamp: sourceMessageTimestamp,
 	}
 }
 
@@ -47,4 +49,28 @@ func (s *ConversationService) GetHistory() ([]port.ConversationMessage, error) {
 	}
 
 	return conversationMessages, nil
+}
+
+func (s *ConversationService) MarkEyes() error {
+	slackClient := s.slackAPI.GetClient()
+	err := slackClient.AddReaction("eyes", slack.ItemRef{
+		Channel:   s.channelID,
+		Timestamp: s.sourceMessageTimestamp,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to add eyes reaction: %w", err)
+	}
+	return nil
+}
+
+func (s *ConversationService) RemoveEyes() error {
+	slackClient := s.slackAPI.GetClient()
+	err := slackClient.RemoveReaction("eyes", slack.ItemRef{
+		Channel:   s.channelID,
+		Timestamp: s.sourceMessageTimestamp,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to remove eyes reaction: %w", err)
+	}
+	return nil
 }
