@@ -9,7 +9,6 @@ import (
 	"go.uber.org/fx/fxevent"
 	"go.uber.org/zap"
 
-	"docgent-backend/internal/domain"
 	"docgent-backend/internal/infrastructure/github"
 	"docgent-backend/internal/infrastructure/google/vertexai/genai"
 	"docgent-backend/internal/infrastructure/handler"
@@ -39,7 +38,7 @@ func main() {
 			AsRoute(handler.NewGitHubWebhookHandler),
 			AsSlackEventRoute(handler.NewSlackReactionAddedEventConsumer),
 			AsGitHubEventRoute(handler.NewGitHubIssueCommentEventConsumer),
-			AsChatModel(genai.NewChatModel),
+			genai.NewChatModel,
 			github.NewServiceProvider,
 			zap.NewExample,
 		),
@@ -86,10 +85,5 @@ func AsSlackEventRoute(f any, anns ...fx.Annotation) any {
 
 func AsGitHubEventRoute(f any, anns ...fx.Annotation) any {
 	anns = append([]fx.Annotation{fx.As(new(handler.GitHubEventRoute)), fx.ResultTags(`group:"github_event_routes"`)}, anns...)
-	return fx.Annotate(f, anns...)
-}
-
-func AsChatModel(f any, anns ...fx.Annotation) any {
-	anns = append([]fx.Annotation{fx.As(new(domain.ChatModel))}, anns...)
 	return fx.Annotate(f, anns...)
 }
