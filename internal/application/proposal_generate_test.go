@@ -281,7 +281,7 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 				fileQueryService,
 				fileChangeService,
 				proposalRepository,
-				ragCorpus,
+				WithProposalGenerateRAGCorpus(ragCorpus),
 			)
 
 			// テストの実行

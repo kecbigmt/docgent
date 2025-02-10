@@ -18,6 +18,7 @@ func TestQuestionAnswerUsecase_Execute(t *testing.T) {
 		question      string
 		setupMocks    func(*MockChatModel, *MockChatSession, *MockConversationService, *MockRAGCorpus)
 		expectedError error
+		disableRAG    bool
 	}{
 		{
 			name:     "success: answer question using RAG",
@@ -42,6 +43,20 @@ func TestQuestionAnswerUsecase_Execute(t *testing.T) {
 				conversationService.On("Reply", "Let me explain how to use the API.").Return(nil)
 			},
 			expectedError: nil,
+		},
+		{
+			name:     "success: answer question without RAG",
+			question: "How do I use the API?",
+			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, ragCorpus *MockRAGCorpus) {
+				conversationService.On("MarkEyes").Return(nil)
+				conversationService.On("RemoveEyes").Return(nil)
+				conversationService.On("Reply", "Let me explain how to use the API.").Return(nil)
+
+				chatModel.On("StartChat", "You are a helpful assistant. Unfortunately, you do not have access to any domain-specific knowledge. Answer the question based on the general knowledge.").Return(chatSession)
+				chatSession.On("SendMessage", mock.Anything, "How do I use the API?").Return("Let me explain how to use the API.", nil)
+			},
+			expectedError: nil,
+			disableRAG:    true,
 		},
 		{
 			name:     "error: RAG query fails",
@@ -106,11 +121,16 @@ func TestQuestionAnswerUsecase_Execute(t *testing.T) {
 
 			tt.setupMocks(chatModel, chatSession, conversationService, ragCorpus)
 
+			var options []NewQuestionAnswerUsecaseOption
+			if !tt.disableRAG {
+				options = append(options, WithQuestionAnswerRAGCorpus(ragCorpus))
+			}
+
 			// Create usecase
 			usecase := NewQuestionAnswerUsecase(
 				chatModel,
-				ragCorpus,
 				conversationService,
+				options...,
 			)
 
 			// Execute test

@@ -111,7 +111,7 @@ func TestProposalRefineUsecase_Refine(t *testing.T) {
 				fileQueryService,
 				fileChangeService,
 				proposalRepository,
-				ragCorpus,
+				WithProposalRefineRAGCorpus(ragCorpus),
 			)
 
 			// テストの実行

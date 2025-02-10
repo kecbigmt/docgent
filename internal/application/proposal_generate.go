@@ -23,13 +23,18 @@ type ProposalGenerateUsecase struct {
 
 type NewProposalGenerateUsecaseOption func(*ProposalGenerateUsecase)
 
+func WithProposalGenerateRAGCorpus(ragCorpus port.RAGCorpus) NewProposalGenerateUsecaseOption {
+	return func(u *ProposalGenerateUsecase) {
+		u.ragCorpus = ragCorpus
+	}
+}
+
 func NewProposalGenerateUsecase(
 	chatModel domain.ChatModel,
 	conversationService port.ConversationService,
 	fileQueryService port.FileQueryService,
 	fileChangeService port.FileChangeService,
 	proposalRepository domain.ProposalRepository,
-	ragCorpus port.RAGCorpus,
 	options ...NewProposalGenerateUsecaseOption,
 ) *ProposalGenerateUsecase {
 	workflow := &ProposalGenerateUsecase{
@@ -38,7 +43,6 @@ func NewProposalGenerateUsecase(
 		fileQueryService:    fileQueryService,
 		fileChangeService:   fileChangeService,
 		proposalRepository:  proposalRepository,
-		ragCorpus:           ragCorpus,
 		remainingStepCount:  10,
 	}
 
@@ -68,7 +72,7 @@ func (w *ProposalGenerateUsecase) Execute(ctx context.Context) (domain.ProposalH
 
 	agent := domain.NewAgent(
 		w.chatModel,
-		buildSystemInstructionToGenerateProposal(chatHistory, tree),
+		buildSystemInstructionToGenerateProposal(chatHistory, tree, w.ragCorpus != nil),
 		tooluse.Cases{
 			AttemptComplete: func(toolUse tooluse.AttemptComplete) (string, bool, error) {
 				if err := w.conversationService.Reply(toolUse.Message); err != nil {
@@ -137,6 +141,9 @@ func (w *ProposalGenerateUsecase) Execute(ctx context.Context) (domain.ProposalH
 				return fmt.Sprintf("<success>Proposal created: %s</success>", handle.Value), false, nil
 			},
 			QueryRAG: func(toolUse tooluse.QueryRAG) (string, bool, error) {
+				if w.ragCorpus == nil {
+					return "<error>RAG corpus is not set.</error>", false, nil
+				}
 				docs, err := w.ragCorpus.Query(ctx, toolUse.Query, 10, 0.7)
 				if err != nil {
 					return fmt.Sprintf("<error>Failed to query RAG: %s</error>", err), false, nil
@@ -181,7 +188,7 @@ You should not use modify_file unless the file is obviously relevant to your cha
 	return proposalHandle, nil
 }
 
-func buildSystemInstructionToGenerateProposal(chatHistory []port.ConversationMessage, fileTree []port.TreeMetadata) *domain.SystemInstruction {
+func buildSystemInstructionToGenerateProposal(chatHistory []port.ConversationMessage, fileTree []port.TreeMetadata, ragEnabled bool) *domain.SystemInstruction {
 	var chatHistoryStr strings.Builder
 	for _, msg := range chatHistory {
 		chatHistoryStr.WriteString(fmt.Sprintf("<message author=%q>\n%s\n</message>\n", msg.Author, msg.Content))
@@ -190,6 +197,20 @@ func buildSystemInstructionToGenerateProposal(chatHistory []port.ConversationMes
 	var fileTreeStr strings.Builder
 	for _, metadata := range fileTree {
 		fileTreeStr.WriteString(fmt.Sprintf("- %s\n", metadata.Path))
+	}
+
+	toolUses := []tooluse.Usage{
+		tooluse.CreateFileUsage,
+		tooluse.ModifyFileUsage,
+		tooluse.DeleteFileUsage,
+		tooluse.RenameFileUsage,
+		tooluse.FindFileUsage,
+		tooluse.CreateProposalUsage,
+		tooluse.AttemptCompleteUsage,
+	}
+
+	if ragEnabled {
+		toolUses = append(toolUses, tooluse.QueryRAGUsage)
 	}
 
 	systemInstruction := domain.NewSystemInstruction(
@@ -203,16 +224,7 @@ func buildSystemInstructionToGenerateProposal(chatHistory []port.ConversationMes
 				Value: fileTreeStr.String(),
 			},
 		},
-		[]tooluse.Usage{
-			tooluse.CreateFileUsage,
-			tooluse.ModifyFileUsage,
-			tooluse.DeleteFileUsage,
-			tooluse.RenameFileUsage,
-			tooluse.FindFileUsage,
-			tooluse.CreateProposalUsage,
-			tooluse.QueryRAGUsage,
-			tooluse.AttemptCompleteUsage,
-		},
+		toolUses,
 	)
 
 	return systemInstruction

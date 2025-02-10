@@ -23,13 +23,18 @@ type ProposalRefineUsecase struct {
 
 type NewProposalRefineUsecaseOption func(*ProposalRefineUsecase)
 
+func WithProposalRefineRAGCorpus(ragCorpus port.RAGCorpus) NewProposalRefineUsecaseOption {
+	return func(u *ProposalRefineUsecase) {
+		u.ragCorpus = ragCorpus
+	}
+}
+
 func NewProposalRefineUsecase(
 	chatModel domain.ChatModel,
 	conversationService port.ConversationService,
 	fileQueryService port.FileQueryService,
 	fileChangeService port.FileChangeService,
 	proposalRepository domain.ProposalRepository,
-	ragCorpus port.RAGCorpus,
 	options ...NewProposalRefineUsecaseOption,
 ) *ProposalRefineUsecase {
 	workflow := &ProposalRefineUsecase{
@@ -38,7 +43,6 @@ func NewProposalRefineUsecase(
 		fileQueryService:    fileQueryService,
 		fileChangeService:   fileChangeService,
 		proposalRepository:  proposalRepository,
-		ragCorpus:           ragCorpus,
 		remainingStepCount:  10,
 	}
 
@@ -76,7 +80,7 @@ func (w *ProposalRefineUsecase) Refine(proposalHandle domain.ProposalHandle, use
 
 	agent := domain.NewAgent(
 		w.chatModel,
-		buildSystemInstructionToRefineProposal(tree, proposal),
+		buildSystemInstructionToRefineProposal(tree, proposal, w.ragCorpus != nil),
 		tooluse.Cases{
 			AttemptComplete: func(toolUse tooluse.AttemptComplete) (string, bool, error) {
 				if err := w.conversationService.Reply(toolUse.Message); err != nil {
@@ -129,6 +133,9 @@ func (w *ProposalRefineUsecase) Refine(proposalHandle domain.ProposalHandle, use
 				return change.Match(cases)
 			},
 			QueryRAG: func(toolUse tooluse.QueryRAG) (string, bool, error) {
+				if w.ragCorpus == nil {
+					return "<error>RAG corpus is not set.</error>", false, nil
+				}
 				docs, err := w.ragCorpus.Query(ctx, toolUse.Query, 10, 0.7)
 				if err != nil {
 					return fmt.Sprintf("<error>Failed to query RAG: %s</error>", err), false, nil
@@ -168,7 +175,7 @@ Use query_rag to find relevant existing documents and refine the proposal based 
 	return nil
 }
 
-func buildSystemInstructionToRefineProposal(fileTree []port.TreeMetadata, proposal domain.Proposal) *domain.SystemInstruction {
+func buildSystemInstructionToRefineProposal(fileTree []port.TreeMetadata, proposal domain.Proposal, ragEnabled bool) *domain.SystemInstruction {
 	var fileTreeStr strings.Builder
 	for _, metadata := range fileTree {
 		fileTreeStr.WriteString(fmt.Sprintf("- %s\n", metadata.Path))
@@ -180,20 +187,25 @@ func buildSystemInstructionToRefineProposal(fileTree []port.TreeMetadata, propos
 	}
 	newFilesStr := strings.Join(newFiles, "\n")
 
+	toolUses := []tooluse.Usage{
+		tooluse.CreateFileUsage,
+		tooluse.ModifyFileUsage,
+		tooluse.DeleteFileUsage,
+		tooluse.RenameFileUsage,
+		tooluse.FindFileUsage,
+		tooluse.AttemptCompleteUsage,
+	}
+
+	if ragEnabled {
+		toolUses = append(toolUses, tooluse.QueryRAGUsage)
+	}
+
 	systemInstruction := domain.NewSystemInstruction(
 		[]domain.EnvironmentContext{
 			domain.NewEnvironmentContext("File tree", fileTreeStr.String()),
 			domain.NewEnvironmentContext("Current proposal files", newFilesStr),
 		},
-		[]tooluse.Usage{
-			tooluse.CreateFileUsage,
-			tooluse.ModifyFileUsage,
-			tooluse.DeleteFileUsage,
-			tooluse.RenameFileUsage,
-			tooluse.FindFileUsage,
-			tooluse.QueryRAGUsage,
-			tooluse.AttemptCompleteUsage,
-		},
+		toolUses,
 	)
 
 	return systemInstruction

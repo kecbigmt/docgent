@@ -10,16 +10,29 @@ import (
 
 type QuestionAnswerUsecase struct {
 	chatModel           domain.ChatModel
-	ragCorpus           port.RAGCorpus
 	conversationService port.ConversationService
+	ragCorpus           port.RAGCorpus
 }
 
-func NewQuestionAnswerUsecase(chatModel domain.ChatModel, ragCorpus port.RAGCorpus, conversationService port.ConversationService) *QuestionAnswerUsecase {
-	return &QuestionAnswerUsecase{
+type NewQuestionAnswerUsecaseOption func(*QuestionAnswerUsecase)
+
+func WithQuestionAnswerRAGCorpus(ragCorpus port.RAGCorpus) NewQuestionAnswerUsecaseOption {
+	return func(u *QuestionAnswerUsecase) {
+		u.ragCorpus = ragCorpus
+	}
+}
+
+func NewQuestionAnswerUsecase(chatModel domain.ChatModel, conversationService port.ConversationService, options ...NewQuestionAnswerUsecaseOption) *QuestionAnswerUsecase {
+	u := &QuestionAnswerUsecase{
 		chatModel:           chatModel,
-		ragCorpus:           ragCorpus,
 		conversationService: conversationService,
 	}
+
+	for _, option := range options {
+		option(u)
+	}
+
+	return u
 }
 
 func (u *QuestionAnswerUsecase) Execute(question string) error {
@@ -28,17 +41,20 @@ func (u *QuestionAnswerUsecase) Execute(question string) error {
 
 	ctx := context.Background()
 
-	docs, err := u.ragCorpus.Query(ctx, question, 10, 0.5)
-	if err != nil {
-		return err
-	}
-
 	var systemInstruction strings.Builder
-	systemInstruction.WriteString("You are a helpful assistant. The following documents are selected in order of relevance to the question, but they may not necessarily be directly related.\n\n")
-	for _, doc := range docs {
-		systemInstruction.WriteString(fmt.Sprintf("<document source=%q score=%.2f>\n%s\n</document>\n", doc.Source, doc.Score, doc.Content))
+	systemInstruction.WriteString("You are a helpful assistant.")
+	if u.ragCorpus != nil {
+		docs, err := u.ragCorpus.Query(ctx, question, 10, 0.5)
+		if err != nil {
+			return err
+		}
+		for _, doc := range docs {
+			systemInstruction.WriteString(fmt.Sprintf("<document source=%q score=%.2f>\n%s\n</document>\n", doc.Source, doc.Score, doc.Content))
+		}
+		systemInstruction.WriteString("\n\nAnswer the question briefly and concisely.")
+	} else {
+		systemInstruction.WriteString(" Unfortunately, you do not have access to any domain-specific knowledge. Answer the question based on the general knowledge.")
 	}
-	systemInstruction.WriteString("\n\nAnswer the question briefly and concisely.")
 
 	session := u.chatModel.StartChat(systemInstruction.String())
 
