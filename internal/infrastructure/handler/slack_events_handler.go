@@ -8,7 +8,7 @@ import (
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 
-	"docgent-backend/internal/infrastructure/slack"
+	"docgent/internal/infrastructure/slack"
 )
 
 type SlackEventHandlerParams struct {

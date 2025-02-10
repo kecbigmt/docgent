@@ -1,7 +1,7 @@
 package main
 
 import (
-	"docgent-backend/internal/infrastructure/handler"
+	"docgent/internal/infrastructure/handler"
 	"encoding/json"
 	"os"
 	"strconv"

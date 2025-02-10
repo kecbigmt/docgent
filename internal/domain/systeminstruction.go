@@ -5,7 +5,7 @@ import (
 	"strings"
 	"text/template"
 
-	"docgent-backend/internal/domain/tooluse"
+	"docgent/internal/domain/tooluse"
 )
 
 //go:embed systeminstruction-template.md

@@ -6,7 +6,7 @@ import (
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 
-	"docgent-backend/internal/infrastructure/github"
+	"docgent/internal/infrastructure/github"
 )
 
 type GitHubWebhookHandlerParams struct {

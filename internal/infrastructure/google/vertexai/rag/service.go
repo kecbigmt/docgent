@@ -1,8 +1,8 @@
 package rag
 
 import (
-	"docgent-backend/internal/application/port"
-	"docgent-backend/internal/infrastructure/google/vertexai/rag/lib"
+	"docgent/internal/application/port"
+	"docgent/internal/infrastructure/google/vertexai/rag/lib"
 )
 
 type Service struct {

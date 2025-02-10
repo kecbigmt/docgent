@@ -2,7 +2,7 @@ package github
 
 import (
 	"context"
-	"docgent-backend/internal/application/port"
+	"docgent/internal/application/port"
 	"fmt"
 
 	"github.com/google/go-github/v68/github"

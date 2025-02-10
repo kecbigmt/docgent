@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"docgent-backend/internal/domain/tooluse"
+	"docgent/internal/domain/tooluse"
 )
 
 type Agent struct {

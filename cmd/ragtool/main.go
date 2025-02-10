@@ -8,8 +8,8 @@ import (
 	"github.com/alecthomas/kong"
 	"golang.org/x/oauth2/google"
 
-	"docgent-backend/cmd/ragtool/cli"
-	"docgent-backend/internal/infrastructure/google/vertexai/rag/lib"
+	"docgent/cmd/ragtool/cli"
+	"docgent/internal/infrastructure/google/vertexai/rag/lib"
 )
 
 var CLI cli.CLI

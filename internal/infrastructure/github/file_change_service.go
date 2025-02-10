@@ -6,8 +6,8 @@ import (
 
 	"github.com/google/go-github/v68/github"
 
-	"docgent-backend/internal/application/port"
-	"docgent-backend/internal/domain/tooluse"
+	"docgent/internal/application/port"
+	"docgent/internal/domain/tooluse"
 )
 
 type FileChangeService struct {

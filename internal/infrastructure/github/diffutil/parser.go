@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	"docgent-backend/internal/domain"
+	"docgent/internal/domain"
 )
 
 type Parser struct{}

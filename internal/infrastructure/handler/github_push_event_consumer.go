@@ -7,9 +7,9 @@ import (
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 
-	"docgent-backend/internal/application"
-	"docgent-backend/internal/application/port"
-	infragithub "docgent-backend/internal/infrastructure/github"
+	"docgent/internal/application"
+	"docgent/internal/application/port"
+	infragithub "docgent/internal/infrastructure/github"
 )
 
 type GitHubPushEventConsumerParams struct {

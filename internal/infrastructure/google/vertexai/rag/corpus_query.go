@@ -2,7 +2,7 @@ package rag
 
 import (
 	"context"
-	"docgent-backend/internal/application/port"
+	"docgent/internal/application/port"
 	"fmt"
 )
 

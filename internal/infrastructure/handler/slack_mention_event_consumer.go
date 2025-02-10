@@ -1,10 +1,10 @@
 package handler
 
 import (
-	"docgent-backend/internal/application"
-	"docgent-backend/internal/application/port"
-	"docgent-backend/internal/domain"
-	"docgent-backend/internal/infrastructure/slack"
+	"docgent/internal/application"
+	"docgent/internal/application/port"
+	"docgent/internal/domain"
+	"docgent/internal/infrastructure/slack"
 
 	"github.com/slack-go/slack/slackevents"
 	"go.uber.org/fx"

@@ -1,6 +1,6 @@
 package slack
 
-import "docgent-backend/internal/application/port"
+import "docgent/internal/application/port"
 
 type ServiceProvider struct {
 	slackAPI *API

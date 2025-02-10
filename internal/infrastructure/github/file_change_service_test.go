@@ -13,7 +13,7 @@ import (
 	"github.com/google/go-github/v68/github"
 	"github.com/stretchr/testify/assert"
 
-	"docgent-backend/internal/domain/tooluse"
+	"docgent/internal/domain/tooluse"
 )
 
 type mockTransport struct {

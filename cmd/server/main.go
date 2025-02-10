@@ -9,10 +9,10 @@ import (
 	"go.uber.org/fx/fxevent"
 	"go.uber.org/zap"
 
-	"docgent-backend/internal/infrastructure/github"
-	"docgent-backend/internal/infrastructure/google/vertexai/genai"
-	"docgent-backend/internal/infrastructure/handler"
-	"docgent-backend/internal/infrastructure/slack"
+	"docgent/internal/infrastructure/github"
+	"docgent/internal/infrastructure/google/vertexai/genai"
+	"docgent/internal/infrastructure/handler"
+	"docgent/internal/infrastructure/slack"
 )
 
 func main() {

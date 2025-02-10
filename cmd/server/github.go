@@ -5,7 +5,7 @@ import (
 	"os"
 	"strconv"
 
-	"docgent-backend/internal/infrastructure/github"
+	"docgent/internal/infrastructure/github"
 )
 
 func newGitHubAPI() *github.API {

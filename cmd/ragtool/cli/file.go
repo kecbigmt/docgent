@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"docgent-backend/internal/infrastructure/google/vertexai/rag/lib"
+	"docgent/internal/infrastructure/google/vertexai/rag/lib"
 )
 
 func HandleFileUpload(ctx context.Context, cli *CLI, client *lib.Client) error {

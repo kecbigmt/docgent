@@ -4,8 +4,8 @@ import (
 	"context"
 	"io"
 
-	"docgent-backend/internal/application/port"
-	"docgent-backend/internal/infrastructure/google/vertexai/rag/lib"
+	"docgent/internal/application/port"
+	"docgent/internal/infrastructure/google/vertexai/rag/lib"
 )
 
 func (c *Corpus) UploadFile(ctx context.Context, file io.Reader, fileName string, options ...port.RAGCorpusUploadFileOption) error {

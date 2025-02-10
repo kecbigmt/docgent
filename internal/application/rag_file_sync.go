@@ -2,7 +2,7 @@ package application
 
 import (
 	"context"
-	"docgent-backend/internal/application/port"
+	"docgent/internal/application/port"
 	"strings"
 )
 

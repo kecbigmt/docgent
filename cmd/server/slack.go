@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"docgent-backend/internal/infrastructure/slack"
+	"docgent/internal/infrastructure/slack"
 )
 
 func newSlackAPI() *slack.API {

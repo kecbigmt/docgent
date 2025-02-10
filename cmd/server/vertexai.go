@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"os"
 
-	"docgent-backend/internal/application/port"
-	"docgent-backend/internal/infrastructure/google/vertexai/genai"
-	"docgent-backend/internal/infrastructure/google/vertexai/rag"
-	raglib "docgent-backend/internal/infrastructure/google/vertexai/rag/lib"
+	"docgent/internal/application/port"
+	"docgent/internal/infrastructure/google/vertexai/genai"
+	"docgent/internal/infrastructure/google/vertexai/rag"
+	raglib "docgent/internal/infrastructure/google/vertexai/rag/lib"
 
 	"golang.org/x/oauth2/google"
 )

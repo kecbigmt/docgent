@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"docgent-backend/internal/application/port"
+	"docgent/internal/application/port"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

@@ -7,8 +7,8 @@ import (
 
 	"github.com/google/go-github/v68/github"
 
-	"docgent-backend/internal/domain"
-	"docgent-backend/internal/infrastructure/github/diffutil"
+	"docgent/internal/domain"
+	"docgent/internal/infrastructure/github/diffutil"
 )
 
 type PullRequestAPI struct {

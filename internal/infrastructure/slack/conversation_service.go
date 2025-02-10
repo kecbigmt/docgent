@@ -1,7 +1,7 @@
 package slack
 
 import (
-	"docgent-backend/internal/application/port"
+	"docgent/internal/application/port"
 	"fmt"
 
 	"github.com/slack-go/slack"

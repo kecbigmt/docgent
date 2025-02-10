@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"docgent-backend/internal/application/port"
-	"docgent-backend/internal/domain"
-	"docgent-backend/internal/domain/tooluse"
+	"docgent/internal/application/port"
+	"docgent/internal/domain"
+	"docgent/internal/domain/tooluse"
 )
 
 type ProposalRefineUsecase struct {

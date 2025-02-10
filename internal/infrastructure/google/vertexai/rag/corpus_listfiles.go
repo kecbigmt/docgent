@@ -2,12 +2,12 @@ package rag
 
 import (
 	"context"
-	"docgent-backend/internal/application/port"
+	"docgent/internal/application/port"
 	"fmt"
 	"strconv"
 	"strings"
 
-	"docgent-backend/internal/infrastructure/google/vertexai/rag/lib"
+	"docgent/internal/infrastructure/google/vertexai/rag/lib"
 )
 
 func (c *Corpus) ListFiles(ctx context.Context) ([]port.RAGFile, error) {

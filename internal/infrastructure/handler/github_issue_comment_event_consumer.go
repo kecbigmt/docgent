@@ -9,10 +9,10 @@ import (
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 
-	"docgent-backend/internal/application"
-	"docgent-backend/internal/application/port"
-	"docgent-backend/internal/domain"
-	infragithub "docgent-backend/internal/infrastructure/github"
+	"docgent/internal/application"
+	"docgent/internal/application/port"
+	"docgent/internal/domain"
+	infragithub "docgent/internal/infrastructure/github"
 )
 
 type GitHubIssueCommentEventConsumerParams struct {

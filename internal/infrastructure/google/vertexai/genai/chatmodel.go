@@ -2,7 +2,7 @@ package genai
 
 import (
 	"context"
-	"docgent-backend/internal/domain"
+	"docgent/internal/domain"
 	"encoding/json"
 	"fmt"
 	"strings"

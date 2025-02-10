@@ -2,13 +2,13 @@ package diffutil
 
 import (
 	"context"
-	"fmt"
 	"encoding/base64"
+	"fmt"
 
 	"github.com/google/go-github/v68/github"
 	"github.com/sergi/go-diff/diffmatchpatch"
 
-	"docgent-backend/internal/domain"
+	"docgent/internal/domain"
 )
 
 type Resolver struct {

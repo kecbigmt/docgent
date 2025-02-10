@@ -2,8 +2,8 @@ package application
 
 import (
 	"context"
-	"docgent-backend/internal/application/port"
-	"docgent-backend/internal/domain"
+	"docgent/internal/application/port"
+	"docgent/internal/domain"
 	"fmt"
 	"strings"
 )

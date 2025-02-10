@@ -2,7 +2,7 @@ package diffutil
 
 import (
 	"bytes"
-	"docgent-backend/internal/domain"
+	"docgent/internal/domain"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"

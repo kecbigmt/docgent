@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	"docgent-backend/internal/infrastructure/google/vertexai/rag/lib"
+	"docgent/internal/infrastructure/google/vertexai/rag/lib"
 )
 
 func HandleCorpusCreate(ctx context.Context, cli *CLI, client *lib.Client) error {

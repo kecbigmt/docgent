@@ -1,7 +1,7 @@
 package diffutil
 
 import (
-	"docgent-backend/internal/domain"
+	"docgent/internal/domain"
 	"reflect"
 	"testing"
 )
