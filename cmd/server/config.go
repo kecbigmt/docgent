@@ -88,6 +88,7 @@ func NewApplicationConfigServiceFromEnv() handler.ApplicationConfigService {
 			GitHubOwner:          githubOwner,
 			GitHubRepo:           githubRepo,
 			GitHubInstallationID: githubInstallationID,
+			GitHubDefaultBranch:  githubDefaultBranch,
 			VertexAICorpusID:     vertexaiRagCorpusID,
 		},
 	}
