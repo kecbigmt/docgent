@@ -1,0 +1,45 @@
+{
+    "name": "docgent",
+    "env": {
+        "GITHUB_APP_PRIVATE_KEY": {
+            "description": "github app private key",
+            "generator": "secret",
+            "required": true
+        },
+        "GITHUB_APP_ID": {
+            "description": "github app id",
+            "required": true
+        },
+        "GITHUB_WEBHOOK_SECRET": {
+            "description": "github webhook secret",
+            "generator": "secret",
+            "required": true
+        },
+        "SLACK_BOT_TOKEN": {
+            "description": "slack bot token",
+            "generator": "secret",
+            "required": true
+        },
+        "SLACK_SIGNING_SECRET": {
+            "description": "slack signing secret",
+            "generator": "secret",
+            "required": true
+        },
+        "VERTEXAI_PROJECT_ID": {
+            "description": "google vertexai project id",
+            "required": true
+        },
+        "VERTEXAI_LOCATION": {
+            "description": "google vertexai location",
+            "required": true
+        },
+        "VERTEXAI_MODEL_NAME": {
+            "description": "google vertexai model name",
+            "required": true,
+            "value": "gemini-2.0-flash"
+        },
+        "VERTEXAI_RAG_CORPUS_ID": {
+            "description": "google vertexai rag corpus id. if not set, rag feature will be disabled."
+        }
+    }
+}
