@@ -47,11 +47,15 @@ func (c *SlackMentionEventConsumer) ConsumeEvent(event slackevents.EventsAPIInne
 		return
 	}
 
-	// メンションを除いたメッセージ本文を取得
 	question := appMentionEvent.Text
+	threadTimestamp := appMentionEvent.ThreadTimeStamp
+	sourceMessageTimestamp := appMentionEvent.TimeStamp
+	if threadTimestamp == "" {
+		threadTimestamp = sourceMessageTimestamp
+	}
 
 	// 会話サービスを初期化
-	conversationService := c.slackServiceProvider.NewConversationService(appMentionEvent.Channel, appMentionEvent.ThreadTimeStamp, appMentionEvent.TimeStamp)
+	conversationService := c.slackServiceProvider.NewConversationService(appMentionEvent.Channel, threadTimestamp, sourceMessageTimestamp)
 
 	ragCorpus := c.ragService.GetCorpus(workspace.VertexAICorpusID)
 
