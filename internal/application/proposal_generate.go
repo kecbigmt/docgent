@@ -67,12 +67,17 @@ func (w *ProposalGenerateUsecase) Execute(ctx context.Context) (domain.ProposalH
 		return domain.ProposalHandle{}, fmt.Errorf("failed to get tree metadata: %w", err)
 	}
 
+	docgentRulesFile, err := getDocgentRulesFileIfExists(ctx, w.fileQueryService, tree)
+	if err != nil {
+		return domain.ProposalHandle{}, fmt.Errorf("failed to get docgent rules file: %w", err)
+	}
+
 	var proposalHandle domain.ProposalHandle
 	var fileChanged bool
 
 	agent := domain.NewAgent(
 		w.chatModel,
-		buildSystemInstructionToGenerateProposal(chatHistory, tree, w.ragCorpus != nil),
+		buildSystemInstructionToGenerateProposal(chatHistory, tree, docgentRulesFile, w.ragCorpus != nil),
 		tooluse.Cases{
 			AttemptComplete: func(toolUse tooluse.AttemptComplete) (string, bool, error) {
 				if err := w.conversationService.Reply(toolUse.Message); err != nil {
@@ -188,7 +193,12 @@ You should not use modify_file unless the file is obviously relevant to your cha
 	return proposalHandle, nil
 }
 
-func buildSystemInstructionToGenerateProposal(chatHistory []port.ConversationMessage, fileTree []port.TreeMetadata, ragEnabled bool) *domain.SystemInstruction {
+func buildSystemInstructionToGenerateProposal(
+	chatHistory []port.ConversationMessage,
+	fileTree []port.TreeMetadata,
+	docgentRulesFile *port.File,
+	ragEnabled bool,
+) *domain.SystemInstruction {
 	var chatHistoryStr strings.Builder
 	for _, msg := range chatHistory {
 		chatHistoryStr.WriteString(fmt.Sprintf("<message author=%q>\n%s\n</message>\n", msg.Author, msg.Content))
@@ -197,6 +207,17 @@ func buildSystemInstructionToGenerateProposal(chatHistory []port.ConversationMes
 	var fileTreeStr strings.Builder
 	for _, metadata := range fileTree {
 		fileTreeStr.WriteString(fmt.Sprintf("- %s\n", metadata.Path))
+	}
+
+	environments := []domain.EnvironmentContext{
+		domain.NewEnvironmentContext("Chat history", chatHistoryStr.String()),
+		domain.NewEnvironmentContext("File tree", fileTreeStr.String()),
+	}
+
+	if docgentRulesFile != nil {
+		environments = append(environments, domain.NewEnvironmentContext("User's custom instructions", fmt.Sprintf(`The following additional instructions are provided by the user.
+
+%s`, docgentRulesFile.Content)))
 	}
 
 	toolUses := []tooluse.Usage{
@@ -214,18 +235,25 @@ func buildSystemInstructionToGenerateProposal(chatHistory []port.ConversationMes
 	}
 
 	systemInstruction := domain.NewSystemInstruction(
-		[]domain.EnvironmentContext{
-			{
-				Name:  "Chat history",
-				Value: chatHistoryStr.String(),
-			},
-			{
-				Name:  "File tree",
-				Value: fileTreeStr.String(),
-			},
-		},
+		environments,
 		toolUses,
 	)
 
 	return systemInstruction
+}
+
+func getDocgentRulesFileIfExists(ctx context.Context, fileQueryService port.FileQueryService, fileTree []port.TreeMetadata) (*port.File, error) {
+	for _, metadata := range fileTree {
+		if metadata.Path == ".docgentrules" {
+			file, err := fileQueryService.FindFile(ctx, ".docgentrules")
+			if err != nil {
+				if errors.Is(err, port.ErrFileNotFound) {
+					return nil, nil
+				}
+				return nil, err
+			}
+			return &file, nil
+		}
+	}
+	return nil, nil
 }

@@ -78,9 +78,14 @@ func (w *ProposalRefineUsecase) Refine(proposalHandle domain.ProposalHandle, use
 		return fmt.Errorf("failed to get tree metadata: %w", err)
 	}
 
+	docgentRulesFile, err := getDocgentRulesFileIfExists(ctx, w.fileQueryService, tree)
+	if err != nil {
+		return fmt.Errorf("failed to get docgent rules file: %w", err)
+	}
+
 	agent := domain.NewAgent(
 		w.chatModel,
-		buildSystemInstructionToRefineProposal(tree, proposal, w.ragCorpus != nil),
+		buildSystemInstructionToRefineProposal(tree, proposal, docgentRulesFile, w.ragCorpus != nil),
 		tooluse.Cases{
 			AttemptComplete: func(toolUse tooluse.AttemptComplete) (string, bool, error) {
 				if err := w.conversationService.Reply(toolUse.Message); err != nil {
@@ -175,7 +180,7 @@ Use query_rag to find relevant existing documents and refine the proposal based 
 	return nil
 }
 
-func buildSystemInstructionToRefineProposal(fileTree []port.TreeMetadata, proposal domain.Proposal, ragEnabled bool) *domain.SystemInstruction {
+func buildSystemInstructionToRefineProposal(fileTree []port.TreeMetadata, proposal domain.Proposal, docgentRulesFile *port.File, ragEnabled bool) *domain.SystemInstruction {
 	var fileTreeStr strings.Builder
 	for _, metadata := range fileTree {
 		fileTreeStr.WriteString(fmt.Sprintf("- %s\n", metadata.Path))
@@ -187,6 +192,11 @@ func buildSystemInstructionToRefineProposal(fileTree []port.TreeMetadata, propos
 	}
 	newFilesStr := strings.Join(newFiles, "\n")
 
+	environments := []domain.EnvironmentContext{
+		domain.NewEnvironmentContext("File tree", fileTreeStr.String()),
+		domain.NewEnvironmentContext("Current proposal files", newFilesStr),
+	}
+
 	toolUses := []tooluse.Usage{
 		tooluse.CreateFileUsage,
 		tooluse.ModifyFileUsage,
@@ -196,15 +206,18 @@ func buildSystemInstructionToRefineProposal(fileTree []port.TreeMetadata, propos
 		tooluse.AttemptCompleteUsage,
 	}
 
+	if docgentRulesFile != nil {
+		environments = append(environments, domain.NewEnvironmentContext("User's custom instructions", fmt.Sprintf(`The following additional instructions are provided by the user.
+
+%s`, docgentRulesFile.Content)))
+	}
+
 	if ragEnabled {
 		toolUses = append(toolUses, tooluse.QueryRAGUsage)
 	}
 
 	systemInstruction := domain.NewSystemInstruction(
-		[]domain.EnvironmentContext{
-			domain.NewEnvironmentContext("File tree", fileTreeStr.String()),
-			domain.NewEnvironmentContext("Current proposal files", newFilesStr),
-		},
+		environments,
 		toolUses,
 	)
 
