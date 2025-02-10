@@ -1,45 +1,68 @@
 {
     "name": "docgent",
     "env": {
-        "GITHUB_APP_PRIVATE_KEY": {
-            "description": "github app private key",
-            "generator": "secret",
-            "required": true
-        },
-        "GITHUB_APP_ID": {
-            "description": "github app id",
-            "required": true
-        },
-        "GITHUB_WEBHOOK_SECRET": {
-            "description": "github webhook secret",
-            "generator": "secret",
-            "required": true
+        "SLACK_WORKSPACE_ID": {
+            "description": "slack workspace id",
+            "order": 1
         },
         "SLACK_BOT_TOKEN": {
             "description": "slack bot token",
             "generator": "secret",
-            "required": true
+            "order": 2
         },
         "SLACK_SIGNING_SECRET": {
             "description": "slack signing secret",
             "generator": "secret",
-            "required": true
+            "order": 3
+        },
+        "GITHUB_APP_ID": {
+            "description": "github app id",
+            "order": 4
+        },
+        "GITHUB_APP_PRIVATE_KEY": {
+            "description": "github app private key",
+            "generator": "secret",
+            "order": 5
+        },
+        "GITHUB_WEBHOOK_SECRET": {
+            "description": "github webhook secret",
+            "generator": "secret",
+            "order": 6
+        },
+        "GITHUB_OWNER": {
+            "description": "github owner name",
+            "order": 7
+        },
+        "GITHUB_REPO": {
+            "description": "github repository name",
+            "order": 8
+        },
+        "GITHUB_DEFAULT_BRANCH": {
+            "description": "github default branch",
+            "value": "main",
+            "order": 9
+        },
+        "GITHUB_INSTALLATION_ID": {
+            "description": "github installation id",
+            "order": 10
         },
         "VERTEXAI_PROJECT_ID": {
             "description": "google vertexai project id",
-            "required": true
+            "order": 11
         },
         "VERTEXAI_LOCATION": {
             "description": "google vertexai location",
-            "required": true
+            "order": 12
         },
         "VERTEXAI_MODEL_NAME": {
             "description": "google vertexai model name",
-            "required": true,
-            "value": "gemini-2.0-flash"
+            "value": "gemini-2.0-flash",
+            "order": 13
         },
         "VERTEXAI_RAG_CORPUS_ID": {
-            "description": "google vertexai rag corpus id. if not set, rag feature will be disabled."
+            "description": "google vertexai rag corpus id. if not set, rag feature will be disabled.",
+            "required": false,
+            "order": 14
         }
     }
 }
