@@ -87,6 +87,12 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 
 	githubPullRequestAPI := h.githubServiceProvider.NewPullRequestAPI(workspace.GitHubInstallationID, workspace.GitHubOwner, workspace.GitHubRepo, baseBranchName, newBranchName)
 
+	var options []application.NewProposalGenerateUsecaseOption
+	// If VertexAICorpusID is set, use RAG corpus
+	if workspace.VertexAICorpusID > 0 {
+		options = append(options, application.WithProposalGenerateRAGCorpus(h.ragService.GetCorpus(workspace.VertexAICorpusID)))
+	}
+
 	// ドキュメントを生成
 	proposalGenerateUsecase := application.NewProposalGenerateUsecase(
 		h.chatModel,
@@ -94,7 +100,7 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 		fileQueryService,
 		fileChangeService,
 		githubPullRequestAPI,
-		h.ragService.GetCorpus(workspace.VertexAICorpusID),
+		options...,
 	)
 	proposalHandle, err := proposalGenerateUsecase.Execute(ctx)
 	if err != nil {

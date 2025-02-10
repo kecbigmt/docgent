@@ -57,13 +57,17 @@ func (c *SlackMentionEventConsumer) ConsumeEvent(event slackevents.EventsAPIInne
 	// 会話サービスを初期化
 	conversationService := c.slackServiceProvider.NewConversationService(appMentionEvent.Channel, threadTimestamp, sourceMessageTimestamp)
 
-	ragCorpus := c.ragService.GetCorpus(workspace.VertexAICorpusID)
+	var options []application.NewQuestionAnswerUsecaseOption
+	// If VertexAICorpusID is set, use RAG corpus
+	if workspace.VertexAICorpusID > 0 {
+		options = append(options, application.WithQuestionAnswerRAGCorpus(c.ragService.GetCorpus(workspace.VertexAICorpusID)))
+	}
 
 	// QuestionAnswerUsecaseを初期化
 	questionAnswerUsecase := application.NewQuestionAnswerUsecase(
 		c.chatModel,
-		ragCorpus,
 		conversationService,
+		options...,
 	)
 
 	err := questionAnswerUsecase.Execute(question)

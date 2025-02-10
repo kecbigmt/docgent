@@ -114,6 +114,12 @@ func (c *GitHubIssueCommentEventConsumer) ConsumeEvent(event interface{}) {
 	// TODO: PRの作成以外ではブランチ名が不要なので、サービスを分ける
 	proposalService := c.githubServiceProvider.NewPullRequestAPI(installationID, ownerName, repoName, defaultBranch, "")
 
+	var options []application.NewProposalRefineUsecaseOption
+	// If VertexAICorpusID is set, use RAG corpus
+	if workspace.VertexAICorpusID > 0 {
+		options = append(options, application.WithProposalRefineRAGCorpus(c.ragService.GetCorpus(workspace.VertexAICorpusID)))
+	}
+
 	// Create workflow instance
 	workflow := application.NewProposalRefineUsecase(
 		c.chatModel,         // AI interaction
@@ -121,7 +127,7 @@ func (c *GitHubIssueCommentEventConsumer) ConsumeEvent(event interface{}) {
 		fileQueryService,    // File operations
 		fileChangeService,   // File operations
 		proposalService,     // PR management
-		c.ragService.GetCorpus(workspace.VertexAICorpusID), // RAG corpus
+		options...,
 	)
 
 	// Process feedbacks
