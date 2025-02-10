@@ -12,6 +12,7 @@ type ConversationService struct {
 	channelID              string
 	threadTimestamp        string
 	sourceMessageTimestamp string
+	userNameMap            map[string]string
 }
 
 func NewConversationService(slackAPI *API, channelID string, threadTimestamp string, sourceMessageTimestamp string) port.ConversationService {
@@ -20,6 +21,7 @@ func NewConversationService(slackAPI *API, channelID string, threadTimestamp str
 		channelID:              channelID,
 		threadTimestamp:        threadTimestamp,
 		sourceMessageTimestamp: sourceMessageTimestamp,
+		userNameMap:            make(map[string]string),
 	}
 }
 
@@ -32,7 +34,9 @@ func (s *ConversationService) Reply(input string) error {
 }
 
 func (s *ConversationService) GetHistory() ([]port.ConversationMessage, error) {
-	messages, _, _, err := s.slackAPI.GetClient().GetConversationReplies(&slack.GetConversationRepliesParameters{
+	client := s.slackAPI.GetClient()
+
+	messages, _, _, err := client.GetConversationReplies(&slack.GetConversationRepliesParameters{
 		ChannelID: s.channelID,
 		Timestamp: s.threadTimestamp,
 	})
@@ -42,8 +46,13 @@ func (s *ConversationService) GetHistory() ([]port.ConversationMessage, error) {
 
 	conversationMessages := make([]port.ConversationMessage, 0, len(messages))
 	for _, message := range messages {
+		author, err := s.getAuthorName(&message)
+		if err != nil {
+			return nil, err
+		}
+
 		conversationMessages = append(conversationMessages, port.ConversationMessage{
-			Author:  message.User,
+			Author:  author,
 			Content: message.Text,
 		})
 	}
@@ -73,4 +82,31 @@ func (s *ConversationService) RemoveEyes() error {
 		return fmt.Errorf("failed to remove eyes reaction: %w", err)
 	}
 	return nil
+}
+
+func (s *ConversationService) getAuthorName(message *slack.Message) (string, error) {
+	// Username is only available in bot messages
+	if message.Username != "" {
+		return message.Username, nil
+	}
+
+	// if it's not a bot message, use the user name cache
+	_, exists := s.userNameMap[message.User]
+	if exists {
+		return s.userNameMap[message.User], nil
+	}
+
+	// if the user name is not in the cache, get the user info
+	userInfo, err := s.slackAPI.GetClient().GetUserInfo(message.User)
+	if err != nil {
+		return "", fmt.Errorf("failed to get user info: %w", err)
+	}
+
+	// if the display name is set, use it
+	if userInfo.Profile.DisplayName != "" {
+		return userInfo.Profile.DisplayName, nil
+	}
+
+	// if the real name is set, use it
+	return userInfo.Profile.RealName, nil
 }
