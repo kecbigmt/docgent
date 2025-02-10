@@ -21,7 +21,7 @@ func main() {
 			return &fxevent.ZapLogger{Logger: log}
 		}),
 		fx.Provide(
-			newApplicationConfigServiceFromEnv,
+			NewApplicationConfigServiceFromEnv,
 			newSlackAPI,
 			newGitHubAPI,
 			newGitHubWebhookRequestParser,

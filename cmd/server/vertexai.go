@@ -14,19 +14,19 @@ import (
 )
 
 func newGenAIConfig() genai.Config {
-	projectID := os.Getenv("GOOGLE_PROJECT_ID")
+	projectID := os.Getenv("VERTEXAI_PROJECT_ID")
 	if projectID == "" {
-		panic("GOOGLE_PROJECT_ID environment variable is not set")
+		panic("VERTEXAI_PROJECT_ID environment variable is not set")
 	}
 
-	location := os.Getenv("GOOGLE_LOCATION")
+	location := os.Getenv("VERTEXAI_LOCATION")
 	if location == "" {
-		panic("GOOGLE_LOCATION environment variable is not set")
+		panic("VERTEXAI_LOCATION environment variable is not set")
 	}
 
-	modelName := os.Getenv("GOOGLE_MODEL_NAME")
+	modelName := os.Getenv("VERTEXAI_MODEL_NAME")
 	if modelName == "" {
-		panic("GOOGLE_MODEL_NAME environment variable is not set")
+		panic("VERTEXAI_MODEL_NAME environment variable is not set")
 	}
 
 	return genai.Config{
@@ -37,14 +37,14 @@ func newGenAIConfig() genai.Config {
 }
 
 func newRAGService() port.RAGService {
-	projectID := os.Getenv("GOOGLE_PROJECT_ID")
+	projectID := os.Getenv("VERTEXAI_PROJECT_ID")
 	if projectID == "" {
-		panic("GOOGLE_PROJECT_ID environment variable is not set")
+		panic("VERTEXAI_PROJECT_ID environment variable is not set")
 	}
 
-	location := os.Getenv("GOOGLE_LOCATION")
+	location := os.Getenv("VERTEXAI_LOCATION")
 	if location == "" {
-		panic("GOOGLE_LOCATION environment variable is not set")
+		panic("VERTEXAI_LOCATION environment variable is not set")
 	}
 
 	ctx := context.Background()
