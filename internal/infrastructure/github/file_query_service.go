@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"docgent/internal/application/port"
-	"docgent/internal/domain"
 
 	"github.com/google/go-github/v68/github"
 )
@@ -39,7 +38,7 @@ func (s *FileQueryService) FindFile(ctx context.Context, path string) (port.File
 	)
 	if err != nil {
 		if _, ok := err.(*github.ErrorResponse); ok && err.(*github.ErrorResponse).Response.StatusCode == 404 {
-			return port.File{}, domain.ErrFileNotFound
+			return port.File{}, port.ErrFileNotFound
 		}
 		return port.File{}, fmt.Errorf("failed to get file contents: %w", err)
 	}

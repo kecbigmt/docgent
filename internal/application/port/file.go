@@ -3,6 +3,11 @@ package port
 import (
 	"context"
 	"docgent/internal/domain/tooluse"
+	"errors"
+)
+
+var (
+	ErrFileNotFound = errors.New("file not found")
 )
 
 type File struct {

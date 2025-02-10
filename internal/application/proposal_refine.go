@@ -91,7 +91,7 @@ func (w *ProposalRefineUsecase) Refine(proposalHandle domain.ProposalHandle, use
 			FindFile: func(toolUse tooluse.FindFile) (string, bool, error) {
 				file, err := w.fileQueryService.FindFile(ctx, toolUse.Path)
 				if err != nil {
-					if errors.Is(err, domain.ErrFileNotFound) {
+					if errors.Is(err, port.ErrFileNotFound) {
 						return fmt.Sprintf("<error>File not found: %s</error>", toolUse.Path), false, nil
 					}
 					return "", false, err

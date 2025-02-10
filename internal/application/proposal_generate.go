@@ -83,7 +83,7 @@ func (w *ProposalGenerateUsecase) Execute(ctx context.Context) (domain.ProposalH
 			FindFile: func(toolUse tooluse.FindFile) (string, bool, error) {
 				file, err := w.fileQueryService.FindFile(ctx, toolUse.Path)
 				if err != nil {
-					if errors.Is(err, domain.ErrFileNotFound) {
+					if errors.Is(err, port.ErrFileNotFound) {
 						return fmt.Sprintf("<error>File not found: %s</error>", toolUse.Path), false, nil
 					}
 					return "", false, err
