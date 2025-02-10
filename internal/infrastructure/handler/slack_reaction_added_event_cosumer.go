@@ -61,6 +61,11 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 		return
 	}
 
+	if ev.Reaction != "doc_it" {
+		h.logger.Info("Reaction is not doc_it", zap.String("reaction", ev.Reaction))
+		return
+	}
+
 	threadTimestamp := ev.Item.Timestamp
 
 	conversationService := h.slackServiceProvider.NewConversationService(ev.Item.Channel, threadTimestamp, threadTimestamp)
