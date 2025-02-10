@@ -1,22 +1,20 @@
 # Docgent
 
-Docgentは、社内のチャットをもとにドキュメントを作成・更新して、同じことを2回答える必要がないようにするためのAIエージェントです。
+Docgent は、社内のチャットをもとにドキュメントを作成・更新して、同じことを 2 回答える必要がないようにするための AI エージェントです。
 
 ## 主な機能
 
-
-
 - ドキュメントの作成・更新の提案
-  - 1. ユーザーがSlackのスレッドで <img src="doc_it.png" width="20"> の絵文字をつける
-  - 2. AIエージェントがスレッド内の会話をもとにして、GitHubリポジトリでPull Requestを作成し、ドキュメントの作成・更新を提案する
+  - 1. ユーザーが Slack のスレッドで <img src="doc_it.png" width="20"> の絵文字をつける
+  - 2. AI エージェントがスレッド内の会話をもとにして、GitHub リポジトリで Pull Request を作成し、ドキュメントの作成・更新を提案する
 - フィードバックによる提案の修正
-  - Pull Request上でのユーザーがフィードバックをすると、AIエージェントが提案内容を修正する
-- RAGコーパスへのファイル追加
-  - リポジトリのmainブランチにファイルがプッシュされると、自動的にRAGコーパスにファイルを追加される
-  - Google CloudのRAG Engine APIを利用
-  - 更新されたRAGコーパスは次のドキュメント作成・更新、ユーザーからの質問への回答に利用される
+  - Pull Request 上でのユーザーがフィードバックをすると、AI エージェントが提案内容を修正する
+- RAG コーパスへのファイル追加
+  - リポジトリの main ブランチにファイルがプッシュされると、自動的に RAG コーパスにファイルを追加される
+  - Google Cloud の RAG Engine API を利用
+  - 更新された RAG コーパスは次のドキュメント作成・更新、ユーザーからの質問への回答に利用される
 - ドキュメントに基づく質問回答
-  - Slack上でボットにメンションして質問をすると、RAGコーパスに基づき回答を生成してくれる
+  - Slack 上でボットにメンションして質問をすると、RAG コーパスに基づき回答を生成してくれる
 
 ## セットアップの前提条件
 
@@ -25,14 +23,17 @@ Docgentは、社内のチャットをもとにドキュメントを作成・更�
     - Signing Secret: _Basic Information_ から取得
     - Bot User OAuth Token: _OAuth & Permissions_ から取得
   - ボットユーザーに以下のスコープの権限が付与されていること
-    - app_mentions:read
-    - channels:history
-    - chat:write
-    - reactions:read
-    - reactions:write
-    - users:read
-    - im:history （DM で使いたいときだけ）
-    - groups:history （プライベートチャンネルで使いたいときだけ）
+    - `app_mentions:read`
+    - `channels:history`
+    - `chat:write`
+    - `reactions:read`
+    - `reactions:write`
+    - `users:read`
+    - `im:history`（DM で使いたいときだけ）
+    - `groups:history`（プライベートチャンネルで使いたいときだけ）
+  - アプリが以下のイベントを購読するよう設定されていること（_Features_ > _Event Subscriptions_ > _Subscribe to bot events_）
+    - `app_mention`
+    - `reaction_added`
   - ボットがワークスペースにインストールされていること
   - ワークスペースに `doc_it` の名前で絵文字が登録されていること
     - 素材: <img src="doc_it.png" width="20">
@@ -72,6 +73,15 @@ Docgentは、社内のチャットをもとにドキュメントを作成・更�
 
 デプロイが完了したら、Cloud Run が決めてくれる URL を使って、Slack・GitHub の Webhook エンドポイントの設定を行ってください。
 
+以下の機密情報は自動で環境変数として設定されないので、初回デプロイ後に Cloud Run のコンソールから Secret として登録してください（_EDIT & DEPLOY NEW REVISION_ > _Edit Container_ > _VARIABLES & SECRETS_）。
+
+- SLACK_BOT_TOKEN
+- SLACK_SIGNING_SECRET
+- GITHUB_WEBHOOK_SECRET
+- GITHUB_APP_PRIVATE_KEY
+
+RAG コーパスを作成して VERTEXAI_RAG_CORPUS_ID に必要な ID を取得する方法は後述します。後回しにする場合は `0` をセットしてください（RAG 機能がオフになります）。
+
 #### Slack App の Webhook エンドポイントを登録
 
 [Slack App](https://api.slack.com/apps)でアプリを選択 > _Features_ > Event Subscriptions から設定する
@@ -89,6 +99,8 @@ https://xxxxx.a.run.app/api/github/events
 ```
 
 ## 開発環境のセットアップ
+
+※事前に Go v1.23.4 以降をインストールしてください。
 
 ### ソースコードの取得
 
@@ -147,3 +159,38 @@ ngrok http 8080
 ```
 
 払い出される URL を使って、Slack App と GitHub App にエンドポイントの設定をすると、Slack や GitHub でのイベントがローカルのサーバーに届いてアプリが動作します。
+
+## RAG コーパスの作成
+
+git clone した後に、以下のコマンドで CLI ツールを利用してください。
+
+```
+go run cmd/ragtool/main.go corpus create \
+--project-id <Google CloudプロジェクトID> \
+--location <Googe Cloudのリージョン名> \
+--display-name <コーパスの表示名>
+```
+
+作成できたら、コーパスの一覧を取得して ID を確認します。
+
+```
+go run cmd/ragtool/main.go corpus list \
+--project-id <Google CloudプロジェクトID> \
+--location <Googe Cloudのリージョン名>
+```
+
+name の最後に入っている数字の文字列がコーパスの ID です。
+
+```
+{
+  "name": "projects/xxxxxx/locations/us-central1/ragCorpora/123456789123456789",
+  "displayName": "xxxxxxxx",
+  "createTime": "2025-02-10T04:35:21.261097Z",
+  "updateTime": "2025-02-10T04:35:21.261097Z",
+  "corpusStatus": {
+    "state": "ACTIVE"
+  }
+}
+```
+
+Cloud Run 上で動かしている場合は、コンソールから環境変数をセットして再デプロイしてください。
