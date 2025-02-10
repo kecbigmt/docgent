@@ -162,6 +162,7 @@ func (w *ProposalGenerateUsecase) Execute(ctx context.Context) (domain.ProposalH
 4. Use attempt_complete to complete the task.
 
 You should use create_proposal only after you changed files.
+You should not use modify_file unless the file is obviously relevant to your chat history. Basically, use create_file instead.
 </task>
 `
 
