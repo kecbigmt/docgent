@@ -68,7 +68,7 @@ func (w *ProposalGenerateUsecase) Execute(ctx context.Context) (domain.ProposalH
 
 	agent := domain.NewAgent(
 		w.chatModel,
-		buildSystemInstructionToGenerateProposal(tree),
+		buildSystemInstructionToGenerateProposal(chatHistory, tree),
 		tooluse.Cases{
 			AttemptComplete: func(toolUse tooluse.AttemptComplete) (string, bool, error) {
 				if err := w.conversationService.Reply(toolUse.Message); err != nil {
@@ -155,12 +155,7 @@ func (w *ProposalGenerateUsecase) Execute(ctx context.Context) (domain.ProposalH
 		},
 	)
 
-	var chatHistoryStr strings.Builder
-	for _, msg := range chatHistory {
-		chatHistoryStr.WriteString(fmt.Sprintf("%s: %s\n", msg.Author, msg.Content))
-	}
-
-	task := fmt.Sprintf(`<task>
+	task := `<task>
 1. Analyze the chat history. Use query_rag to find relevant existing documents and find_file to check the file content.
 2. Use create_file, modify_file, rename_file, delete_file to change files for the best documentation.
 3. Use create_proposal to create a proposal based on the document file changes. You should contain the chat history in the proposal description as a reference.
@@ -168,10 +163,7 @@ func (w *ProposalGenerateUsecase) Execute(ctx context.Context) (domain.ProposalH
 
 You should use create_proposal only after you changed files.
 </task>
-<chat_history>
-%s
-</chat_history>
-`, chatHistoryStr.String())
+`
 
 	err = agent.InitiateTaskLoop(ctx, task, w.remainingStepCount)
 	if err != nil {
@@ -188,7 +180,12 @@ You should use create_proposal only after you changed files.
 	return proposalHandle, nil
 }
 
-func buildSystemInstructionToGenerateProposal(fileTree []port.TreeMetadata) *domain.SystemInstruction {
+func buildSystemInstructionToGenerateProposal(chatHistory []port.ConversationMessage, fileTree []port.TreeMetadata) *domain.SystemInstruction {
+	var chatHistoryStr strings.Builder
+	for _, msg := range chatHistory {
+		chatHistoryStr.WriteString(fmt.Sprintf("<message author=%q>\n%s\n</message>\n", msg.Author, msg.Content))
+	}
+
 	var fileTreeStr strings.Builder
 	for _, metadata := range fileTree {
 		fileTreeStr.WriteString(fmt.Sprintf("- %s\n", metadata.Path))
@@ -196,6 +193,10 @@ func buildSystemInstructionToGenerateProposal(fileTree []port.TreeMetadata) *dom
 
 	systemInstruction := domain.NewSystemInstruction(
 		[]domain.EnvironmentContext{
+			{
+				Name:  "Chat history",
+				Value: chatHistoryStr.String(),
+			},
 			{
 				Name:  "File tree",
 				Value: fileTreeStr.String(),
