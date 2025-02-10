@@ -5,64 +5,44 @@
             "description": "slack workspace id",
             "order": 1
         },
-        "SLACK_BOT_TOKEN": {
-            "description": "slack bot token",
-            "generator": "secret",
-            "order": 2
-        },
-        "SLACK_SIGNING_SECRET": {
-            "description": "slack signing secret",
-            "generator": "secret",
-            "order": 3
-        },
         "GITHUB_APP_ID": {
             "description": "github app id",
-            "order": 4
-        },
-        "GITHUB_APP_PRIVATE_KEY": {
-            "description": "github app private key",
-            "generator": "secret",
-            "order": 5
-        },
-        "GITHUB_WEBHOOK_SECRET": {
-            "description": "github webhook secret",
-            "generator": "secret",
-            "order": 6
+            "order": 2
         },
         "GITHUB_OWNER": {
             "description": "github owner name",
-            "order": 7
+            "order": 3
         },
         "GITHUB_REPO": {
             "description": "github repository name",
-            "order": 8
+            "order": 4
         },
         "GITHUB_DEFAULT_BRANCH": {
             "description": "github default branch",
             "value": "main",
-            "order": 9
+            "order": 5
         },
         "GITHUB_INSTALLATION_ID": {
             "description": "github installation id",
-            "order": 10
+            "order": 6
         },
         "VERTEXAI_PROJECT_ID": {
             "description": "google vertexai project id",
-            "order": 11
+            "order": 7
         },
         "VERTEXAI_LOCATION": {
             "description": "google vertexai location",
-            "order": 12
+            "order": 8
         },
         "VERTEXAI_MODEL_NAME": {
             "description": "google vertexai model name",
             "value": "gemini-2.0-flash",
-            "order": 13
+            "order": 9
         },
         "VERTEXAI_RAG_CORPUS_ID": {
             "description": "google vertexai rag corpus id. if not set, rag feature will be disabled.",
             "required": false,
-            "order": 14
+            "order": 10
         }
     }
 }
