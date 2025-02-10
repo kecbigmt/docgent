@@ -4,17 +4,14 @@ Docgent は、社内のチャットをもとにドキュメントを作成・更
 
 ## 主な機能
 
-- ドキュメントの作成・更新の提案
-  - 1. ユーザーが Slack のスレッドで <img src="doc_it.png" width="20"> の絵文字をつける
-  - 2. AI エージェントがスレッド内の会話をもとにして、GitHub リポジトリで Pull Request を作成し、ドキュメントの作成・更新を提案する
-- フィードバックによる提案の修正
-  - Pull Request 上でのユーザーがフィードバックをすると、AI エージェントが提案内容を修正する
-- RAG コーパスへのファイル追加
-  - リポジトリの main ブランチにファイルがプッシュされると、自動的に RAG コーパスにファイルを追加される
-  - Google Cloud の RAG Engine API を利用
-  - 更新された RAG コーパスは次のドキュメント作成・更新、ユーザーからの質問への回答に利用される
-- ドキュメントに基づく質問回答
-  - Slack 上でボットにメンションして質問をすると、RAG コーパスに基づき回答を生成してくれる
+1. SlackのスレッドをもとにしてGitHub上でドキュメントを作成
+2. GitHubのPull Requestでのコメントに基づいて編集内容を改善
+3. mainブランチに反映されると、AIエージェントの知識として蓄積
+4. Slackでの質問に対して、蓄積した知識をもとに回答
+
+## デモ動画
+
+[!['YouTube thumbnail'](https://img.youtube.com/vi/L7dzehHun18/maxres1.jpg)](https://www.youtube.com/watch?v=L7dzehHun18a "Demo video")
 
 ## セットアップの前提条件
 
