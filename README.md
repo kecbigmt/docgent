@@ -54,7 +54,7 @@ Docgent は、社内のチャットをもとにドキュメントを作成・更
     　- 既存リポジトリでも構いませんが、最初は新規作成をおすすめします
     - オーナー名・リポジトリ名はリポジトリの URL（`https://github.com/OWNER/REPO`）から抜き出せます
   - ドキュメント管理用のリポジトリに、上記で作成した GitHub App がインストールされていて、インストール ID が発行されていること
-    - GitHub App 管理画面の _General_ > _Install App_ から、自分が管理しているリポジトリにアプリをインストールできます
+    - GitHub App 管理画面の _Install App_ から、自分が管理しているリポジトリにアプリをインストールできます
     - インストール完了後、対象リポジトリの _Settings_ > _Integrations_ > _GitHub Apps_ にある対象アプリの設定画面の URL にインストール ID が入っています
       - e.g. `https://github.com/apps/[アプリ名]/installations/[インストールID]`
 - Google Cloud
