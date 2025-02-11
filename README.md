@@ -94,7 +94,7 @@ Docgent は、社内のチャットをもとにドキュメントを作成・更
 
 #### Slack App の Webhook エンドポイントを登録
 
-[Slack App](https://api.slack.com/apps)でアプリを選択 > _Features_ > Event Subscriptions から設定する
+[Slack App](https://api.slack.com/apps)でアプリを選択 > _Features_ > _Event Subscriptions_ から設定する
 
 ```
 https://xxxxx.a.run.app/api/slack/events
