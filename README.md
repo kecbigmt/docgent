@@ -165,7 +165,7 @@ go run ./cmd/server/*.go
 
 注意
 
-- ngrok が発行する URL を外部に公開しないこと
+- セキュリティのため ngrok が発行する URL を外部に公開しないこと（Webhookエンドポイントに対するリクエストは検証されますが念のため）
 - 動作確認が終わったら ngrok を終了すること
 
 ```
@@ -176,7 +176,9 @@ ngrok http 8080
 
 ## RAG コーパスの作成
 
-git clone した後に、以下のコマンドで CLI ツールを利用してください。
+エージェントのRAG機能を利用するには、Vertex AIのRAG Engine APIを利用してRAGコーパスを作成する必要があります。
+
+git clone した後に、以下のコマンドで CLI ツールを利用してください。コーパスの表示名は開発者にとってわかりやすければ何でも構いません。
 
 ```
 go run cmd/ragtool/main.go corpus create \
@@ -193,7 +195,7 @@ go run cmd/ragtool/main.go corpus list \
 --location <Googe Cloudのリージョン名>
 ```
 
-name の最後に入っている数字の文字列がコーパスの ID です。
+name の最後に入っている数字の文字列（`123456789123456789` の部分）がコーパスの ID です。
 
 ```
 {
@@ -207,4 +209,4 @@ name の最後に入っている数字の文字列がコーパスの ID です�
 }
 ```
 
-Cloud Run 上で動かしている場合は、コンソールから環境変数をセットして再デプロイしてください。
+Cloud Run 上で動かしている場合は、コンソールから環境変数 `VERTEXAI_RAG_CORPUS_ID` をセットして再デプロイしてください。
