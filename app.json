@@ -32,6 +32,7 @@
         },
         "VERTEXAI_LOCATION": {
             "description": "google vertexai location",
+            "value": "us-central1",
             "order": 8
         },
         "VERTEXAI_MODEL_NAME": {
