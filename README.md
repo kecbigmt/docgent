@@ -39,8 +39,8 @@ Docgent は、社内のチャットをもとにドキュメントを作成・更
     - 画像は何でも可
 - GitHub
   - [GitHub App](https://github.com/settings/apps)が作成されていること
-  - アプリでWebhookが有効になっていること
-    - _General_ > _Webhook_ から 有効にできます
+    - アプリは非公開でも問題ないはずですが、Organizationのリポジトリにインストールする場合はOrganizationの設定画面からアプリを作成してください
+  - アプリでWebhookが有効になっていること（_General_ > _Webhook_）
   - アプリに以下の権限がついていること（_Permissions & events_ > _Permissions_）
     - Metadata: `Read only`
     - Contents: `Read and write`
@@ -51,7 +51,7 @@ Docgent は、社内のチャットをもとにドキュメントを作成・更
     - Push
   - ドキュメント管理用のリポジトリが作成されていること
     - 既存リポジトリでも動作しますが、試しに使ってみる場合は新規作成をおすすめします
-  - ドキュメント管理用のリポジトリに、上記で作成した GitHub App がインストールされていて、インストール ID が発行されていること
+  - ドキュメント管理用のリポジトリに、上記で作成した GitHub App がインストールされていること
     - GitHub App 管理画面の _Install App_ から、自分が管理しているリポジトリにアプリをインストールできます
 - Google Cloud
   - プロジェクトが作成されていること
