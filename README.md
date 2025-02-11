@@ -92,7 +92,7 @@ Docgent は、社内のチャットをもとにドキュメントを作成・更
 
 デプロイが完了したら、Cloud Run が決めてくれる URL を使って、Slack・GitHub の Webhook エンドポイントの設定を行ってください。
 
-#### Slack App の Webhook エンドポイントを登録
+### Slack App の Webhook エンドポイントを登録
 
 [Slack App](https://api.slack.com/apps)でアプリを選択 > _Features_ > _Event Subscriptions_ から設定する
 
