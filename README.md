@@ -18,10 +18,8 @@ Docgent は、社内のチャットをもとにドキュメントを作成・更
 ## セットアップの前提条件
 
 - Slack
-  - [Slack App](https://api.slack.com/apps)が作成されていて、Signing Secret と Bot User OAuth Token を取得していること
-    - Signing Secret: _Basic Information_ から取得
-    - Bot User OAuth Token: _OAuth & Permissions_ から取得
-  - ボットユーザーに以下のスコープの権限が付与されていること
+  - [Slack App](https://api.slack.com/apps)が作成されていること
+  - ボットユーザーに以下のスコープの権限が付与されていること（_Features_ > _OAuth & Permissions_ で設定できます）
     - `app_mentions:read`
     - `channels:history`
     - `chat:write`
@@ -30,33 +28,31 @@ Docgent は、社内のチャットをもとにドキュメントを作成・更
     - `users:read`
     - `im:history`（DM で使いたいときだけ）
     - `groups:history`（プライベートチャンネルで使いたいときだけ）
-  - アプリが以下のイベントを購読するよう設定されていること（_Features_ > _Event Subscriptions_ > _Subscribe to bot events_）
+  - アプリがワークスペースにインストールされていること
+    -  _OAuth & Permissions_ で権限を選択した後に `Install to [ワークスペース名]` というボタンを押すとインストールできます
+  - アプリのEvent Subscriptionsが有効になっていること（_Features_ > _Event Subscriptions_）
+  - アプリが以下のイベントを購読するよう設定されていること（_Event Subscriptions_ > _Subscribe to bot events_）
     - `app_mention`
     - `reaction_added`
-  - ボットがワークスペースにインストールされていること
   - ワークスペースに `doc_it` の名前で絵文字が登録されていること
-    - 素材: <img src="doc_it.png" width="20">
+    - サンプル素材: <img src="doc_it.png" width="20">
     - 画像は何でも可
 - GitHub
-  - [GitHub App](https://github.com/settings/apps)が作成されていて、App ID・Webhook Secret・秘密鍵が発行されていること
-    - App ID: _General_ > _About_ に書いてある
-    - Webhook Secret: _General_ > _Webhook_ から Webhook を有効にする
-    - 秘密鍵: _General_ > _Private Keys_ から生成・ダウンロードする
-  - GitHub App に以下の権限がついていること（_Permissions & events_ > _Permissions_）
+  - [GitHub App](https://github.com/settings/apps)が作成されていること
+  - アプリでWebhookが有効になっていること
+    - _General_ > _Webhook_ から 有効にできます
+  - アプリに以下の権限がついていること（_Permissions & events_ > _Permissions_）
     - Metadata: `Read only`
     - Contents: `Read and write`
     - Issues: `Read and write`
     - Pull Requests: `Read and write`
-  - GitHub App が以下のイベントを購読していること（_Permissions & events_ > _Subscribe to events_）
+  - アプリが以下のイベントを購読していること（_Permissions & events_ > _Subscribe to events_）
     - Issue comment
     - Push
-  - ドキュメント管理用のリポジトリが作成されていて、オーナー名・リポジトリ名が決まっていること
+  - ドキュメント管理用のリポジトリが作成されていること
     - 既存リポジトリでも動作しますが、試しに使ってみる場合は新規作成をおすすめします
-    - オーナー名・リポジトリ名はリポジトリの URL（`https://github.com/OWNER/REPO`）から抜き出せます
   - ドキュメント管理用のリポジトリに、上記で作成した GitHub App がインストールされていて、インストール ID が発行されていること
     - GitHub App 管理画面の _Install App_ から、自分が管理しているリポジトリにアプリをインストールできます
-    - インストール完了後、対象リポジトリの _Settings_ > _Integrations_ > _GitHub Apps_ にある対象アプリの設定画面の URL にインストール ID が入っています
-      - e.g. `https://github.com/apps/[アプリ名]/installations/[インストールID]`
 - Google Cloud
   - プロジェクトが作成されていること
   - Vertex AI API が有効になっていること
@@ -68,18 +64,33 @@ Docgent は、社内のチャットをもとにドキュメントを作成・更
 
 [![Run on Google Cloud](https://storage.googleapis.com/cloudrun/button.svg)](https://console.cloud.google.com/cloudshell/editor?shellonly=true&cloudshell_image=gcr.io/cloudrun/button&cloudshell_git_repo=https%3A%2F%2Fgithub.com%2Fkecbigmt%2Fdocgent)
 
-環境変数をたくさん設定するように案内されます。後述する環境変数の一覧を参考にしてください。
+環境変数をたくさん設定するように案内されます。以下を参考に設定してください。
+
+変数名 | 説明
+---|---
+`SLACK_WORKSPACE_ID` | SlackのワークスペースID。[こちら](https://slack.com/intl/ja-jp/help/articles/221769328)を参考にして確認してください
+`GITHUB_APP_ID` | GitHubのApp ID。[GitHub App](https://github.com/settings/apps) で対象アプリ選択 > _General_ > _About_ に書いてあります
+`GITHUB_OWNER` | GitHubリポジトリのオーナー名。リポジトリの URL（`https://github.com/OWNER/REPO`）から抜き出せます
+`GITHUB_REPO` | GitHubリポジトリの名前。同上
+`GITHUB_DEFAULT_BRANCH` | GitHubリポジトリのデフォルトブランチ名。デフォルト値は `main`
+`GITHUB_INSTALLATION_ID` | GitHubb AppのインストールID。対象リポジトリにインストール完了後、リポジトリの _Settings_ > _Integrations_ > _GitHub Apps_ にある対象アプリの設定画面の URL にインストール ID が入っています<br>e.g.  `https://github.com/apps/[アプリ名]/installations/[インストールID]`
+`VERTEXAI_PROJECT_ID` | Vertex AIを利用できるGoogle CloudプロジェクトのID。Cloud Runと同じプロジェクトにするのを推奨します
+`VERTEXAI_LOCATION` |　Vertex AIを利用するリージョン名。デフォルト値は `us-central1`
+`VERTEXAI_MODEL_NAME` |　エージェント制御や回答生成のためのGeminiのモデル名。デフォルト値は `gemini-2.0-flash`
+`VERTEXAI_RAG_CORPUS_ID` | RAGコーパスのID。作成方法は後述。後回しにする場合は `0` をセットしてください（RAG 機能がオフになります）
 
 デプロイが完了したら、Cloud Run が決めてくれる URL を使って、Slack・GitHub の Webhook エンドポイントの設定を行ってください。
 
-以下の機密情報は自動で環境変数として設定されないので、初回デプロイ後に Cloud Run のコンソールから Secret として登録してください（_EDIT & DEPLOY NEW REVISION_ > _Edit Container_ > _VARIABLES & SECRETS_）。
+以下の機密情報は自動で環境変数として設定されないので、初回デプロイ後に Cloud Run のコンソールから シークレット として登録してください（_新しいリビジョンの編集とデプロイ_ > _コンテナの編集_ > _変数とシークレット_）。
 
-- SLACK_BOT_TOKEN
-- SLACK_SIGNING_SECRET
-- GITHUB_WEBHOOK_SECRET
-- GITHUB_APP_PRIVATE_KEY
+変数名 |  説明
+---|---
+`SLACK_SIGNING_SECRET` | Slack AppのSigning Secret。[Slack App](https://api.slack.com/apps)で対象アプリ選択 > _Basic Information_ から取得できます
+`SLACK_BOT_TOKEN` | Slack AppのBot User OAuth Token。_OAuth & Permissions_ から取得できます
+`GITHUB_WEBHOOK_SECRET` | GitHubのWebhookシークレット。[GitHub App](https://github.com/settings/apps) で対象アプリ選択 > _General_ > _Webhook_ から取得できます
+`GITHUB_APP_PRIVATE_KEY` | GitHub Appからのアクセストークンリクエストに署名するための秘密鍵。_General_ > _Private Keys_ から生成・ダウンロードできます
 
-RAG コーパスを作成して VERTEXAI_RAG_CORPUS_ID に必要な ID を取得する方法は後述します。後回しにする場合は `0` をセットしてください（RAG 機能がオフになります）。
+登録後は「デプロイ」ボタンを押して再デプロイしてください。
 
 #### Slack App の Webhook エンドポイントを登録
 
@@ -96,6 +107,10 @@ https://xxxxx.a.run.app/api/slack/events
 ```
 https://xxxxx.a.run.app/api/github/events
 ```
+
+---
+
+以上でインストール完了です。Slackワークスペースを開き、任意のスレッドで :doc_it: リアクションをつけて、応答が返ってくればOKです（ドキュメントのファイルとPull Requestが作成されます）。
 
 ## 開発環境のセットアップ
 
