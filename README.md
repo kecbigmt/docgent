@@ -75,8 +75,8 @@ Docgent は、社内のチャットをもとにドキュメントを作成・更
 `GITHUB_DEFAULT_BRANCH` | GitHubリポジトリのデフォルトブランチ名。デフォルト値は `main`
 `GITHUB_INSTALLATION_ID` | GitHubb AppのインストールID。対象リポジトリにインストール完了後、リポジトリの _Settings_ > _Integrations_ > _GitHub Apps_ にある対象アプリの設定画面の URL にインストール ID が入っています<br>e.g.  `https://github.com/apps/[アプリ名]/installations/[インストールID]`
 `VERTEXAI_PROJECT_ID` | Vertex AIを利用できるGoogle CloudプロジェクトのID。Cloud Runと同じプロジェクトにするのを推奨します
-`VERTEXAI_LOCATION` |　Vertex AIを利用するリージョン名。デフォルト値は `us-central1`
-`VERTEXAI_MODEL_NAME` |　エージェント制御や回答生成のためのGeminiのモデル名。デフォルト値は `gemini-2.0-flash`
+`VERTEXAI_LOCATION` | Vertex AIを利用するリージョン名。デフォルト値は `us-central1`
+`VERTEXAI_MODEL_NAME` | エージェント制御や回答生成のためのGeminiモデル名。デフォルト値は `gemini-2.0-flash`
 `VERTEXAI_RAG_CORPUS_ID` | RAGコーパスのID。作成方法は後述。後回しにする場合は `0` をセットしてください（RAG 機能がオフになります）
 
 以下の機密情報は自動で環境変数として設定されないので、初回デプロイ後に Cloud Run のコンソールから シークレット として登録してください（_新しいリビジョンの編集とデプロイ_ > _コンテナの編集_ > _変数とシークレット_）。
@@ -125,7 +125,7 @@ cd docgent
 
 ### 環境変数の設定
 
-以下のように環境変数をセットしてください
+以下のように環境変数をセットしてください。
 
 ```sh
 # Slack App設定
