@@ -14,20 +14,14 @@ import (
 // - Example: https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/rag-api-v1#create-a-rag-corpus-example-api
 // - Parameters: https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/rag-api-v1#corpus-management-params-api
 func (c *Client) CreateCorpus(ctx context.Context, displayName string, options ...CreateCorpusOption) error {
-	createCorpusOptions := &CreateCorpusOptions{}
+	params := CreateCorpusParams{}
 	for _, option := range options {
-		option(createCorpusOptions)
+		option(&params)
 	}
 
-	reqBody := map[string]interface{}{
-		"display_name": displayName,
-	}
+	params.DisplayName = displayName
 
-	if createCorpusOptions.Description != "" {
-		reqBody["description"] = createCorpusOptions.Description
-	}
-
-	reqBodyBytes, err := json.Marshal(reqBody)
+	reqBodyBytes, err := json.Marshal(params)
 	if err != nil {
 		return err
 	}
@@ -55,14 +49,113 @@ func (c *Client) CreateCorpus(ctx context.Context, displayName string, options .
 	return nil
 }
 
-type CreateCorpusOption func(*CreateCorpusOptions)
+type CreateCorpusOption func(*CreateCorpusParams)
 
-type CreateCorpusOptions struct {
-	Description string
+type CreateCorpusParams struct {
+	DisplayName    string                 `json:"display_name"`
+	Description    string                 `json:"description,omitempty"`
+	VectorDBConfig map[string]interface{} `json:"vector_db_config,omitempty"`
 }
 
 func WithCreateCorpusDescription(description string) CreateCorpusOption {
-	return func(o *CreateCorpusOptions) {
-		o.Description = description
+	return func(p *CreateCorpusParams) {
+		p.Description = description
 	}
+}
+
+func WithVectorDBConfig(config VectorDBConfig) CreateCorpusOption {
+	return func(p *CreateCorpusParams) {
+		p.VectorDBConfig = map[string]interface{}{}
+		config.Match(VectorDBConfigCases{
+			RAGManagedDBConfig: func(c RAGManagedDBConfig) {
+				if c.RAGEmbeddingModelConfig != nil {
+					p.VectorDBConfig["rag_embedding_model_config"] = map[string]interface{}{
+						"vertex_prediction_endpoint": map[string]interface{}{
+							"endpoint": c.RAGEmbeddingModelConfig.VertexPredictionEndpoint.Endpoint,
+						},
+					}
+				}
+			},
+			PineconeConfig: func(c PineconeConfig) {
+				p.VectorDBConfig["pinecone"] = map[string]interface{}{
+					"index_name": c.IndexName,
+				}
+				p.VectorDBConfig["api_auth"] = map[string]interface{}{
+					"api_key_config": map[string]interface{}{
+						"api_key_secret_version": c.APIKeyConfig.APIKeySecretVersion,
+					},
+				}
+				if c.RAGEmbeddingModelConfig != nil {
+					p.VectorDBConfig["rag_embedding_model_config"] = map[string]interface{}{
+						"vertex_prediction_endpoint": map[string]interface{}{
+							"endpoint": c.RAGEmbeddingModelConfig.VertexPredictionEndpoint.Endpoint,
+						},
+					}
+				}
+			},
+			VertexVectorSearchConfig: func(c VertexVectorSearchConfig) {
+				p.VectorDBConfig["vertex_vector_search"] = map[string]interface{}{
+					"index":          c.Index,
+					"index_endpoint": c.IndexEndpoint,
+				}
+				if c.RAGEmbeddingModelConfig != nil {
+					p.VectorDBConfig["rag_embedding_model_config"] = map[string]interface{}{
+						"vertex_prediction_endpoint": map[string]interface{}{
+							"endpoint": c.RAGEmbeddingModelConfig.VertexPredictionEndpoint.Endpoint,
+						},
+					}
+				}
+			},
+		})
+	}
+}
+
+type VectorDBConfig interface {
+	Match(cs VectorDBConfigCases)
+}
+
+type VectorDBConfigCases struct {
+	RAGManagedDBConfig       func(RAGManagedDBConfig)
+	PineconeConfig           func(PineconeConfig)
+	VertexVectorSearchConfig func(VertexVectorSearchConfig)
+}
+
+type RAGManagedDBConfig struct {
+	RAGEmbeddingModelConfig *RAGEmbeddingModelConfig
+}
+
+type RAGEmbeddingModelConfig struct {
+	VertexPredictionEndpoint VertexPredictionEndpoint
+}
+
+type VertexPredictionEndpoint struct {
+	Endpoint string
+}
+
+func (c RAGManagedDBConfig) Match(cs VectorDBConfigCases) {
+	cs.RAGManagedDBConfig(c)
+}
+
+type PineconeConfig struct {
+	IndexName               string
+	APIKeyConfig            APIKeyConfig
+	RAGEmbeddingModelConfig *RAGEmbeddingModelConfig
+}
+
+type APIKeyConfig struct {
+	APIKeySecretVersion string
+}
+
+func (c PineconeConfig) Match(cs VectorDBConfigCases) {
+	cs.PineconeConfig(c)
+}
+
+type VertexVectorSearchConfig struct {
+	Index                   string
+	IndexEndpoint           string
+	RAGEmbeddingModelConfig *RAGEmbeddingModelConfig
+}
+
+func (c VertexVectorSearchConfig) Match(cs VectorDBConfigCases) {
+	cs.VertexVectorSearchConfig(c)
 }
