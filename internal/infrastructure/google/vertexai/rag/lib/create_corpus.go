@@ -63,18 +63,20 @@ func WithCreateCorpusDescription(description string) CreateCorpusOption {
 	}
 }
 
+// WithVectorDBConfig sets the vector database configuration for the corpus.
+// Supported vector databases:
+// - RAG Managed DB
+// - Pinecone
+// - Vertex Vector Search
+// Reference: https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/rag-api-v1
 func WithVectorDBConfig(config VectorDBConfig) CreateCorpusOption {
 	return func(p *CreateCorpusParams) {
 		p.VectorDBConfig = map[string]interface{}{}
+		var ragEmbedding *RAGEmbeddingModelConfig
+
 		config.Match(VectorDBConfigCases{
 			RAGManagedDBConfig: func(c RAGManagedDBConfig) {
-				if c.RAGEmbeddingModelConfig != nil {
-					p.VectorDBConfig["rag_embedding_model_config"] = map[string]interface{}{
-						"vertex_prediction_endpoint": map[string]interface{}{
-							"endpoint": c.RAGEmbeddingModelConfig.VertexPredictionEndpoint.Endpoint,
-						},
-					}
-				}
+				ragEmbedding = c.RAGEmbeddingModelConfig
 			},
 			PineconeConfig: func(c PineconeConfig) {
 				p.VectorDBConfig["pinecone"] = map[string]interface{}{
@@ -85,35 +87,39 @@ func WithVectorDBConfig(config VectorDBConfig) CreateCorpusOption {
 						"api_key_secret_version": c.APIKeyConfig.APIKeySecretVersion,
 					},
 				}
-				if c.RAGEmbeddingModelConfig != nil {
-					p.VectorDBConfig["rag_embedding_model_config"] = map[string]interface{}{
-						"vertex_prediction_endpoint": map[string]interface{}{
-							"endpoint": c.RAGEmbeddingModelConfig.VertexPredictionEndpoint.Endpoint,
-						},
-					}
-				}
+				ragEmbedding = c.RAGEmbeddingModelConfig
 			},
 			VertexVectorSearchConfig: func(c VertexVectorSearchConfig) {
 				p.VectorDBConfig["vertex_vector_search"] = map[string]interface{}{
 					"index":          c.Index,
 					"index_endpoint": c.IndexEndpoint,
 				}
-				if c.RAGEmbeddingModelConfig != nil {
-					p.VectorDBConfig["rag_embedding_model_config"] = map[string]interface{}{
-						"vertex_prediction_endpoint": map[string]interface{}{
-							"endpoint": c.RAGEmbeddingModelConfig.VertexPredictionEndpoint.Endpoint,
-						},
-					}
-				}
+				ragEmbedding = c.RAGEmbeddingModelConfig
 			},
 		})
+		if ragEmbedding != nil {
+			p.VectorDBConfig["rag_embedding_model_config"] = buildRAGEmbeddingModelConfig(ragEmbedding)
+		}
 	}
 }
 
+func buildRAGEmbeddingModelConfig(emb *RAGEmbeddingModelConfig) map[string]interface{} {
+	if emb == nil {
+		return nil
+	}
+	return map[string]interface{}{
+		"vertex_prediction_endpoint": map[string]interface{}{
+			"endpoint": emb.VertexPredictionEndpoint.Endpoint,
+		},
+	}
+}
+
+// VectorDBConfig is the interface for the vector database configuration.
 type VectorDBConfig interface {
 	Match(cs VectorDBConfigCases)
 }
 
+// VectorDBConfigCases is the interface for the vector database configuration cases.
 type VectorDBConfigCases struct {
 	RAGManagedDBConfig       func(RAGManagedDBConfig)
 	PineconeConfig           func(PineconeConfig)
@@ -122,14 +128,6 @@ type VectorDBConfigCases struct {
 
 type RAGManagedDBConfig struct {
 	RAGEmbeddingModelConfig *RAGEmbeddingModelConfig
-}
-
-type RAGEmbeddingModelConfig struct {
-	VertexPredictionEndpoint VertexPredictionEndpoint
-}
-
-type VertexPredictionEndpoint struct {
-	Endpoint string
 }
 
 func (c RAGManagedDBConfig) Match(cs VectorDBConfigCases) {
@@ -158,4 +156,12 @@ type VertexVectorSearchConfig struct {
 
 func (c VertexVectorSearchConfig) Match(cs VectorDBConfigCases) {
 	cs.VertexVectorSearchConfig(c)
+}
+
+type RAGEmbeddingModelConfig struct {
+	VertexPredictionEndpoint VertexPredictionEndpoint
+}
+
+type VertexPredictionEndpoint struct {
+	Endpoint string
 }
