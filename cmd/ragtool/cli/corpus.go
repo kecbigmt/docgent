@@ -15,6 +15,36 @@ func HandleCorpusCreate(ctx context.Context, cli *CLI, client *lib.Client) error
 		options = append(options, lib.WithCreateCorpusDescription(cli.Corpus.Create.Description))
 	}
 
+	switch cli.Corpus.Create.VectorDB {
+	case "pinecone":
+		if cli.Corpus.Create.PineconeIndexName == "" || cli.Corpus.Create.PineconeAPIKeySecretVersion == "" {
+			return fmt.Errorf("pinecone index name and API key secret version are required")
+		}
+		config := lib.PineconeConfig{
+			IndexName:    cli.Corpus.Create.PineconeIndexName,
+			APIKeyConfig: lib.APIKeyConfig{APIKeySecretVersion: cli.Corpus.Create.PineconeAPIKeySecretVersion},
+		}
+		config.RAGEmbeddingModelConfig = maybeSetEmbeddingConfig(cli.Corpus.Create.EmbeddingPredictionEndpoint)
+		options = append(options, lib.WithVectorDBConfig(config))
+	case "vertex_vector_search":
+		if cli.Corpus.Create.VectorSearchIndex == "" || cli.Corpus.Create.VectorSearchIndexEndpoint == "" {
+			return fmt.Errorf("vertex vector search index and endpoint are required")
+		}
+		config := lib.VertexVectorSearchConfig{
+			Index:         cli.Corpus.Create.VectorSearchIndex,
+			IndexEndpoint: cli.Corpus.Create.VectorSearchIndexEndpoint,
+		}
+		config.RAGEmbeddingModelConfig = maybeSetEmbeddingConfig(cli.Corpus.Create.EmbeddingPredictionEndpoint)
+		options = append(options, lib.WithVectorDBConfig(config))
+	case "rag_managed_db":
+		config := lib.RAGManagedDBConfig{
+			RAGEmbeddingModelConfig: maybeSetEmbeddingConfig(cli.Corpus.Create.EmbeddingPredictionEndpoint),
+		}
+		options = append(options, lib.WithVectorDBConfig(config))
+	default:
+		return fmt.Errorf("invalid vector database type: %s", cli.Corpus.Create.VectorDB)
+	}
+
 	err := client.CreateCorpus(ctx, cli.Corpus.Create.DisplayName, options...)
 	if err != nil {
 		var httpErr *lib.HTTPError
@@ -47,4 +77,13 @@ func HandleCorpusList(ctx context.Context, cli *CLI, client *lib.Client) error {
 
 	fmt.Println(string(output))
 	return nil
+}
+
+func maybeSetEmbeddingConfig(endpoint string) *lib.RAGEmbeddingModelConfig {
+	if endpoint == "" {
+		return nil
+	}
+	return &lib.RAGEmbeddingModelConfig{
+		VertexPredictionEndpoint: lib.VertexPredictionEndpoint{Endpoint: endpoint},
+	}
 }
