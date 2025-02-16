@@ -183,9 +183,34 @@ git clone した後に、以下のコマンドで CLI ツールを利用して�
 ```
 go run cmd/ragtool/main.go corpus create \
 --project-id <Google CloudプロジェクトID> \
---location <Googe Cloudのリージョン名> \
---display-name <コーパスの表示名>
+--display-name <コーパスの表示名> \
 ```
+
+### オプション：ロケーション
+
+ロケーションのデフォルトは us-central1 です。 `--locaiton` で他のロケーションも指定可能ですが、動作確認はしていません。
+
+例えば東京リージョンを指定する場合は以下です。
+
+```
+--location asia-northeast1
+```
+
+### オプション：Embeddingモデル
+
+`--embedding-prediction-endpoint` でEmbeddingモデルを指定できます。
+
+- Vertex AIで利用可能なモデルについては[こちら](https://cloud.google.com/vertex-ai/generative-ai/docs/use-embedding-models)を参照してください
+- モデルを指定しない場合、デフォルトで text-embedding-005 が使われます（Vertex AIの仕様により変わる可能性があります）
+- 日本語のドキュメントを読ませたい場合は text-multilingual-embedding-002 がおすすめです
+
+モデルの指定は以下のように行います。
+
+```
+--embedding-prediction-endpoint projects/<Google CloudプロジェクトID>/locations/us-central1/publishers/google/models/text-multilingual-embedding-002
+```
+
+## RAG コーパスの一覧取得
 
 作成できたら、コーパスの一覧を取得して ID を確認します。
 
