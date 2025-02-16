@@ -1,5 +1,5 @@
 # Use the official Golang image to create a build artifact.
-FROM golang:1.23 as builder
+FROM golang:1.24 as builder
 
 # Set the working directory inside the container
 WORKDIR /app
