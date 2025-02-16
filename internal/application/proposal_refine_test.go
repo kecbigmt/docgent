@@ -2,6 +2,7 @@ package application
 
 import (
 	"errors"
+	"sync"
 	"testing"
 
 	"docgent/internal/application/port"
@@ -24,8 +25,8 @@ func TestProposalRefineUsecase_Refine(t *testing.T) {
 			proposalHandle: domain.NewProposalHandle("github", "123"),
 			userFeedback:   "エンドポイントの説明をもう少し詳しくしてください",
 			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileChangeService *MockFileChangeService, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus) {
-				conversationService.On("MarkEyes").Return(nil)
-				conversationService.On("RemoveEyes").Return(nil)
+				conversationService.On("MarkEyes").Return(nil).Once()
+				conversationService.On("RemoveEyes").Return(nil).Once()
 
 				proposal := domain.Proposal{
 					Handle: domain.NewProposalHandle("github", "123"),
@@ -68,8 +69,8 @@ func TestProposalRefineUsecase_Refine(t *testing.T) {
 			proposalHandle: domain.NewProposalHandle("github", "123"),
 			userFeedback:   "エンドポイントの説明をもう少し詳しくしてください",
 			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileChangeService *MockFileChangeService, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus) {
-				conversationService.On("MarkEyes").Return(nil)
-				conversationService.On("RemoveEyes").Return(nil)
+				conversationService.On("MarkEyes").Return(nil).Once()
+				conversationService.On("RemoveEyes").Return(nil).Once()
 
 				proposal := domain.Proposal{
 					Handle: domain.NewProposalHandle("github", "123"),
@@ -97,6 +98,8 @@ func TestProposalRefineUsecase_Refine(t *testing.T) {
 			chatModel := new(MockChatModel)
 			chatSession := new(MockChatSession)
 			conversationService := new(MockConversationService)
+			conversationService.markEyesWaitGroup = &sync.WaitGroup{}
+			conversationService.markEyesWaitGroup.Add(1)
 			fileQueryService := new(MockFileQueryService)
 			fileChangeService := new(MockFileChangeService)
 			proposalRepository := new(MockProposalRepository)
@@ -116,6 +119,8 @@ func TestProposalRefineUsecase_Refine(t *testing.T) {
 
 			// テストの実行
 			err := workflow.Refine(tt.proposalHandle, tt.userFeedback)
+
+			conversationService.markEyesWaitGroup.Wait()
 
 			// アサーション
 			if tt.expectedError != nil {
