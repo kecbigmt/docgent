@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"sync"
 	"testing"
 
 	"docgent/internal/application/port"
@@ -39,6 +40,7 @@ func (m *MockChatSession) GetHistory() ([]domain.Message, error) {
 
 type MockConversationService struct {
 	mock.Mock
+	markEyesWaitGroup *sync.WaitGroup
 }
 
 func (m *MockConversationService) Reply(input string) error {
@@ -53,6 +55,7 @@ func (m *MockConversationService) GetHistory() ([]port.ConversationMessage, erro
 
 func (m *MockConversationService) MarkEyes() error {
 	args := m.Called()
+	m.markEyesWaitGroup.Done()
 	return args.Error(0)
 }
 
@@ -167,8 +170,8 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 		{
 			name: "正常系：RAGを使用して提案が正常に生成される",
 			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileChangeService *MockFileChangeService, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus) {
-				conversationService.On("MarkEyes").Return(nil)
-				conversationService.On("RemoveEyes").Return(nil)
+				conversationService.On("MarkEyes").Return(nil).Once()
+				conversationService.On("RemoveEyes").Return(nil).Once()
 
 				conversationService.On("GetHistory").Return([]port.ConversationMessage{
 					{Author: "user", Content: "APIの仕様書を作成してください"},
@@ -214,8 +217,8 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 		{
 			name: "エラー系：エージェントの実行に失敗する",
 			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileChangeService *MockFileChangeService, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus) {
-				conversationService.On("MarkEyes").Return(nil)
-				conversationService.On("RemoveEyes").Return(nil)
+				conversationService.On("MarkEyes").Return(nil).Once()
+				conversationService.On("RemoveEyes").Return(nil).Once()
 				conversationService.On("GetHistory").Return([]port.ConversationMessage{
 					{Author: "user", Content: "APIの仕様書を作成してください"},
 					{Author: "assistant", Content: "承知しました。どのような内容を含めるべきでしょうか？"},
@@ -234,8 +237,8 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 		{
 			name: "エラー系：提案の作成に失敗する",
 			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileChangeService *MockFileChangeService, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus) {
-				conversationService.On("MarkEyes").Return(nil)
-				conversationService.On("RemoveEyes").Return(nil)
+				conversationService.On("MarkEyes").Return(nil).Once()
+				conversationService.On("RemoveEyes").Return(nil).Once()
 
 				conversationService.On("GetHistory").Return([]port.ConversationMessage{
 					{Author: "user", Content: "APIの仕様書を作成してください"},
@@ -267,6 +270,8 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 			chatModel := new(MockChatModel)
 			chatSession := new(MockChatSession)
 			conversationService := new(MockConversationService)
+			conversationService.markEyesWaitGroup = &sync.WaitGroup{}
+			conversationService.markEyesWaitGroup.Add(1)
 			fileQueryService := new(MockFileQueryService)
 			fileChangeService := new(MockFileChangeService)
 			proposalRepository := new(MockProposalRepository)
@@ -286,6 +291,8 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 
 			// テストの実行
 			handle, err := workflow.Execute(context.Background())
+
+			conversationService.markEyesWaitGroup.Wait()
 
 			// アサーション
 			if tt.expectedError != nil {
