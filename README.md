@@ -118,7 +118,7 @@ https://xxxxx.a.run.app/api/github/events
 
 ### ソースコードの取得
 
-```sh
+```bash
 git clone git@github.com:kecbigmt/docgent.git
 cd docgent
 ```
@@ -127,7 +127,7 @@ cd docgent
 
 以下のように環境変数をセットしてください。
 
-```sh
+```bash
 # Slack App設定
 export SLACK_BOT_TOKEN=xoxb-123456789
 export SLACK_SIGNING_SECRET=xxxxxxxxxxxx
@@ -157,7 +157,7 @@ export GOOGLE_APPLICATION_CREDENTIALS=/path/to/application_default_credentials.j
 
 ### サーバーを起動
 
-```
+```bash
 go run ./cmd/server/*.go
 ```
 
@@ -168,7 +168,7 @@ go run ./cmd/server/*.go
 - セキュリティのため ngrok が発行する URL を外部に公開しないこと（Webhookエンドポイントに対するリクエストは検証されますが念のため）
 - 動作確認が終わったら ngrok を終了すること
 
-```
+```bash
 ngrok http 8080
 ```
 
@@ -180,7 +180,7 @@ ngrok http 8080
 
 git clone した後に、以下のコマンドで CLI ツールを利用してください。コーパスの表示名は開発者にとってわかりやすければ何でも構いません。
 
-```
+```bash
 go run cmd/ragtool/main.go corpus create \
 --project-id <Google CloudプロジェクトID> \
 --display-name <コーパスの表示名>
@@ -192,7 +192,7 @@ go run cmd/ragtool/main.go corpus create \
 
 例えば東京リージョンを指定する場合は以下です。
 
-```
+```bash
 --location asia-northeast1
 ```
 
@@ -206,7 +206,7 @@ go run cmd/ragtool/main.go corpus create \
 
 モデルの指定は以下のように行います。
 
-```
+```bash
 --embedding-prediction-endpoint projects/<Google CloudプロジェクトID>/locations/us-central1/publishers/google/models/text-multilingual-embedding-002
 ```
 
@@ -214,7 +214,7 @@ go run cmd/ragtool/main.go corpus create \
 
 作成できたら、コーパスの一覧を取得して ID を確認します。
 
-```
+```bash
 go run cmd/ragtool/main.go corpus list \
 --project-id <Google CloudプロジェクトID> \
 --location <Googe Cloudのリージョン名>
@@ -222,7 +222,7 @@ go run cmd/ragtool/main.go corpus list \
 
 name の最後に入っている数字の文字列（`123456789123456789` の部分）がコーパスの ID です。
 
-```
+```json
 {
   "name": "projects/xxxxxx/locations/us-central1/ragCorpora/123456789123456789",
   "displayName": "xxxxxxxx",
@@ -240,7 +240,7 @@ Cloud Run 上で動かしている場合は、コンソールから環境変数 
 
 不要になったコーパスは以下のように ID を指定して削除できます。
 
-```
+```bash
 go run cmd/ragtool/main.go corpus delete \
 --project-id <Google CloudプロジェクトID> \
 123456789123456789
