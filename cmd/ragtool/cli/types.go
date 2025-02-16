@@ -16,6 +16,9 @@ type CLI struct {
 			PageSize  int    `help:"Maximum number of corpora to return" default:"50"`
 			PageToken string `help:"Page token for the next page of results"`
 		} `cmd:"" help:"List RAG corpora"`
+		Delete struct {
+			CorpusID string `arg:"" required:"" help:"ID of the RAG corpus to delete"`
+		} `cmd:"" help:"Delete a RAG corpus"`
 	} `cmd:"" help:"Manage RAG corpus"`
 
 	File struct {

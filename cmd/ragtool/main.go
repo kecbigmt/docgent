@@ -39,6 +39,8 @@ func main() {
 		cmdErr = cli.HandleCorpusCreate(ctx, &CLI, client)
 	case "corpus list":
 		cmdErr = cli.HandleCorpusList(ctx, &CLI, client)
+	case "corpus delete <corpus-id>":
+		cmdErr = cli.HandleCorpusDelete(ctx, &CLI, client)
 	default:
 		fmt.Printf("invalid command: %s\n", kongCtx.Command())
 		os.Exit(1)

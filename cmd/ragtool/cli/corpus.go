@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"docgent/internal/infrastructure/google/vertexai/rag/lib"
 )
@@ -76,6 +77,25 @@ func HandleCorpusList(ctx context.Context, cli *CLI, client *lib.Client) error {
 	}
 
 	fmt.Println(string(output))
+	return nil
+}
+
+func HandleCorpusDelete(ctx context.Context, cli *CLI, client *lib.Client) error {
+	corpusID, err := strconv.ParseInt(cli.Corpus.Delete.CorpusID, 10, 64)
+	if err != nil {
+		return fmt.Errorf("invalid corpus ID format: %v", err)
+	}
+
+	err = client.DeleteCorpus(ctx, corpusID)
+	if err != nil {
+		var httpErr *lib.HTTPError
+		if errors.As(err, &httpErr) {
+			return fmt.Errorf("failed to delete corpus: %s %s", httpErr.Status, httpErr.RawBody)
+		}
+		return fmt.Errorf("failed to delete corpus: %v", err)
+	}
+
+	fmt.Printf("Successfully deleted corpus %d\n", corpusID)
 	return nil
 }
 
