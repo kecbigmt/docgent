@@ -235,3 +235,13 @@ name の最後に入っている数字の文字列（`123456789123456789` の部
 ```
 
 Cloud Run 上で動かしている場合は、コンソールから環境変数 `VERTEXAI_RAG_CORPUS_ID` をセットして再デプロイしてください。
+
+## RAG コーパスの削除
+
+不要になったコーパスは以下のように ID を指定して削除できます。
+
+```
+go run cmd/ragtool/main.go corpus delete \
+--project-id <Google CloudプロジェクトID> \
+123456789123456789
+```
