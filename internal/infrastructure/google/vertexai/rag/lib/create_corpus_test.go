@@ -89,6 +89,138 @@ func TestClient_CreateCorpus(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:        "Success: Create corpus with RAGManagedDBConfig",
+			displayName: "test-corpus",
+			options: []CreateCorpusOption{
+				WithVectorDBConfig(RAGManagedDBConfig{
+					RAGEmbeddingModelConfig: &RAGEmbeddingModelConfig{
+						VertexPredictionEndpoint: VertexPredictionEndpoint{
+							Endpoint: "test-endpoint",
+						},
+					},
+				}),
+			},
+			setup: func(mt *mockTransport) {
+				mt.responses = map[string]mockResponse{
+					"POST /v1/projects/test-project/locations/test-location/ragCorpora": {
+						statusCode: http.StatusOK,
+						body:       map[string]interface{}{},
+					},
+				}
+			},
+			errorExpected: false,
+			expectedReqs: []mockRequest{
+				{
+					method: "POST",
+					path:   "/v1/projects/test-project/locations/test-location/ragCorpora",
+					body: map[string]interface{}{
+						"display_name": "test-corpus",
+						"vector_db_config": map[string]interface{}{
+							"rag_embedding_model_config": map[string]interface{}{
+								"vertex_prediction_endpoint": map[string]interface{}{
+									"endpoint": "test-endpoint",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:        "Success: Create corpus with PineconeConfig",
+			displayName: "test-corpus",
+			options: []CreateCorpusOption{
+				WithVectorDBConfig(PineconeConfig{
+					IndexName: "test-index",
+					APIKeyConfig: APIKeyConfig{
+						APIKeySecretVersion: "test-secret-version",
+					},
+					RAGEmbeddingModelConfig: &RAGEmbeddingModelConfig{
+						VertexPredictionEndpoint: VertexPredictionEndpoint{
+							Endpoint: "test-endpoint",
+						},
+					},
+				}),
+			},
+			setup: func(mt *mockTransport) {
+				mt.responses = map[string]mockResponse{
+					"POST /v1/projects/test-project/locations/test-location/ragCorpora": {
+						statusCode: http.StatusOK,
+						body:       map[string]interface{}{},
+					},
+				}
+			},
+			errorExpected: false,
+			expectedReqs: []mockRequest{
+				{
+					method: "POST",
+					path:   "/v1/projects/test-project/locations/test-location/ragCorpora",
+					body: map[string]interface{}{
+						"display_name": "test-corpus",
+						"vector_db_config": map[string]interface{}{
+							"pinecone": map[string]interface{}{
+								"index_name": "test-index",
+							},
+							"api_auth": map[string]interface{}{
+								"api_key_config": map[string]interface{}{
+									"api_key_secret_version": "test-secret-version",
+								},
+							},
+							"rag_embedding_model_config": map[string]interface{}{
+								"vertex_prediction_endpoint": map[string]interface{}{
+									"endpoint": "test-endpoint",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:        "Success: Create corpus with VertexVectorSearchConfig",
+			displayName: "test-corpus",
+			options: []CreateCorpusOption{
+				WithVectorDBConfig(VertexVectorSearchConfig{
+					Index:         "test-index",
+					IndexEndpoint: "test-index-endpoint",
+					RAGEmbeddingModelConfig: &RAGEmbeddingModelConfig{
+						VertexPredictionEndpoint: VertexPredictionEndpoint{
+							Endpoint: "test-endpoint",
+						},
+					},
+				}),
+			},
+			setup: func(mt *mockTransport) {
+				mt.responses = map[string]mockResponse{
+					"POST /v1/projects/test-project/locations/test-location/ragCorpora": {
+						statusCode: http.StatusOK,
+						body:       map[string]interface{}{},
+					},
+				}
+			},
+			errorExpected: false,
+			expectedReqs: []mockRequest{
+				{
+					method: "POST",
+					path:   "/v1/projects/test-project/locations/test-location/ragCorpora",
+					body: map[string]interface{}{
+						"display_name": "test-corpus",
+						"vector_db_config": map[string]interface{}{
+							"vertex_vector_search": map[string]interface{}{
+								"index":          "test-index",
+								"index_endpoint": "test-index-endpoint",
+							},
+							"rag_embedding_model_config": map[string]interface{}{
+								"vertex_prediction_endpoint": map[string]interface{}{
+									"endpoint": "test-endpoint",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
