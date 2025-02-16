@@ -147,8 +147,8 @@ export GITHUB_INSTALLATION_ID=123456789
 
 # Vertex AIの設定
 export VERTEXAI_PROJECT_ID=xxxxxx # Google CloudプロジェクトのID
-export VERTEXAI_LOCATION=us-central1
-export VERTEXAI_MODEL_NAME=gemini-2.0-flash
+export VERTEXAI_LOCATION=us-central1 #最新のモデルだとロケーションによっては使えないことがあるので us-central1 がおすすめです
+export VERTEXAI_MODEL_NAME=gemini-2.0-flash # エージェントが安定しない場合はgemini-2.0-pro-exp-02-05を利用してください
 export VERTEXAI_RAG_CORPUS_ID=123456789123456789 # 別途作成後にセット。作成するまでは記載しない
 
 # Google Cloudの認証情報（上記のVertex AIを利用できる権限を持っていること）
@@ -183,12 +183,12 @@ git clone した後に、以下のコマンドで CLI ツールを利用して�
 ```
 go run cmd/ragtool/main.go corpus create \
 --project-id <Google CloudプロジェクトID> \
---display-name <コーパスの表示名> \
+--display-name <コーパスの表示名>
 ```
 
 ### オプション：ロケーション
 
-ロケーションのデフォルトは us-central1 です。 `--locaiton` で他のロケーションも指定可能ですが、動作確認はしていません。
+ロケーションのデフォルトは us-central1 です。 `--locaiton` で他のロケーションも指定可能ですが、詳しい動作確認はしていません。
 
 例えば東京リージョンを指定する場合は以下です。
 
