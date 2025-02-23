@@ -66,6 +66,7 @@ func (w *ProposalRefineUsecase) Refine(proposalHandle domain.ProposalHandle, use
 
 	ctx := context.Background()
 
+	conversationURI := w.conversationService.GetURI()
 	proposal, err := w.proposalRepository.GetProposal(proposalHandle)
 	if err != nil {
 		if err := w.conversationService.Reply("Failed to retrieve proposal"); err != nil {
@@ -112,11 +113,12 @@ func (w *ProposalRefineUsecase) Refine(proposalHandle domain.ProposalHandle, use
 You submitted a proposal to create/update documents.
 Now, you are given a user feedback.
 Use query_rag to find relevant existing documents and refine the proposal based on the user feedback.
+When you change any files, you should set uri to each file as a knowledge source using create_file or add_knowledge_sources.
 </task>
-<user_feedback>
+<user_feedback uri=%q>
 %s
 </user_feedback>
-`, userFeedback)
+`, conversationURI, userFeedback)
 
 	err = agent.InitiateTaskLoop(ctx, task, w.remainingStepCount)
 	if err != nil {

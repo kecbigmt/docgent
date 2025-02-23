@@ -29,6 +29,7 @@ func TestProposalRefineUsecase_Refine(t *testing.T) {
 			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileRepository *MockFileRepository, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus) {
 				conversationService.On("MarkEyes").Return(nil).Once()
 				conversationService.On("RemoveEyes").Return(nil).Once()
+				conversationService.On("GetURI").Return("https://github.com/123/456/pull/123").Once()
 
 				proposal := domain.Proposal{
 					Handle: domain.NewProposalHandle("github", "123"),
@@ -79,6 +80,7 @@ func TestProposalRefineUsecase_Refine(t *testing.T) {
 			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileRepository *MockFileRepository, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus) {
 				conversationService.On("MarkEyes").Return(nil).Once()
 				conversationService.On("RemoveEyes").Return(nil).Once()
+				conversationService.On("GetURI").Return("https://github.com/123/456/pull/123").Once()
 
 				proposal := domain.Proposal{
 					Handle: domain.NewProposalHandle("github", "123"),

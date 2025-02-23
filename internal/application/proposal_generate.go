@@ -59,6 +59,7 @@ func (w *ProposalGenerateUsecase) Execute(ctx context.Context) (domain.ProposalH
 	go w.conversationService.MarkEyes()
 	defer w.conversationService.RemoveEyes()
 
+	conversationURI := w.conversationService.GetURI()
 	chatHistory, err := w.conversationService.GetHistory()
 	if err != nil {
 		return domain.ProposalHandle{}, fmt.Errorf("failed to get chat history: %w", err)
@@ -97,14 +98,14 @@ func (w *ProposalGenerateUsecase) Execute(ctx context.Context) (domain.ProposalH
 
 	agent := domain.NewAgent(
 		w.chatModel,
-		buildSystemInstructionToGenerateProposal(chatHistory, tree, docgentRulesFile, w.ragCorpus != nil),
+		buildSystemInstructionToGenerateProposal(conversationURI, chatHistory, tree, docgentRulesFile, w.ragCorpus != nil),
 		cases,
 	)
 
 	task := `<task>
 1. Analyze the chat history. Use query_rag to find relevant existing documents and find_file to check the file content.
-2. Use create_file, modify_file, rename_file, delete_file to change files for the best documentation.
-3. Use create_proposal to create a proposal based on the document file changes. You should contain the chat history in the proposal description as a reference.
+2. Use create_file, modify_file, rename_file, delete_file to change files for the best documentation. You should set conversation uri to each file as a knowledge source using create_file or add_knowledge_sources.
+3. Use create_proposal to create a proposal based on the document file changes.
 4. Use attempt_complete to complete the task.
 
 You should use create_proposal only after you changed files.
@@ -128,15 +129,19 @@ You should not use modify_file unless the file is obviously relevant to your cha
 }
 
 func buildSystemInstructionToGenerateProposal(
+	conversationURI string,
 	chatHistory []port.ConversationMessage,
 	fileTree []port.TreeMetadata,
 	docgentRulesFile *data.File,
 	ragEnabled bool,
 ) *domain.SystemInstruction {
-	var chatHistoryStr strings.Builder
+
+	var conversationStr strings.Builder
+	conversationStr.WriteString(fmt.Sprintf("<conversation uri=%q>\n", conversationURI))
 	for _, msg := range chatHistory {
-		chatHistoryStr.WriteString(fmt.Sprintf("<message author=%q>\n%s\n</message>\n", msg.Author, msg.Content))
+		conversationStr.WriteString(fmt.Sprintf("<message author=%q>\n%s\n</message>\n", msg.Author, msg.Content))
 	}
+	conversationStr.WriteString("</conversation>\n")
 
 	var fileTreeStr strings.Builder
 	for _, metadata := range fileTree {
@@ -144,7 +149,7 @@ func buildSystemInstructionToGenerateProposal(
 	}
 
 	environments := []domain.EnvironmentContext{
-		domain.NewEnvironmentContext("Chat history", chatHistoryStr.String()),
+		domain.NewEnvironmentContext("Conversation", conversationStr.String()),
 		domain.NewEnvironmentContext("File tree", fileTreeStr.String()),
 	}
 
