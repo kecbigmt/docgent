@@ -2,7 +2,6 @@ package tooluse
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"docgent/internal/domain/data"
@@ -36,16 +35,9 @@ func (h *FileChangeHandler) Handle(toolUse tooluse.ChangeFile) (string, bool, er
 }
 
 func (h *FileChangeHandler) handleCreateFile(c tooluse.CreateFile) (string, bool, error) {
-	// YAMLフロントマターを生成
-	frontmatter := generateFrontmatter(c.KnowledgeSourceURIs)
-
-	// フロントマターとコンテンツを結合
-	content := fmt.Sprintf("---\n%s\n---\n%s", frontmatter, c.Content)
-
-	// ファイルを作成
 	file := &data.File{
 		Path:             c.Path,
-		Content:          content,
+		Content:          c.Content,
 		KnowledgeSources: make([]data.KnowledgeSource, len(c.KnowledgeSourceURIs)),
 	}
 	for i, uri := range c.KnowledgeSourceURIs {
@@ -56,7 +48,9 @@ func (h *FileChangeHandler) handleCreateFile(c tooluse.CreateFile) (string, bool
 	if err != nil {
 		return "", false, err
 	}
+
 	*h.fileChanged = true
+
 	return "<success>File created</success>", false, nil
 }
 
@@ -79,7 +73,9 @@ func (h *FileChangeHandler) handleModifyFile(c tooluse.ModifyFile) (string, bool
 	if err != nil {
 		return "", false, err
 	}
+
 	*h.fileChanged = true
+
 	return "<success>File modified</success>", false, nil
 }
 
@@ -114,6 +110,7 @@ func (h *FileChangeHandler) handleRenameFile(c tooluse.RenameFile) (string, bool
 	}
 
 	*h.fileChanged = true
+
 	return "<success>File renamed</success>", false, nil
 }
 
@@ -122,6 +119,8 @@ func (h *FileChangeHandler) handleDeleteFile(c tooluse.DeleteFile) (string, bool
 	if err != nil {
 		return "", false, err
 	}
+
 	*h.fileChanged = true
+
 	return "<success>File deleted</success>", false, nil
 }
