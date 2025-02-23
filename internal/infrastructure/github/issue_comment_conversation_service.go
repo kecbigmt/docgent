@@ -45,6 +45,11 @@ func (s *IssueCommentConversationService) GetHistory() ([]port.ConversationMessa
 	return conversationMessages, nil
 }
 
+func (s *IssueCommentConversationService) GetURI() string {
+	// https://github.com/{owner}/{repo}/pull/{prNumber}#issuecomment-{sourceCommentID}
+	return fmt.Sprintf("https://github.com/%s/%s/pull/%d#issuecomment-%d", s.owner, s.repo, s.prNumber, s.sourceCommentID)
+}
+
 func (s *IssueCommentConversationService) Reply(input string) error {
 	ctx := context.Background()
 

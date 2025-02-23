@@ -31,6 +31,10 @@ func (s *ReviewCommentConversationService) GetHistory() ([]port.ConversationMess
 	panic("not implemented")
 }
 
+func (s *ReviewCommentConversationService) GetURI() string {
+	panic("not implemented")
+}
+
 func (s *ReviewCommentConversationService) Reply(input string) error {
 	ctx := context.Background()
 
