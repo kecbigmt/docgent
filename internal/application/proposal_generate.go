@@ -83,14 +83,16 @@ func (w *ProposalGenerateUsecase) Execute(ctx context.Context) (domain.ProposalH
 	fileChangeHandler := tooluse.NewFileChangeHandler(ctx, w.fileRepository, &fileChanged)
 	queryRAGHandler := tooluse.NewQueryRAGHandler(ctx, w.ragCorpus)
 	generateProposalHandler := tooluse.NewGenerateProposalHandler(w.proposalRepository, &fileChanged, &proposalHandle)
+	addKnowledgeSourcesHandler := tooluse.NewAddKnowledgeSourcesHandler(ctx, w.fileRepository, &fileChanged)
 
 	// ツールケースの設定
 	cases := domaintooluse.Cases{
-		AttemptComplete: attemptCompleteHandler.Handle,
-		FindFile:        findFileHandler.Handle,
-		ChangeFile:      fileChangeHandler.Handle,
-		QueryRAG:        queryRAGHandler.Handle,
-		CreateProposal:  generateProposalHandler.Handle,
+		AttemptComplete:     attemptCompleteHandler.Handle,
+		FindFile:            findFileHandler.Handle,
+		ChangeFile:          fileChangeHandler.Handle,
+		QueryRAG:            queryRAGHandler.Handle,
+		CreateProposal:      generateProposalHandler.Handle,
+		AddKnowledgeSources: addKnowledgeSourcesHandler.Handle,
 	}
 
 	agent := domain.NewAgent(
@@ -160,6 +162,7 @@ func buildSystemInstructionToGenerateProposal(
 		domaintooluse.FindFileUsage,
 		domaintooluse.CreateProposalUsage,
 		domaintooluse.AttemptCompleteUsage,
+		domaintooluse.AddKnowledgeSourcesUsage,
 	}
 
 	if ragEnabled {
