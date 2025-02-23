@@ -156,7 +156,7 @@ func TestCombineContentAndFrontmatter(t *testing.T) {
 			name:        "正常系：フロントマターと本文あり",
 			frontmatter: "knowledge_sources:\n  - https://slack.com/archives/C01234567/p123456789\n",
 			body:        "# Hello\nWorld",
-			expected:    "---\nknowledge_sources:\n  - https://slack.com/archives/C01234567/p123456789\n\n---\n# Hello\nWorld",
+			expected:    "---\nknowledge_sources:\n  - https://slack.com/archives/C01234567/p123456789\n---\n# Hello\nWorld",
 		},
 		{
 			name:        "正常系：空のフロントマター",
@@ -168,7 +168,7 @@ func TestCombineContentAndFrontmatter(t *testing.T) {
 			name:        "正常系：空の本文",
 			frontmatter: "knowledge_sources:\n  - https://slack.com/archives/C01234567/p123456789\n",
 			body:        "",
-			expected:    "---\nknowledge_sources:\n  - https://slack.com/archives/C01234567/p123456789\n\n---\n",
+			expected:    "---\nknowledge_sources:\n  - https://slack.com/archives/C01234567/p123456789\n---\n",
 		},
 		{
 			name:        "正常系：両方空",
