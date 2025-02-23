@@ -69,9 +69,9 @@ type MockFileQueryService struct {
 	mock.Mock
 }
 
-func (m *MockFileQueryService) FindFile(ctx context.Context, path string) (port.File, error) {
+func (m *MockFileQueryService) FindFile(ctx context.Context, path string) (data.File, error) {
 	args := m.Called(ctx, path)
-	return args.Get(0).(port.File), args.Error(1)
+	return args.Get(0).(data.File), args.Error(1)
 }
 
 func (m *MockFileQueryService) GetTree(ctx context.Context, options ...port.GetTreeOption) ([]port.TreeMetadata, error) {

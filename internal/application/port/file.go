@@ -2,6 +2,7 @@ package port
 
 import (
 	"context"
+	"docgent/internal/domain/data"
 	"docgent/internal/domain/tooluse"
 	"errors"
 )
@@ -9,11 +10,6 @@ import (
 var (
 	ErrFileNotFound = errors.New("file not found")
 )
-
-type File struct {
-	Path    string
-	Content string
-}
 
 type TreeMetadata struct {
 	Type TreeType
@@ -30,7 +26,7 @@ const (
 )
 
 type FileQueryService interface {
-	FindFile(ctx context.Context, path string) (File, error)
+	FindFile(ctx context.Context, path string) (data.File, error)
 	GetTree(ctx context.Context, options ...GetTreeOption) ([]TreeMetadata, error)
 }
 

@@ -129,7 +129,7 @@ Use query_rag to find relevant existing documents and refine the proposal based 
 	return nil
 }
 
-func buildSystemInstructionToRefineProposal(fileTree []port.TreeMetadata, proposal domain.Proposal, docgentRulesFile *port.File, ragEnabled bool) *domain.SystemInstruction {
+func buildSystemInstructionToRefineProposal(fileTree []port.TreeMetadata, proposal domain.Proposal, docgentRulesFile *data.File, ragEnabled bool) *domain.SystemInstruction {
 	var fileTreeStr strings.Builder
 	for _, metadata := range fileTree {
 		fileTreeStr.WriteString(fmt.Sprintf("- %s\n", metadata.Path))

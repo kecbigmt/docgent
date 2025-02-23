@@ -130,7 +130,7 @@ You should not use modify_file unless the file is obviously relevant to your cha
 func buildSystemInstructionToGenerateProposal(
 	chatHistory []port.ConversationMessage,
 	fileTree []port.TreeMetadata,
-	docgentRulesFile *port.File,
+	docgentRulesFile *data.File,
 	ragEnabled bool,
 ) *domain.SystemInstruction {
 	var chatHistoryStr strings.Builder
@@ -177,7 +177,7 @@ func buildSystemInstructionToGenerateProposal(
 	return systemInstruction
 }
 
-func getDocgentRulesFileIfExists(ctx context.Context, fileQueryService port.FileQueryService, fileTree []port.TreeMetadata) (*port.File, error) {
+func getDocgentRulesFileIfExists(ctx context.Context, fileQueryService port.FileQueryService, fileTree []port.TreeMetadata) (*data.File, error) {
 	for _, metadata := range fileTree {
 		if metadata.Path == ".docgentrules" {
 			file, err := fileQueryService.FindFile(ctx, ".docgentrules")
