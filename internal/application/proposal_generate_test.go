@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"io"
+	"strings"
 	"sync"
 	"testing"
 
 	"docgent/internal/application/port"
 	"docgent/internal/domain"
-	"docgent/internal/domain/tooluse"
+	"docgent/internal/domain/data"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -78,27 +79,27 @@ func (m *MockFileQueryService) GetTree(ctx context.Context, options ...port.GetT
 	return args.Get(0).([]port.TreeMetadata), args.Error(1)
 }
 
-type MockFileChangeService struct {
+type MockFileRepository struct {
 	mock.Mock
 }
 
-func (m *MockFileChangeService) CreateFile(ctx context.Context, path, content string) error {
-	args := m.Called(ctx, path, content)
+func (m *MockFileRepository) Create(ctx context.Context, file *data.File) error {
+	args := m.Called(ctx, file)
 	return args.Error(0)
 }
 
-func (m *MockFileChangeService) DeleteFile(ctx context.Context, path string) error {
+func (m *MockFileRepository) Get(ctx context.Context, path string) (*data.File, error) {
 	args := m.Called(ctx, path)
+	return args.Get(0).(*data.File), args.Error(1)
+}
+
+func (m *MockFileRepository) Update(ctx context.Context, file *data.File) error {
+	args := m.Called(ctx, file)
 	return args.Error(0)
 }
 
-func (m *MockFileChangeService) ModifyFile(ctx context.Context, path string, hunks []tooluse.Hunk) error {
-	args := m.Called(ctx, path, hunks)
-	return args.Error(0)
-}
-
-func (m *MockFileChangeService) RenameFile(ctx context.Context, oldPath, newPath string, hunks []tooluse.Hunk) error {
-	args := m.Called(ctx, oldPath, newPath, hunks)
+func (m *MockFileRepository) Delete(ctx context.Context, path string) error {
+	args := m.Called(ctx, path)
 	return args.Error(0)
 }
 
@@ -163,13 +164,13 @@ func (m *MockRAGCorpus) DeleteFile(ctx context.Context, fileID int64) error {
 func TestProposalGenerateUsecase_Execute(t *testing.T) {
 	tests := []struct {
 		name           string
-		setupMocks     func(*MockChatModel, *MockChatSession, *MockConversationService, *MockFileQueryService, *MockFileChangeService, *MockProposalRepository, *MockRAGCorpus)
+		setupMocks     func(*MockChatModel, *MockChatSession, *MockConversationService, *MockFileQueryService, *MockFileRepository, *MockProposalRepository, *MockRAGCorpus)
 		expectedHandle domain.ProposalHandle
 		expectedError  error
 	}{
 		{
 			name: "正常系：RAGを使用して提案が正常に生成される",
-			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileChangeService *MockFileChangeService, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus) {
+			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileRepository *MockFileRepository, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus) {
 				conversationService.On("MarkEyes").Return(nil).Once()
 				conversationService.On("RemoveEyes").Return(nil).Once()
 
@@ -198,7 +199,9 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 
 				// 2回目のメッセージ：ファイルを作成
 				chatSession.On("SendMessage", mock.Anything, mock.Anything).Return(`<create_file><path>path/to/file.md</path><content>Hello, world!</content></create_file>`, nil).Once()
-				fileChangeService.On("CreateFile", mock.Anything, "path/to/file.md", "Hello, world!").Return(nil)
+				fileRepository.On("Create", mock.Anything, mock.MatchedBy(func(file *data.File) bool {
+					return file.Path == "path/to/file.md" && strings.Contains(file.Content, "Hello, world!")
+				})).Return(nil)
 
 				// 3回目のメッセージ：提案を作成
 				chatSession.On("SendMessage", mock.Anything, mock.Anything).Return(`<create_proposal><title>API仕様書の作成</title><description>APIの仕様書を作成します。エンドポイント、リクエスト、レスポンスの形式を含めます。</description></create_proposal>`, nil).Once()
@@ -216,7 +219,7 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 		},
 		{
 			name: "エラー系：エージェントの実行に失敗する",
-			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileChangeService *MockFileChangeService, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus) {
+			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileRepository *MockFileRepository, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus) {
 				conversationService.On("MarkEyes").Return(nil).Once()
 				conversationService.On("RemoveEyes").Return(nil).Once()
 				conversationService.On("GetHistory").Return([]port.ConversationMessage{
@@ -236,7 +239,7 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 		},
 		{
 			name: "エラー系：提案の作成に失敗する",
-			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileChangeService *MockFileChangeService, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus) {
+			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileRepository *MockFileRepository, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus) {
 				conversationService.On("MarkEyes").Return(nil).Once()
 				conversationService.On("RemoveEyes").Return(nil).Once()
 
@@ -252,7 +255,9 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 				chatModel.On("StartChat", mock.Anything).Return(chatSession)
 
 				chatSession.On("SendMessage", mock.Anything, mock.Anything).Return(`<create_file><path>path/to/file.md</path><content>Hello, world!</content></create_file>`, nil).Once()
-				fileChangeService.On("CreateFile", mock.Anything, "path/to/file.md", "Hello, world!").Return(nil)
+				fileRepository.On("Create", mock.Anything, mock.MatchedBy(func(file *data.File) bool {
+					return file.Path == "path/to/file.md" && strings.Contains(file.Content, "Hello, world!")
+				})).Return(nil)
 
 				chatSession.On("SendMessage", mock.Anything, mock.Anything).Return(`<create_proposal><title>API仕様書の作成</title><description>APIの仕様書を作成します。</description></create_proposal>`, nil).Once()
 
@@ -273,18 +278,18 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 			conversationService.markEyesWaitGroup = &sync.WaitGroup{}
 			conversationService.markEyesWaitGroup.Add(1)
 			fileQueryService := new(MockFileQueryService)
-			fileChangeService := new(MockFileChangeService)
+			fileRepository := new(MockFileRepository)
 			proposalRepository := new(MockProposalRepository)
 			ragCorpus := new(MockRAGCorpus)
 
-			tt.setupMocks(chatModel, chatSession, conversationService, fileQueryService, fileChangeService, proposalRepository, ragCorpus)
+			tt.setupMocks(chatModel, chatSession, conversationService, fileQueryService, fileRepository, proposalRepository, ragCorpus)
 
 			// ワークフローの作成
 			workflow := NewProposalGenerateUsecase(
 				chatModel,
 				conversationService,
 				fileQueryService,
-				fileChangeService,
+				fileRepository,
 				proposalRepository,
 				WithProposalGenerateRAGCorpus(ragCorpus),
 			)
@@ -307,7 +312,7 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 			chatModel.AssertExpectations(t)
 			conversationService.AssertExpectations(t)
 			fileQueryService.AssertExpectations(t)
-			fileChangeService.AssertExpectations(t)
+			fileRepository.AssertExpectations(t)
 			proposalRepository.AssertExpectations(t)
 			ragCorpus.AssertExpectations(t)
 		})

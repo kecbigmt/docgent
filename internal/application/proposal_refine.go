@@ -2,20 +2,21 @@ package application
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
 	"docgent/internal/application/port"
+	"docgent/internal/application/tooluse"
 	"docgent/internal/domain"
-	"docgent/internal/domain/tooluse"
+	"docgent/internal/domain/data"
+	domaintooluse "docgent/internal/domain/tooluse"
 )
 
 type ProposalRefineUsecase struct {
 	chatModel           domain.ChatModel
 	conversationService port.ConversationService
 	fileQueryService    port.FileQueryService
-	fileChangeService   port.FileChangeService
+	fileRepository      data.FileRepository
 	proposalRepository  domain.ProposalRepository
 	ragCorpus           port.RAGCorpus
 	remainingStepCount  int
@@ -33,7 +34,7 @@ func NewProposalRefineUsecase(
 	chatModel domain.ChatModel,
 	conversationService port.ConversationService,
 	fileQueryService port.FileQueryService,
-	fileChangeService port.FileChangeService,
+	fileRepository data.FileRepository,
 	proposalRepository domain.ProposalRepository,
 	options ...NewProposalRefineUsecaseOption,
 ) *ProposalRefineUsecase {
@@ -41,7 +42,7 @@ func NewProposalRefineUsecase(
 		chatModel:           chatModel,
 		conversationService: conversationService,
 		fileQueryService:    fileQueryService,
-		fileChangeService:   fileChangeService,
+		fileRepository:      fileRepository,
 		proposalRepository:  proposalRepository,
 		remainingStepCount:  10,
 	}
@@ -83,80 +84,26 @@ func (w *ProposalRefineUsecase) Refine(proposalHandle domain.ProposalHandle, use
 		return fmt.Errorf("failed to get docgent rules file: %w", err)
 	}
 
+	var fileChanged bool
+
+	// ハンドラーの初期化
+	attemptCompleteHandler := tooluse.NewAttemptCompleteHandler(w.conversationService)
+	findFileHandler := tooluse.NewFindFileHandler(ctx, w.fileQueryService)
+	fileChangeHandler := tooluse.NewFileChangeHandler(ctx, w.fileRepository, &fileChanged)
+	queryRAGHandler := tooluse.NewQueryRAGHandler(ctx, w.ragCorpus)
+
+	// ツールケースの設定
+	cases := domaintooluse.Cases{
+		AttemptComplete: attemptCompleteHandler.Handle,
+		FindFile:        findFileHandler.Handle,
+		ChangeFile:      fileChangeHandler.Handle,
+		QueryRAG:        queryRAGHandler.Handle,
+	}
+
 	agent := domain.NewAgent(
 		w.chatModel,
 		buildSystemInstructionToRefineProposal(tree, proposal, docgentRulesFile, w.ragCorpus != nil),
-		tooluse.Cases{
-			AttemptComplete: func(toolUse tooluse.AttemptComplete) (string, bool, error) {
-				if err := w.conversationService.Reply(toolUse.Message); err != nil {
-					return "", false, fmt.Errorf("failed to reply: %w", err)
-				}
-				return "", true, nil
-			},
-			FindFile: func(toolUse tooluse.FindFile) (string, bool, error) {
-				file, err := w.fileQueryService.FindFile(ctx, toolUse.Path)
-				if err != nil {
-					if errors.Is(err, port.ErrFileNotFound) {
-						return fmt.Sprintf("<error>File not found: %s</error>", toolUse.Path), false, nil
-					}
-					return "", false, err
-				}
-				return fmt.Sprintf("<success>\n<content>%s</content>\n</success>", file.Content), false, nil
-			},
-			ChangeFile: func(toolUse tooluse.ChangeFile) (string, bool, error) {
-				change := toolUse.Unwrap()
-				cases := tooluse.ChangeFileCases{
-					CreateFile: func(c tooluse.CreateFile) (string, bool, error) {
-						err := w.fileChangeService.CreateFile(ctx, c.Path, c.Content)
-						if err != nil {
-							return "", false, err
-						}
-						return "<success>File created</success>", false, nil
-					},
-					ModifyFile: func(c tooluse.ModifyFile) (string, bool, error) {
-						err := w.fileChangeService.ModifyFile(ctx, c.Path, c.Hunks)
-						if err != nil {
-							return "", false, err
-						}
-						return "<success>File modified</success>", false, nil
-					},
-					RenameFile: func(c tooluse.RenameFile) (string, bool, error) {
-						err := w.fileChangeService.RenameFile(ctx, c.OldPath, c.NewPath, c.Hunks)
-						if err != nil {
-							return "", false, err
-						}
-						return "<success>File renamed</success>", false, nil
-					},
-					DeleteFile: func(c tooluse.DeleteFile) (string, bool, error) {
-						err := w.fileChangeService.DeleteFile(ctx, c.Path)
-						if err != nil {
-							return "", false, err
-						}
-						return "<success>File deleted</success>", false, nil
-					},
-				}
-				return change.Match(cases)
-			},
-			QueryRAG: func(toolUse tooluse.QueryRAG) (string, bool, error) {
-				if w.ragCorpus == nil {
-					return "<error>RAG corpus is not set.</error>", false, nil
-				}
-				docs, err := w.ragCorpus.Query(ctx, toolUse.Query, 10, 0.7)
-				if err != nil {
-					return fmt.Sprintf("<error>Failed to query RAG: %s</error>", err), false, nil
-				}
-				if len(docs) == 0 {
-					return "<success>No relevant documents found.</success>", false, nil
-				}
-				var result strings.Builder
-				result.WriteString("<success>\n")
-				for _, doc := range docs {
-					result.WriteString(fmt.Sprintf("<document source=%q score=%.2f>\n%s\n</document>\n", doc.Source, doc.Score, doc.Content))
-				}
-				result.WriteString("</success>")
-				return result.String(), false, nil
-			},
-		},
+		cases,
 	)
 
 	task := fmt.Sprintf(`<task>
@@ -197,13 +144,13 @@ func buildSystemInstructionToRefineProposal(fileTree []port.TreeMetadata, propos
 		domain.NewEnvironmentContext("Current proposal files", newFilesStr),
 	}
 
-	toolUses := []tooluse.Usage{
-		tooluse.CreateFileUsage,
-		tooluse.ModifyFileUsage,
-		tooluse.DeleteFileUsage,
-		tooluse.RenameFileUsage,
-		tooluse.FindFileUsage,
-		tooluse.AttemptCompleteUsage,
+	toolUses := []domaintooluse.Usage{
+		domaintooluse.CreateFileUsage,
+		domaintooluse.ModifyFileUsage,
+		domaintooluse.DeleteFileUsage,
+		domaintooluse.RenameFileUsage,
+		domaintooluse.FindFileUsage,
+		domaintooluse.AttemptCompleteUsage,
 	}
 
 	if docgentRulesFile != nil {
@@ -213,7 +160,7 @@ func buildSystemInstructionToRefineProposal(fileTree []port.TreeMetadata, propos
 	}
 
 	if ragEnabled {
-		toolUses = append(toolUses, tooluse.QueryRAGUsage)
+		toolUses = append(toolUses, domaintooluse.QueryRAGUsage)
 	}
 
 	systemInstruction := domain.NewSystemInstruction(

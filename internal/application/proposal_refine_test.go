@@ -2,11 +2,13 @@ package application
 
 import (
 	"errors"
+	"strings"
 	"sync"
 	"testing"
 
 	"docgent/internal/application/port"
 	"docgent/internal/domain"
+	"docgent/internal/domain/data"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -17,14 +19,14 @@ func TestProposalRefineUsecase_Refine(t *testing.T) {
 		name           string
 		proposalHandle domain.ProposalHandle
 		userFeedback   string
-		setupMocks     func(*MockChatModel, *MockChatSession, *MockConversationService, *MockFileQueryService, *MockFileChangeService, *MockProposalRepository, *MockRAGCorpus)
+		setupMocks     func(*MockChatModel, *MockChatSession, *MockConversationService, *MockFileQueryService, *MockFileRepository, *MockProposalRepository, *MockRAGCorpus)
 		expectedError  error
 	}{
 		{
 			name:           "正常系：RAGを使用して提案が正常に更新される",
 			proposalHandle: domain.NewProposalHandle("github", "123"),
 			userFeedback:   "エンドポイントの説明をもう少し詳しくしてください",
-			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileChangeService *MockFileChangeService, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus) {
+			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileRepository *MockFileRepository, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus) {
 				conversationService.On("MarkEyes").Return(nil).Once()
 				conversationService.On("RemoveEyes").Return(nil).Once()
 
@@ -55,7 +57,13 @@ func TestProposalRefineUsecase_Refine(t *testing.T) {
 
 				// 2回目のメッセージ：ファイルを更新
 				chatSession.On("SendMessage", mock.Anything, mock.Anything).Return(`<modify_file><path>docs/api.md</path><hunk><search>エンドポイント</search><replace>endpoint</replace></hunk></modify_file>`, nil).Once()
-				fileChangeService.On("ModifyFile", mock.Anything, "docs/api.md", mock.Anything).Return(nil)
+				fileRepository.On("Get", mock.Anything, "docs/api.md").Return(&data.File{
+					Path:    "docs/api.md",
+					Content: "エンドポイントの説明",
+				}, nil)
+				fileRepository.On("Update", mock.Anything, mock.MatchedBy(func(file *data.File) bool {
+					return file.Path == "docs/api.md" && strings.Contains(file.Content, "endpoint")
+				})).Return(nil)
 
 				// 3回目のメッセージ：タスクを完了
 				chatSession.On("SendMessage", mock.Anything, mock.Anything).Return(`<attempt_complete><message>提案を更新しました</message></attempt_complete>`, nil).Once()
@@ -68,7 +76,7 @@ func TestProposalRefineUsecase_Refine(t *testing.T) {
 			name:           "エラー系：エージェントの実行に失敗する",
 			proposalHandle: domain.NewProposalHandle("github", "123"),
 			userFeedback:   "エンドポイントの説明をもう少し詳しくしてください",
-			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileChangeService *MockFileChangeService, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus) {
+			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileRepository *MockFileRepository, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus) {
 				conversationService.On("MarkEyes").Return(nil).Once()
 				conversationService.On("RemoveEyes").Return(nil).Once()
 
@@ -101,18 +109,18 @@ func TestProposalRefineUsecase_Refine(t *testing.T) {
 			conversationService.markEyesWaitGroup = &sync.WaitGroup{}
 			conversationService.markEyesWaitGroup.Add(1)
 			fileQueryService := new(MockFileQueryService)
-			fileChangeService := new(MockFileChangeService)
+			fileRepository := new(MockFileRepository)
 			proposalRepository := new(MockProposalRepository)
 			ragCorpus := new(MockRAGCorpus)
 
-			tt.setupMocks(chatModel, chatSession, conversationService, fileQueryService, fileChangeService, proposalRepository, ragCorpus)
+			tt.setupMocks(chatModel, chatSession, conversationService, fileQueryService, fileRepository, proposalRepository, ragCorpus)
 
 			// ワークフローの作成
 			workflow := NewProposalRefineUsecase(
 				chatModel,
 				conversationService,
 				fileQueryService,
-				fileChangeService,
+				fileRepository,
 				proposalRepository,
 				WithProposalRefineRAGCorpus(ragCorpus),
 			)
@@ -134,7 +142,7 @@ func TestProposalRefineUsecase_Refine(t *testing.T) {
 			chatModel.AssertExpectations(t)
 			conversationService.AssertExpectations(t)
 			fileQueryService.AssertExpectations(t)
-			fileChangeService.AssertExpectations(t)
+			fileRepository.AssertExpectations(t)
 			proposalRepository.AssertExpectations(t)
 			ragCorpus.AssertExpectations(t)
 		})
