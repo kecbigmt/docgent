@@ -22,6 +22,9 @@ func (m *MockFileRepository) Create(ctx context.Context, file *data.File) error 
 
 func (m *MockFileRepository) Get(ctx context.Context, path string) (*data.File, error) {
 	args := m.Called(ctx, path)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
 	return args.Get(0).(*data.File), args.Error(1)
 }
 
@@ -116,7 +119,7 @@ func TestAddKnowledgeSourcesHandler_Handle(t *testing.T) {
 				[]string{"https://github.com/user/repo/pull/1"},
 			),
 			setupMocks: func(fileRepository *MockFileRepository) {
-				fileRepository.On("Get", mock.Anything, "path/to/file.md").Return((*data.File)(nil), data.ErrFileNotFound)
+				fileRepository.On("Get", mock.Anything, "path/to/file.md").Return(nil, data.ErrFileNotFound)
 			},
 			expectedResult: "",
 			expectedError:  data.ErrFileNotFound,
@@ -150,10 +153,10 @@ func TestAddKnowledgeSourcesHandler_Handle(t *testing.T) {
 						len(file.KnowledgeSources) == len(expectedFile.KnowledgeSources) &&
 						file.KnowledgeSources[0].URI == expectedFile.KnowledgeSources[0].URI &&
 						file.KnowledgeSources[1].URI == expectedFile.KnowledgeSources[1].URI
-				})).Return(data.ErrFileUpdateFailed)
+				})).Return(data.ErrFailedToAccessFile)
 			},
 			expectedResult: "",
-			expectedError:  data.ErrFileUpdateFailed,
+			expectedError:  data.ErrFailedToAccessFile,
 		},
 	}
 
