@@ -8,74 +8,85 @@ import (
 
 // Parse parses XML string and returns Union
 func Parse(xmlStr string) (Union, error) {
-	decoder := xml.NewDecoder(strings.NewReader(xmlStr))
+	// 空のXMLをパースしない
+	if strings.TrimSpace(xmlStr) == "" {
+		return nil, fmt.Errorf("empty xml string")
+	}
 
-	// 最初のトークンを読み込んで、要素の種類を判断
+	// XMLのルート要素名を取得
+	decoder := xml.NewDecoder(strings.NewReader(xmlStr))
 	token, err := decoder.Token()
 	if err != nil {
-		return nil, fmt.Errorf("failed to read first token: %w", err)
+		return nil, fmt.Errorf("failed to get first token: %w", err)
 	}
 
 	startElement, ok := token.(xml.StartElement)
 	if !ok {
-		return nil, fmt.Errorf("expected start element, got %T", token)
+		return nil, fmt.Errorf("first token is not start element")
 	}
 
 	switch startElement.Name.Local {
 	case "create_file":
 		var cf CreateFile
-		if err := decoder.DecodeElement(&cf, &startElement); err != nil {
-			return nil, fmt.Errorf("failed to decode create_file: %w", err)
+		if err := xml.Unmarshal([]byte(xmlStr), &cf); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal create_file: %w", err)
 		}
-		cf.Path = strings.TrimPrefix(cf.Path, "/")
 		return NewChangeFile(cf), nil
 	case "modify_file":
 		var mf ModifyFile
-		if err := decoder.DecodeElement(&mf, &startElement); err != nil {
-			return nil, fmt.Errorf("failed to decode modify_file: %w", err)
+		if err := xml.Unmarshal([]byte(xmlStr), &mf); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal modify_file: %w", err)
 		}
-		mf.Path = strings.TrimPrefix(mf.Path, "/")
 		return NewChangeFile(mf), nil
 	case "rename_file":
 		var rf RenameFile
-		if err := decoder.DecodeElement(&rf, &startElement); err != nil {
-			return nil, fmt.Errorf("failed to decode rename_file: %w", err)
+		if err := xml.Unmarshal([]byte(xmlStr), &rf); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal rename_file: %w", err)
 		}
-		rf.OldPath = strings.TrimPrefix(rf.OldPath, "/")
-		rf.NewPath = strings.TrimPrefix(rf.NewPath, "/")
 		return NewChangeFile(rf), nil
+	case "delete_file":
+		var df DeleteFile
+		if err := xml.Unmarshal([]byte(xmlStr), &df); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal delete_file: %w", err)
+		}
+		return NewChangeFile(df), nil
 	case "find_file":
 		var ff FindFile
-		if err := decoder.DecodeElement(&ff, &startElement); err != nil {
-			return nil, fmt.Errorf("failed to decode find_file: %w", err)
+		if err := xml.Unmarshal([]byte(xmlStr), &ff); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal find_file: %w", err)
 		}
-		ff.Path = strings.TrimPrefix(ff.Path, "/")
 		return ff, nil
-	case "attempt_complete":
-		var ac AttemptComplete
-		if err := decoder.DecodeElement(&ac, &startElement); err != nil {
-			return nil, fmt.Errorf("failed to decode attempt_complete: %w", err)
-		}
-		return ac, nil
 	case "create_proposal":
 		var cp CreateProposal
-		if err := decoder.DecodeElement(&cp, &startElement); err != nil {
-			return nil, fmt.Errorf("failed to decode create_proposal: %w", err)
+		if err := xml.Unmarshal([]byte(xmlStr), &cp); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal create_proposal: %w", err)
 		}
 		return cp, nil
 	case "update_proposal":
 		var up UpdateProposal
-		if err := decoder.DecodeElement(&up, &startElement); err != nil {
-			return nil, fmt.Errorf("failed to decode update_proposal: %w", err)
+		if err := xml.Unmarshal([]byte(xmlStr), &up); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal update_proposal: %w", err)
 		}
 		return up, nil
+	case "add_knowledge_sources":
+		var aks AddKnowledgeSources
+		if err := xml.Unmarshal([]byte(xmlStr), &aks); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal add_knowledge_sources: %w", err)
+		}
+		return aks, nil
+	case "attempt_complete":
+		var ac AttemptComplete
+		if err := xml.Unmarshal([]byte(xmlStr), &ac); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal attempt_complete: %w", err)
+		}
+		return ac, nil
 	case "query_rag":
 		var qr QueryRAG
-		if err := decoder.DecodeElement(&qr, &startElement); err != nil {
-			return nil, fmt.Errorf("failed to decode query_rag: %w", err)
+		if err := xml.Unmarshal([]byte(xmlStr), &qr); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal query_rag: %w", err)
 		}
 		return qr, nil
 	default:
-		return nil, fmt.Errorf("unknown command type: %s", startElement.Name.Local)
+		return nil, fmt.Errorf("unknown command: %s", startElement.Name.Local)
 	}
 }
