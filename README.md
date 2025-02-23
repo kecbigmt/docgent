@@ -55,8 +55,10 @@ Docgent は、社内のチャットをもとにドキュメントを作成・更
     - GitHub App 管理画面の _Install App_ から、自分が管理しているリポジトリにアプリをインストールできます
 - Google Cloud
   - プロジェクトが作成されていること
-  - Vertex AI API が有効になっていること
   - 課金が有効になっていること
+  - Vertex AI API が有効になっていること
+  - Secret Manager APIが有効になっていること
+  - Cloud Runに割り当てるサービスアカウントにSecret Manager Secret Accessorのロールが付与されていること
 
 ## インストール
 
