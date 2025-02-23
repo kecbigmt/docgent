@@ -4,6 +4,7 @@ go 1.24.0
 
 require (
 	cloud.google.com/go/vertexai v0.13.3
+	github.com/alecthomas/kong v1.7.0
 	github.com/bradleyfalzon/ghinstallation/v2 v2.13.0
 	github.com/google/go-github/v68 v68.0.0
 	github.com/sergi/go-diff v1.3.1
@@ -12,6 +13,7 @@ require (
 	go.uber.org/fx v1.23.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/oauth2 v0.25.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -22,7 +24,6 @@ require (
 	cloud.google.com/go/compute/metadata v0.6.0 // indirect
 	cloud.google.com/go/iam v1.3.1 // indirect
 	cloud.google.com/go/longrunning v0.6.4 // indirect
-	github.com/alecthomas/kong v1.7.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
@@ -55,5 +56,4 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250124145028-65684f501c47 // indirect
 	google.golang.org/grpc v1.70.0 // indirect
 	google.golang.org/protobuf v1.36.4 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
