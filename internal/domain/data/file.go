@@ -4,15 +4,6 @@ import "context"
 
 // KnowledgeSource はドキュメントの知識源を表す
 type KnowledgeSource struct {
-	Conversation Conversation
-	Proposal     *Proposal
-}
-
-type Conversation struct {
-	URI string
-}
-
-type Proposal struct {
 	URI string
 }
 
