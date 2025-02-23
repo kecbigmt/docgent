@@ -78,6 +78,12 @@ func TestParseFrontmatter(t *testing.T) {
 			expected:    []data.KnowledgeSource{},
 		},
 		{
+			name:          "正常系：空のフロントマター",
+			frontmatter:   "",
+			expected:      []data.KnowledgeSource{},
+			expectedError: false,
+		},
+		{
 			name:          "エラー系：不正なYAML形式",
 			frontmatter:   "invalid: - yaml: format",
 			expectedError: true,
@@ -103,7 +109,6 @@ func TestSplitContentAndFrontmatter(t *testing.T) {
 		content             string
 		expectedFrontmatter string
 		expectedBody        string
-		expectedError       bool
 	}{
 		{
 			name:                "正常系：フロントマターあり",
@@ -133,14 +138,9 @@ func TestSplitContentAndFrontmatter(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			frontmatter, body, err := SplitContentAndFrontmatter(tt.content)
-			if tt.expectedError {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, tt.expectedFrontmatter, frontmatter)
-				assert.Equal(t, tt.expectedBody, body)
-			}
+			frontmatter, body := SplitContentAndFrontmatter(tt.content)
+			assert.Equal(t, tt.expectedFrontmatter, frontmatter)
+			assert.Equal(t, tt.expectedBody, body)
 		})
 	}
 }

@@ -150,10 +150,7 @@ func (r *FileRepository) Get(ctx context.Context, path string) (*data.File, erro
 	}
 
 	// フロントマターとコンテンツを分離
-	frontmatter, body, err := yaml.SplitContentAndFrontmatter(content)
-	if err != nil {
-		return nil, fmt.Errorf("%w: %s", data.ErrInvalidFrontmatter, err.Error())
-	}
+	frontmatter, body := yaml.SplitContentAndFrontmatter(content)
 
 	// フロントマーターをパース
 	var sources []data.KnowledgeSource

@@ -35,6 +35,10 @@ func GenerateFrontmatter(sources []data.KnowledgeSource) (string, error) {
 
 // ParseFrontmatter はYAMLフロントマターから知識源情報を抽出します
 func ParseFrontmatter(frontmatter string) ([]data.KnowledgeSource, error) {
+	if frontmatter == "" {
+		return []data.KnowledgeSource{}, nil
+	}
+
 	var fm Frontmatter
 	if err := yaml.Unmarshal([]byte(frontmatter), &fm); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal frontmatter: %w", err)
@@ -49,12 +53,12 @@ func ParseFrontmatter(frontmatter string) ([]data.KnowledgeSource, error) {
 }
 
 // SplitContentAndFrontmatter はファイル内容からフロントマターと本文を分離します
-func SplitContentAndFrontmatter(content string) (frontmatter, body string, err error) {
+func SplitContentAndFrontmatter(content string) (frontmatter, body string) {
 	parts := strings.SplitN(content, "---\n", 3)
 	if len(parts) != 3 {
-		return "", content, nil
+		return "", content
 	}
-	return parts[1], parts[2], nil
+	return parts[1], parts[2]
 }
 
 // CombineContentAndFrontmatter はフロントマターと本文を結合します
