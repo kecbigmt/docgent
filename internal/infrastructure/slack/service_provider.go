@@ -12,6 +12,6 @@ func NewServiceProvider(slackAPI *API) *ServiceProvider {
 	}
 }
 
-func (s *ServiceProvider) NewConversationService(channelID, threadTimestamp, sourceMessageTimestamp string) port.ConversationService {
-	return NewConversationService(s.slackAPI, channelID, threadTimestamp, sourceMessageTimestamp)
+func (s *ServiceProvider) NewConversationService(handle ConversationHandle) port.ConversationService {
+	return NewConversationService(s.slackAPI, handle)
 }
