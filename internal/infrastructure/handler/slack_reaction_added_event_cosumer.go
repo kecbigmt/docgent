@@ -83,7 +83,7 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 	}
 
 	fileQueryService := h.githubServiceProvider.NewFileQueryService(workspace.GitHubInstallationID, workspace.GitHubOwner, workspace.GitHubRepo, newBranchName)
-	fileChangeService := h.githubServiceProvider.NewFileChangeService(workspace.GitHubInstallationID, workspace.GitHubOwner, workspace.GitHubRepo, newBranchName)
+	fileRepository := h.githubServiceProvider.NewFileRepository(workspace.GitHubInstallationID, workspace.GitHubOwner, workspace.GitHubRepo, newBranchName)
 
 	githubPullRequestAPI := h.githubServiceProvider.NewPullRequestAPI(workspace.GitHubInstallationID, workspace.GitHubOwner, workspace.GitHubRepo, baseBranchName, newBranchName)
 
@@ -98,7 +98,7 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 		h.chatModel,
 		conversationService,
 		fileQueryService,
-		fileChangeService,
+		fileRepository,
 		githubPullRequestAPI,
 		options...,
 	)

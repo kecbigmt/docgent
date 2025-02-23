@@ -108,7 +108,7 @@ func (c *GitHubIssueCommentEventConsumer) ConsumeEvent(event interface{}) {
 	fileQueryService := c.githubServiceProvider.NewFileQueryService(installationID, ownerName, repoName, headBranch)
 
 	// Create file change service
-	fileChangeService := c.githubServiceProvider.NewFileChangeService(installationID, ownerName, repoName, headBranch)
+	fileRepository := c.githubServiceProvider.NewFileRepository(installationID, ownerName, repoName, headBranch)
 
 	// Create proposal service
 	// TODO: PRの作成以外ではブランチ名が不要なので、サービスを分ける
@@ -125,7 +125,7 @@ func (c *GitHubIssueCommentEventConsumer) ConsumeEvent(event interface{}) {
 		c.chatModel,         // AI interaction
 		conversationService, // Comment management
 		fileQueryService,    // File operations
-		fileChangeService,   // File operations
+		fileRepository,      // File operations
 		proposalService,     // PR management
 		options...,
 	)
