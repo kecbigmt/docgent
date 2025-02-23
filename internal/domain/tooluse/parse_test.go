@@ -18,8 +18,9 @@ func TestParse(t *testing.T) {
 			xmlStr: `<create_file>
 				<path>test.txt</path>
 				<content>Hello, World!</content>
+				<conversation_uri>https://slack.com/archives/C01234567/p123456789</conversation_uri>
 			</create_file>`,
-			want:    NewChangeFile(NewCreateFile("test.txt", "Hello, World!")),
+			want:    NewChangeFile(NewCreateFile("test.txt", "Hello, World!", "https://slack.com/archives/C01234567/p123456789", "")),
 			wantErr: false,
 		},
 		{
@@ -117,6 +118,8 @@ func TestParse(t *testing.T) {
 							wantCreate := wantChange.Unwrap().(CreateFile)
 							assert.Equal(t, wantCreate.Path, gotCreate.Path)
 							assert.Equal(t, wantCreate.Content, gotCreate.Content)
+							assert.Equal(t, wantCreate.ConversationURI, gotCreate.ConversationURI)
+							assert.Equal(t, wantCreate.ProposalURI, gotCreate.ProposalURI)
 							return "file created", false, nil
 						},
 						ModifyFile: func(gotModify ModifyFile) (string, bool, error) {
