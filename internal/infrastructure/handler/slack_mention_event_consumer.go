@@ -55,8 +55,8 @@ func (c *SlackMentionEventConsumer) ConsumeEvent(event slackevents.EventsAPIInne
 	}
 
 	// 会話サービスを初期化
-	handle := slack.NewConversationHandle(workspace.SlackWorkspaceID, appMentionEvent.Channel, threadTimestamp, sourceMessageTimestamp)
-	conversationService := c.slackServiceProvider.NewConversationService(handle)
+	ref := slack.NewConversationRef(workspace.SlackWorkspaceID, appMentionEvent.Channel, threadTimestamp, sourceMessageTimestamp)
+	conversationService := c.slackServiceProvider.NewConversationService(ref)
 
 	var options []application.NewQuestionAnswerUsecaseOption
 	// If VertexAICorpusID is set, use RAG corpus
