@@ -7,16 +7,16 @@ import (
 	"docgent/internal/domain/tooluse"
 )
 
-// AddKnowledgeSourcesHandler は既存のファイルに知識源情報を追加するハンドラーです
-type AddKnowledgeSourcesHandler struct {
+// LinkSourcesHandler は既存のファイルに知識源情報を追加するハンドラーです
+type LinkSourcesHandler struct {
 	ctx            context.Context
 	fileRepository data.FileRepository
 	fileChanged    *bool
 }
 
-// NewAddKnowledgeSourcesHandler は AddKnowledgeSourcesHandler の新しいインスタンスを作成します
-func NewAddKnowledgeSourcesHandler(ctx context.Context, fileRepository data.FileRepository, fileChanged *bool) *AddKnowledgeSourcesHandler {
-	return &AddKnowledgeSourcesHandler{
+// NewLinkSourcesHandler は LinkSourcesHandler の新しいインスタンスを作成します
+func NewLinkSourcesHandler(ctx context.Context, fileRepository data.FileRepository, fileChanged *bool) *LinkSourcesHandler {
+	return &LinkSourcesHandler{
 		ctx:            ctx,
 		fileRepository: fileRepository,
 		fileChanged:    fileChanged,
@@ -24,7 +24,7 @@ func NewAddKnowledgeSourcesHandler(ctx context.Context, fileRepository data.File
 }
 
 // Handle は AddKnowledgeSources ツールの呼び出しを処理します
-func (h *AddKnowledgeSourcesHandler) Handle(toolUse tooluse.AddKnowledgeSources) (string, bool, error) {
+func (h *LinkSourcesHandler) Handle(toolUse tooluse.LinkSources) (string, bool, error) {
 	// 既存のファイルを取得
 	file, err := h.fileRepository.Get(h.ctx, toolUse.FilePath)
 	if err != nil {
@@ -32,17 +32,23 @@ func (h *AddKnowledgeSourcesHandler) Handle(toolUse tooluse.AddKnowledgeSources)
 	}
 
 	// 知識源情報を追加
-	for _, uri := range toolUse.URIs {
+	for _, rawURI := range toolUse.URIs {
+		// バリデーション
+		uri, err := data.NewURI(rawURI)
+		if err != nil {
+			return "", false, err
+		}
+
 		// 重複チェック
 		exists := false
-		for _, source := range file.KnowledgeSources {
-			if source.URI == uri {
+		for _, existingURI := range file.SourceURIs {
+			if existingURI.Equal(uri) {
 				exists = true
 				break
 			}
 		}
 		if !exists {
-			file.KnowledgeSources = append(file.KnowledgeSources, data.KnowledgeSource{URI: uri})
+			file.SourceURIs = append(file.SourceURIs, uri)
 		}
 	}
 

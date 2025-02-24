@@ -38,17 +38,17 @@ func (m *MockFileRepository) Delete(ctx context.Context, path string) error {
 	return args.Error(0)
 }
 
-func TestAddKnowledgeSourcesHandler_Handle(t *testing.T) {
+func TestLinkSourcesHandler_Handle(t *testing.T) {
 	tests := []struct {
 		name           string
-		toolUse        tooluse.AddKnowledgeSources
+		toolUse        tooluse.LinkSources
 		setupMocks     func(*MockFileRepository)
 		expectedResult string
 		expectedError  error
 	}{
 		{
 			name: "正常系：新しい知識源を追加",
-			toolUse: tooluse.NewAddKnowledgeSources(
+			toolUse: tooluse.NewLinkSources(
 				"path/to/file.md",
 				[]string{"https://github.com/user/repo/pull/1"},
 			),
@@ -56,25 +56,25 @@ func TestAddKnowledgeSourcesHandler_Handle(t *testing.T) {
 				existingFile := &data.File{
 					Path:    "path/to/file.md",
 					Content: "# Hello\nWorld",
-					KnowledgeSources: []data.KnowledgeSource{
-						{URI: "https://slack.com/archives/C01234567/p123456789"},
+					SourceURIs: []data.URI{
+						data.NewURIUnsafe("https://slack.com/archives/C01234567/p123456789"),
 					},
 				}
 				expectedFile := &data.File{
 					Path:    "path/to/file.md",
 					Content: "# Hello\nWorld",
-					KnowledgeSources: []data.KnowledgeSource{
-						{URI: "https://slack.com/archives/C01234567/p123456789"},
-						{URI: "https://github.com/user/repo/pull/1"},
+					SourceURIs: []data.URI{
+						data.NewURIUnsafe("https://slack.com/archives/C01234567/p123456789"),
+						data.NewURIUnsafe("https://github.com/user/repo/pull/1"),
 					},
 				}
 				fileRepository.On("Get", mock.Anything, "path/to/file.md").Return(existingFile, nil)
 				fileRepository.On("Update", mock.Anything, mock.MatchedBy(func(file *data.File) bool {
 					return file.Path == expectedFile.Path &&
 						file.Content == expectedFile.Content &&
-						len(file.KnowledgeSources) == len(expectedFile.KnowledgeSources) &&
-						file.KnowledgeSources[0].URI == expectedFile.KnowledgeSources[0].URI &&
-						file.KnowledgeSources[1].URI == expectedFile.KnowledgeSources[1].URI
+						len(file.SourceURIs) == len(expectedFile.SourceURIs) &&
+						file.SourceURIs[0].Equal(expectedFile.SourceURIs[0]) &&
+						file.SourceURIs[1].Equal(expectedFile.SourceURIs[1])
 				})).Return(nil)
 			},
 			expectedResult: "<success>Knowledge sources added</success>",
@@ -82,7 +82,7 @@ func TestAddKnowledgeSourcesHandler_Handle(t *testing.T) {
 		},
 		{
 			name: "正常系：重複する知識源は追加しない",
-			toolUse: tooluse.NewAddKnowledgeSources(
+			toolUse: tooluse.NewLinkSources(
 				"path/to/file.md",
 				[]string{"https://slack.com/archives/C01234567/p123456789"},
 			),
@@ -90,23 +90,23 @@ func TestAddKnowledgeSourcesHandler_Handle(t *testing.T) {
 				existingFile := &data.File{
 					Path:    "path/to/file.md",
 					Content: "# Hello\nWorld",
-					KnowledgeSources: []data.KnowledgeSource{
-						{URI: "https://slack.com/archives/C01234567/p123456789"},
+					SourceURIs: []data.URI{
+						data.NewURIUnsafe("https://slack.com/archives/C01234567/p123456789"),
 					},
 				}
 				expectedFile := &data.File{
 					Path:    "path/to/file.md",
 					Content: "# Hello\nWorld",
-					KnowledgeSources: []data.KnowledgeSource{
-						{URI: "https://slack.com/archives/C01234567/p123456789"},
+					SourceURIs: []data.URI{
+						data.NewURIUnsafe("https://slack.com/archives/C01234567/p123456789"),
 					},
 				}
 				fileRepository.On("Get", mock.Anything, "path/to/file.md").Return(existingFile, nil)
 				fileRepository.On("Update", mock.Anything, mock.MatchedBy(func(file *data.File) bool {
 					return file.Path == expectedFile.Path &&
 						file.Content == expectedFile.Content &&
-						len(file.KnowledgeSources) == len(expectedFile.KnowledgeSources) &&
-						file.KnowledgeSources[0].URI == expectedFile.KnowledgeSources[0].URI
+						len(file.SourceURIs) == len(expectedFile.SourceURIs) &&
+						file.SourceURIs[0].Equal(expectedFile.SourceURIs[0])
 				})).Return(nil)
 			},
 			expectedResult: "<success>Knowledge sources added</success>",
@@ -114,7 +114,7 @@ func TestAddKnowledgeSourcesHandler_Handle(t *testing.T) {
 		},
 		{
 			name: "エラー系：ファイルの取得に失敗",
-			toolUse: tooluse.NewAddKnowledgeSources(
+			toolUse: tooluse.NewLinkSources(
 				"path/to/file.md",
 				[]string{"https://github.com/user/repo/pull/1"},
 			),
@@ -126,7 +126,7 @@ func TestAddKnowledgeSourcesHandler_Handle(t *testing.T) {
 		},
 		{
 			name: "エラー系：ファイルの更新に失敗",
-			toolUse: tooluse.NewAddKnowledgeSources(
+			toolUse: tooluse.NewLinkSources(
 				"path/to/file.md",
 				[]string{"https://github.com/user/repo/pull/1"},
 			),
@@ -134,25 +134,25 @@ func TestAddKnowledgeSourcesHandler_Handle(t *testing.T) {
 				existingFile := &data.File{
 					Path:    "path/to/file.md",
 					Content: "# Hello\nWorld",
-					KnowledgeSources: []data.KnowledgeSource{
-						{URI: "https://slack.com/archives/C01234567/p123456789"},
+					SourceURIs: []data.URI{
+						data.NewURIUnsafe("https://slack.com/archives/C01234567/p123456789"),
 					},
 				}
 				expectedFile := &data.File{
 					Path:    "path/to/file.md",
 					Content: "# Hello\nWorld",
-					KnowledgeSources: []data.KnowledgeSource{
-						{URI: "https://slack.com/archives/C01234567/p123456789"},
-						{URI: "https://github.com/user/repo/pull/1"},
+					SourceURIs: []data.URI{
+						data.NewURIUnsafe("https://slack.com/archives/C01234567/p123456789"),
+						data.NewURIUnsafe("https://github.com/user/repo/pull/1"),
 					},
 				}
 				fileRepository.On("Get", mock.Anything, "path/to/file.md").Return(existingFile, nil)
 				fileRepository.On("Update", mock.Anything, mock.MatchedBy(func(file *data.File) bool {
 					return file.Path == expectedFile.Path &&
 						file.Content == expectedFile.Content &&
-						len(file.KnowledgeSources) == len(expectedFile.KnowledgeSources) &&
-						file.KnowledgeSources[0].URI == expectedFile.KnowledgeSources[0].URI &&
-						file.KnowledgeSources[1].URI == expectedFile.KnowledgeSources[1].URI
+						len(file.SourceURIs) == len(expectedFile.SourceURIs) &&
+						file.SourceURIs[0].Equal(expectedFile.SourceURIs[0]) &&
+						file.SourceURIs[1].Equal(expectedFile.SourceURIs[1])
 				})).Return(data.ErrFailedToAccessFile)
 			},
 			expectedResult: "",
@@ -167,7 +167,7 @@ func TestAddKnowledgeSourcesHandler_Handle(t *testing.T) {
 			tt.setupMocks(fileRepository)
 
 			fileChanged := false
-			handler := NewAddKnowledgeSourcesHandler(context.Background(), fileRepository, &fileChanged)
+			handler := NewLinkSourcesHandler(context.Background(), fileRepository, &fileChanged)
 
 			// テストの実行
 			result, _, err := handler.Handle(tt.toolUse)

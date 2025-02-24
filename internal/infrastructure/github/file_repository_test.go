@@ -25,8 +25,8 @@ func TestFileRepository_Create(t *testing.T) {
 			file: &data.File{
 				Path:    "test.md",
 				Content: "Hello, world!",
-				KnowledgeSources: []data.KnowledgeSource{
-					{URI: "https://slack.com/archives/C01234567/p123456789"},
+				SourceURIs: []data.URI{
+					data.NewURIUnsafe("https://slack.com/archives/C01234567/p123456789"),
 				},
 			},
 			setup: func(mt *mockTransport) {
@@ -44,7 +44,7 @@ func TestFileRepository_Create(t *testing.T) {
 							Content: &github.RepositoryContent{
 								Name:    github.Ptr("test.md"),
 								Path:    github.Ptr("test.md"),
-								Content: github.Ptr(base64.StdEncoding.EncodeToString([]byte("---\nknowledge_sources:\n  - https://slack.com/archives/C01234567/p123456789\n---\nHello, world!"))),
+								Content: github.Ptr(base64.StdEncoding.EncodeToString([]byte("---\nsources:\n  - https://slack.com/archives/C01234567/p123456789\n---\nHello, world!"))),
 							},
 						},
 					},
@@ -61,7 +61,7 @@ func TestFileRepository_Create(t *testing.T) {
 					path:   "/repos/owner/repo/contents/test.md",
 					body: map[string]interface{}{
 						"message": "Create file test.md",
-						"content": base64.StdEncoding.EncodeToString([]byte("---\nknowledge_sources:\n  - https://slack.com/archives/C01234567/p123456789\n---\nHello, world!")),
+						"content": base64.StdEncoding.EncodeToString([]byte("---\nsources:\n  - https://slack.com/archives/C01234567/p123456789\n---\nHello, world!")),
 						"branch":  "main",
 					},
 				},
@@ -72,8 +72,8 @@ func TestFileRepository_Create(t *testing.T) {
 			file: &data.File{
 				Path:    "test.md",
 				Content: "Hello, world!",
-				KnowledgeSources: []data.KnowledgeSource{
-					{URI: "https://slack.com/archives/C01234567/p123456789"},
+				SourceURIs: []data.URI{
+					data.NewURIUnsafe("https://slack.com/archives/C01234567/p123456789"),
 				},
 			},
 			setup: func(mt *mockTransport) {
@@ -97,35 +97,12 @@ func TestFileRepository_Create(t *testing.T) {
 			},
 		},
 		{
-			name: "error: invalid knowledge source",
-			file: &data.File{
-				Path:    "test.md",
-				Content: "Hello, world!",
-				KnowledgeSources: []data.KnowledgeSource{
-					{URI: ""}, // 空のURIは不正
-				},
-			},
-			setup: func(mt *mockTransport) {
-				mt.responses = map[string]mockResponse{
-					"GET /repos/owner/repo/contents/test.md": {
-						statusCode: http.StatusNotFound,
-						body: &github.ErrorResponse{
-							Response: &http.Response{StatusCode: http.StatusNotFound},
-							Message:  "Not Found",
-						},
-					},
-				}
-			},
-			wantErr:      data.ErrInvalidKnowledgeSource,
-			expectedReqs: []mockRequest{},
-		},
-		{
 			name: "error: failed to access file",
 			file: &data.File{
 				Path:    "test.md",
 				Content: "Hello, world!",
-				KnowledgeSources: []data.KnowledgeSource{
-					{URI: "https://slack.com/archives/C01234567/p123456789"},
+				SourceURIs: []data.URI{
+					data.NewURIUnsafe("https://slack.com/archives/C01234567/p123456789"),
 				},
 			},
 			setup: func(mt *mockTransport) {
@@ -185,8 +162,8 @@ func TestFileRepository_Update(t *testing.T) {
 			file: &data.File{
 				Path:    "test.md",
 				Content: "Hello, world!",
-				KnowledgeSources: []data.KnowledgeSource{
-					{URI: "https://slack.com/archives/C01234567/p123456789"},
+				SourceURIs: []data.URI{
+					data.NewURIUnsafe("https://slack.com/archives/C01234567/p123456789"),
 				},
 			},
 			setup: func(mt *mockTransport) {
@@ -196,7 +173,7 @@ func TestFileRepository_Update(t *testing.T) {
 						body: &github.RepositoryContent{
 							Name:     github.Ptr("test.md"),
 							Path:     github.Ptr("test.md"),
-							Content:  github.Ptr(base64.StdEncoding.EncodeToString([]byte("---\nknowledge_sources:\n  - https://slack.com/archives/C01234567/p123456789\n---\nHello, world!"))),
+							Content:  github.Ptr(base64.StdEncoding.EncodeToString([]byte("---\nsources:\n  - https://slack.com/archives/C01234567/p123456789\n---\nHello, world!"))),
 							SHA:      github.Ptr("sha"),
 							Encoding: github.Ptr("base64"),
 						},
@@ -218,7 +195,7 @@ func TestFileRepository_Update(t *testing.T) {
 					path:   "/repos/owner/repo/contents/test.md",
 					body: map[string]interface{}{
 						"message": "Update file test.md",
-						"content": base64.StdEncoding.EncodeToString([]byte("---\nknowledge_sources:\n  - https://slack.com/archives/C01234567/p123456789\n---\nHello, world!")),
+						"content": base64.StdEncoding.EncodeToString([]byte("---\nsources:\n  - https://slack.com/archives/C01234567/p123456789\n---\nHello, world!")),
 						"branch":  "main",
 						"sha":     "sha",
 					},
@@ -230,8 +207,8 @@ func TestFileRepository_Update(t *testing.T) {
 			file: &data.File{
 				Path:    "test.md",
 				Content: "Hello, world!",
-				KnowledgeSources: []data.KnowledgeSource{
-					{URI: "https://slack.com/archives/C01234567/p123456789"},
+				SourceURIs: []data.URI{
+					data.NewURIUnsafe("https://slack.com/archives/C01234567/p123456789"),
 				},
 			},
 			setup: func(mt *mockTransport) {
@@ -254,25 +231,12 @@ func TestFileRepository_Update(t *testing.T) {
 			},
 		},
 		{
-			name: "error: invalid knowledge source",
-			file: &data.File{
-				Path:    "test.md",
-				Content: "Hello, world!",
-				KnowledgeSources: []data.KnowledgeSource{
-					{URI: ""}, // 空のURIは不正
-				},
-			},
-			setup:        func(mt *mockTransport) {},
-			wantErr:      data.ErrInvalidKnowledgeSource,
-			expectedReqs: []mockRequest{},
-		},
-		{
 			name: "error: failed to access file",
 			file: &data.File{
 				Path:    "test.md",
 				Content: "Hello, world!",
-				KnowledgeSources: []data.KnowledgeSource{
-					{URI: "https://slack.com/archives/C01234567/p123456789"},
+				SourceURIs: []data.URI{
+					data.NewURIUnsafe("https://slack.com/archives/C01234567/p123456789"),
 				},
 			},
 			setup: func(mt *mockTransport) {
@@ -338,7 +302,7 @@ func TestFileRepository_Get(t *testing.T) {
 						body: &github.RepositoryContent{
 							Name:     github.Ptr("test.md"),
 							Path:     github.Ptr("test.md"),
-							Content:  github.Ptr(base64.StdEncoding.EncodeToString([]byte("---\nknowledge_sources:\n  - https://slack.com/archives/C01234567/p123456789\n---\nHello, world!"))),
+							Content:  github.Ptr(base64.StdEncoding.EncodeToString([]byte("---\nsources:\n  - https://slack.com/archives/C01234567/p123456789\n---\nHello, world!"))),
 							SHA:      github.Ptr("sha"),
 							Encoding: github.Ptr("base64"),
 						},
@@ -348,8 +312,8 @@ func TestFileRepository_Get(t *testing.T) {
 			want: &data.File{
 				Path:    "test.md",
 				Content: "Hello, world!",
-				KnowledgeSources: []data.KnowledgeSource{
-					{URI: "https://slack.com/archives/C01234567/p123456789"},
+				SourceURIs: []data.URI{
+					data.NewURIUnsafe("https://slack.com/archives/C01234567/p123456789"),
 				},
 			},
 			wantErr: nil,
@@ -477,7 +441,7 @@ func TestFileRepository_Delete(t *testing.T) {
 						body: &github.RepositoryContent{
 							Name:    github.Ptr("test.md"),
 							Path:    github.Ptr("test.md"),
-							Content: github.Ptr(base64.StdEncoding.EncodeToString([]byte("---\nknowledge_sources:\n  - https://slack.com/archives/C01234567/p123456789\n---\nHello, world!"))),
+							Content: github.Ptr(base64.StdEncoding.EncodeToString([]byte("---\nsources:\n  - https://slack.com/archives/C01234567/p123456789\n---\nHello, world!"))),
 							SHA:     github.Ptr("sha"),
 						},
 					},

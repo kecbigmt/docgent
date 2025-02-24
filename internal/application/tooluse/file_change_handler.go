@@ -35,13 +35,19 @@ func (h *FileChangeHandler) Handle(toolUse tooluse.ChangeFile) (string, bool, er
 }
 
 func (h *FileChangeHandler) handleCreateFile(c tooluse.CreateFile) (string, bool, error) {
-	file := &data.File{
-		Path:             c.Path,
-		Content:          c.Content,
-		KnowledgeSources: make([]data.KnowledgeSource, len(c.KnowledgeSourceURIs)),
+	sourceURIs := make([]data.URI, len(c.SourceURIs))
+	for i, uri := range c.SourceURIs {
+		sourceURI, err := data.NewURI(uri)
+		if err != nil {
+			return "", false, err
+		}
+		sourceURIs[i] = sourceURI
 	}
-	for i, uri := range c.KnowledgeSourceURIs {
-		file.KnowledgeSources[i] = data.KnowledgeSource{URI: uri}
+
+	file := &data.File{
+		Path:       c.Path,
+		Content:    c.Content,
+		SourceURIs: sourceURIs,
 	}
 
 	err := h.fileRepository.Create(h.ctx, file)
@@ -94,9 +100,9 @@ func (h *FileChangeHandler) handleRenameFile(c tooluse.RenameFile) (string, bool
 
 	// 新しいファイルを作成
 	newFile := &data.File{
-		Path:             c.NewPath,
-		Content:          content,
-		KnowledgeSources: file.KnowledgeSources,
+		Path:       c.NewPath,
+		Content:    content,
+		SourceURIs: file.SourceURIs,
 	}
 	err = h.fileRepository.Create(h.ctx, newFile)
 	if err != nil {

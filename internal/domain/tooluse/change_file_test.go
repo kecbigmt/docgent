@@ -20,7 +20,7 @@ func TestChangeFile_MarshalXML(t *testing.T) {
 				"Hello, World!",
 				[]string{"https://slack.com/archives/C01234567/p123456789"},
 			)),
-			expected: `<create_file><path>example.txt</path><content>Hello, World!</content><knowledge_source_uri>https://slack.com/archives/C01234567/p123456789</knowledge_source_uri></create_file>`,
+			expected: `<create_file><path>example.txt</path><content>Hello, World!</content><source_uri>https://slack.com/archives/C01234567/p123456789</source_uri></create_file>`,
 		},
 		{
 			name: "modify file",

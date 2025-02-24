@@ -10,16 +10,16 @@ import (
 )
 
 type Frontmatter struct {
-	KnowledgeSources []string `yaml:"knowledge_sources"`
+	Sources []string `yaml:"sources"`
 }
 
 // GenerateFrontmatter は知識源のリストからYAMLフロントマターを生成します
-func GenerateFrontmatter(sources []data.KnowledgeSource) (string, error) {
+func GenerateFrontmatter(sources []data.URI) (string, error) {
 	frontmatter := Frontmatter{
-		KnowledgeSources: make([]string, len(sources)),
+		Sources: make([]string, len(sources)),
 	}
 	for i, source := range sources {
-		frontmatter.KnowledgeSources[i] = source.URI
+		frontmatter.Sources[i] = source.Value()
 	}
 
 	var buf strings.Builder
@@ -34,9 +34,9 @@ func GenerateFrontmatter(sources []data.KnowledgeSource) (string, error) {
 }
 
 // ParseFrontmatter はYAMLフロントマターから知識源情報を抽出します
-func ParseFrontmatter(frontmatter string) ([]data.KnowledgeSource, error) {
+func ParseFrontmatter(frontmatter string) ([]data.URI, error) {
 	if frontmatter == "" {
-		return []data.KnowledgeSource{}, nil
+		return []data.URI{}, nil
 	}
 
 	var fm Frontmatter
@@ -44,9 +44,13 @@ func ParseFrontmatter(frontmatter string) ([]data.KnowledgeSource, error) {
 		return nil, fmt.Errorf("failed to unmarshal frontmatter: %w", err)
 	}
 
-	sources := make([]data.KnowledgeSource, len(fm.KnowledgeSources))
-	for i, uri := range fm.KnowledgeSources {
-		sources[i] = data.KnowledgeSource{URI: uri}
+	sources := make([]data.URI, len(fm.Sources))
+	for i, uri := range fm.Sources {
+		source, err := data.NewURI(uri)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse uri: %w", err)
+		}
+		sources[i] = source
 	}
 
 	return sources, nil

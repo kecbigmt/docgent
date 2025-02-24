@@ -30,13 +30,6 @@ func NewFileRepository(client *github.Client, owner, repo, branch string) *FileR
 
 // Create はファイルを作成します
 func (r *FileRepository) Create(ctx context.Context, file *data.File) error {
-	// 知識ソースのバリデーション
-	for _, ks := range file.KnowledgeSources {
-		if ks.URI == "" {
-			return data.ErrInvalidKnowledgeSource
-		}
-	}
-
 	// ファイルの存在確認
 	_, _, resp, err := r.client.Repositories.GetContents(ctx, r.owner, r.repo, file.Path, &github.RepositoryContentGetOptions{
 		Ref: r.branch,
@@ -49,7 +42,7 @@ func (r *FileRepository) Create(ctx context.Context, file *data.File) error {
 	}
 
 	// フロントマターの生成
-	frontmatter, err := yaml.GenerateFrontmatter(file.KnowledgeSources)
+	frontmatter, err := yaml.GenerateFrontmatter(file.SourceURIs)
 	if err != nil {
 		return fmt.Errorf("failed to generate frontmatter: %w", err)
 	}
@@ -71,15 +64,8 @@ func (r *FileRepository) Create(ctx context.Context, file *data.File) error {
 }
 
 func (r *FileRepository) Update(ctx context.Context, file *data.File) error {
-	// 知識ソースのバリデーション
-	for _, ks := range file.KnowledgeSources {
-		if ks.URI == "" {
-			return data.ErrInvalidKnowledgeSource
-		}
-	}
-
 	// YAMLフロントマターを生成
-	frontmatter, err := yaml.GenerateFrontmatter(file.KnowledgeSources)
+	frontmatter, err := yaml.GenerateFrontmatter(file.SourceURIs)
 	if err != nil {
 		return fmt.Errorf("%w: %s", data.ErrInvalidKnowledgeSource, err.Error())
 	}
@@ -153,18 +139,18 @@ func (r *FileRepository) Get(ctx context.Context, path string) (*data.File, erro
 	frontmatter, body := yaml.SplitContentAndFrontmatter(content)
 
 	// フロントマーターをパース
-	var sources []data.KnowledgeSource
+	var sourceURIs []data.URI
 	if frontmatter != "" {
-		sources, err = yaml.ParseFrontmatter(frontmatter)
+		sourceURIs, err = yaml.ParseFrontmatter(frontmatter)
 		if err != nil {
 			return nil, fmt.Errorf("%w: %s", data.ErrInvalidFrontmatter, err.Error())
 		}
 	}
 
 	return &data.File{
-		Path:             path,
-		Content:          body,
-		KnowledgeSources: sources,
+		Path:       path,
+		Content:    body,
+		SourceURIs: sourceURIs,
 	}, nil
 }
 

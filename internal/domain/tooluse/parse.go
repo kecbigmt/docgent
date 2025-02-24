@@ -68,12 +68,12 @@ func Parse(xmlStr string) (Union, error) {
 			return nil, fmt.Errorf("failed to unmarshal update_proposal: %w", err)
 		}
 		return up, nil
-	case "add_knowledge_sources":
-		var aks AddKnowledgeSources
-		if err := xml.Unmarshal([]byte(xmlStr), &aks); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal add_knowledge_sources: %w", err)
+	case "link_sources":
+		var ls LinkSources
+		if err := xml.Unmarshal([]byte(xmlStr), &ls); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal link_sources: %w", err)
 		}
-		return aks, nil
+		return ls, nil
 	case "attempt_complete":
 		var ac AttemptComplete
 		if err := xml.Unmarshal([]byte(xmlStr), &ac); err != nil {

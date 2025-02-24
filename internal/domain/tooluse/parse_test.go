@@ -18,19 +18,19 @@ func TestParse(t *testing.T) {
 			xmlStr: `<create_file>
 				<path>test.txt</path>
 				<content>Hello, World!</content>
-				<knowledge_source_uri>https://slack.com/archives/C01234567/p123456789</knowledge_source_uri>
+				<source_uri>https://slack.com/archives/C01234567/p123456789</source_uri>
 			</create_file>`,
 			want:    NewChangeFile(NewCreateFile("test.txt", "Hello, World!", []string{"https://slack.com/archives/C01234567/p123456789"})),
 			wantErr: false,
 		},
 		{
-			name: "add_knowledge_sources",
-			xmlStr: `<add_knowledge_sources>
+			name: "link_sources",
+			xmlStr: `<link_sources>
 				<file_path>test.txt</file_path>
 				<uri>https://slack.com/archives/C01234567/p123456789</uri>
 				<uri>https://github.com/user/repo/pull/1</uri>
-			</add_knowledge_sources>`,
-			want:    NewAddKnowledgeSources("test.txt", []string{"https://slack.com/archives/C01234567/p123456789", "https://github.com/user/repo/pull/1"}),
+			</link_sources>`,
+			want:    NewLinkSources("test.txt", []string{"https://slack.com/archives/C01234567/p123456789", "https://github.com/user/repo/pull/1"}),
 			wantErr: false,
 		},
 		{
@@ -128,7 +128,7 @@ func TestParse(t *testing.T) {
 							wantCreate := wantChange.Unwrap().(CreateFile)
 							assert.Equal(t, wantCreate.Path, gotCreate.Path)
 							assert.Equal(t, wantCreate.Content, gotCreate.Content)
-							assert.Equal(t, wantCreate.KnowledgeSourceURIs, gotCreate.KnowledgeSourceURIs)
+							assert.Equal(t, wantCreate.SourceURIs, gotCreate.SourceURIs)
 							return "file created", false, nil
 						},
 						ModifyFile: func(gotModify ModifyFile) (string, bool, error) {
@@ -168,10 +168,10 @@ func TestParse(t *testing.T) {
 					assert.Equal(t, wantUpdate.Description, gotUpdate.Description)
 					return "proposal updated", false, nil
 				},
-				AddKnowledgeSources: func(gotAdd AddKnowledgeSources) (string, bool, error) {
-					wantAdd := tt.want.(AddKnowledgeSources)
-					assert.Equal(t, wantAdd.FilePath, gotAdd.FilePath)
-					assert.Equal(t, wantAdd.URIs, gotAdd.URIs)
+				LinkSources: func(gotLink LinkSources) (string, bool, error) {
+					wantLink := tt.want.(LinkSources)
+					assert.Equal(t, wantLink.FilePath, gotLink.FilePath)
+					assert.Equal(t, wantLink.URIs, gotLink.URIs)
 					return "knowledge sources added", false, nil
 				},
 			})

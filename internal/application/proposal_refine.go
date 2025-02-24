@@ -92,15 +92,15 @@ func (w *ProposalRefineUsecase) Refine(proposalHandle domain.ProposalHandle, use
 	findFileHandler := tooluse.NewFindFileHandler(ctx, w.fileQueryService)
 	fileChangeHandler := tooluse.NewFileChangeHandler(ctx, w.fileRepository, &fileChanged)
 	queryRAGHandler := tooluse.NewQueryRAGHandler(ctx, w.ragCorpus)
-	addKnowledgeSourcesHandler := tooluse.NewAddKnowledgeSourcesHandler(ctx, w.fileRepository, &fileChanged)
+	linkSourcesHandler := tooluse.NewLinkSourcesHandler(ctx, w.fileRepository, &fileChanged)
 
 	// ツールケースの設定
 	cases := domaintooluse.Cases{
-		AttemptComplete:     attemptCompleteHandler.Handle,
-		FindFile:            findFileHandler.Handle,
-		ChangeFile:          fileChangeHandler.Handle,
-		QueryRAG:            queryRAGHandler.Handle,
-		AddKnowledgeSources: addKnowledgeSourcesHandler.Handle,
+		AttemptComplete: attemptCompleteHandler.Handle,
+		FindFile:        findFileHandler.Handle,
+		ChangeFile:      fileChangeHandler.Handle,
+		QueryRAG:        queryRAGHandler.Handle,
+		LinkSources:     linkSourcesHandler.Handle,
 	}
 
 	agent := domain.NewAgent(
@@ -155,7 +155,7 @@ func buildSystemInstructionToRefineProposal(fileTree []port.TreeMetadata, propos
 		domaintooluse.RenameFileUsage,
 		domaintooluse.FindFileUsage,
 		domaintooluse.AttemptCompleteUsage,
-		domaintooluse.AddKnowledgeSourcesUsage,
+		domaintooluse.LinkSourcesUsage,
 	}
 
 	if docgentRulesFile != nil {
