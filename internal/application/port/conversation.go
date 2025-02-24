@@ -1,9 +1,11 @@
 package port
 
+import "docgent/internal/domain/data"
+
 type ConversationService interface {
 	Reply(input string) error
 	GetHistory() ([]ConversationMessage, error)
-	GetURI() string
+	URI() data.URI
 	MarkEyes() error
 	RemoveEyes() error
 }

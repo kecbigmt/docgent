@@ -49,9 +49,9 @@ func (m *MockConversationService) Reply(input string) error {
 	return args.Error(0)
 }
 
-func (m *MockConversationService) GetURI() string {
+func (m *MockConversationService) URI() data.URI {
 	args := m.Called()
-	return args.String(0)
+	return args.Get(0).(data.URI)
 }
 
 func (m *MockConversationService) GetHistory() ([]port.ConversationMessage, error) {

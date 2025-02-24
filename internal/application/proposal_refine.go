@@ -66,7 +66,7 @@ func (w *ProposalRefineUsecase) Refine(proposalHandle domain.ProposalHandle, use
 
 	ctx := context.Background()
 
-	conversationURI := w.conversationService.GetURI()
+	conversationURI := w.conversationService.URI()
 	proposal, err := w.proposalRepository.GetProposal(proposalHandle)
 	if err != nil {
 		if err := w.conversationService.Reply("Failed to retrieve proposal"); err != nil {
@@ -118,7 +118,7 @@ When you change any files, you should set uri to each file as a knowledge source
 <user_feedback uri=%q>
 %s
 </user_feedback>
-`, conversationURI, userFeedback)
+`, conversationURI.String(), userFeedback)
 
 	err = agent.InitiateTaskLoop(ctx, task, w.remainingStepCount)
 	if err != nil {

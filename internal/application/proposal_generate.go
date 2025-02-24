@@ -59,7 +59,7 @@ func (w *ProposalGenerateUsecase) Execute(ctx context.Context) (domain.ProposalH
 	go w.conversationService.MarkEyes()
 	defer w.conversationService.RemoveEyes()
 
-	conversationURI := w.conversationService.GetURI()
+	conversationURI := w.conversationService.URI()
 	chatHistory, err := w.conversationService.GetHistory()
 	if err != nil {
 		return domain.ProposalHandle{}, fmt.Errorf("failed to get chat history: %w", err)
@@ -129,7 +129,7 @@ You should not use modify_file unless the file is obviously relevant to your cha
 }
 
 func buildSystemInstructionToGenerateProposal(
-	conversationURI string,
+	conversationURI data.URI,
 	chatHistory []port.ConversationMessage,
 	fileTree []port.TreeMetadata,
 	docgentRulesFile *data.File,
@@ -137,7 +137,7 @@ func buildSystemInstructionToGenerateProposal(
 ) *domain.SystemInstruction {
 
 	var conversationStr strings.Builder
-	conversationStr.WriteString(fmt.Sprintf("<conversation uri=%q>\n", conversationURI))
+	conversationStr.WriteString(fmt.Sprintf("<conversation uri=%q>\n", conversationURI.String()))
 	for _, msg := range chatHistory {
 		conversationStr.WriteString(fmt.Sprintf("<message author=%q>\n%s\n</message>\n", msg.Author, msg.Content))
 	}
