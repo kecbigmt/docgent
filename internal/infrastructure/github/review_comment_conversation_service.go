@@ -3,6 +3,7 @@ package github
 import (
 	"context"
 	"docgent/internal/application/port"
+	"docgent/internal/domain/data"
 	"fmt"
 
 	"github.com/google/go-github/v68/github"
@@ -31,7 +32,7 @@ func (s *ReviewCommentConversationService) GetHistory() ([]port.ConversationMess
 	panic("not implemented")
 }
 
-func (s *ReviewCommentConversationService) GetURI() string {
+func (s *ReviewCommentConversationService) URI() data.URI {
 	panic("not implemented")
 }
 
