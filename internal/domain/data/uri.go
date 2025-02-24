@@ -33,6 +33,10 @@ func (u *URI) Value() string {
 	return u.value
 }
 
+func (u URI) String() string {
+	return u.value
+}
+
 func (u *URI) Scheme() string {
 	return u.parsed.Scheme
 }
