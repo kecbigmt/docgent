@@ -2,16 +2,11 @@ package data
 
 import "context"
 
-// KnowledgeSource はドキュメントの知識源を表す
-type KnowledgeSource struct {
-	URI string
-}
-
 // File はドキュメントファイルを表す
 type File struct {
-	Path             string
-	Content          string
-	KnowledgeSources []KnowledgeSource
+	Path       string
+	Content    string
+	SourceURIs []URI
 }
 
 // FileRepository はファイルの永続化を担当
