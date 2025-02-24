@@ -129,7 +129,7 @@ You should not use modify_file unless the file is obviously relevant to your cha
 }
 
 func buildSystemInstructionToGenerateProposal(
-	conversationURI data.URI,
+	conversationURI *data.URI,
 	chatHistory []port.ConversationMessage,
 	fileTree []port.TreeMetadata,
 	docgentRulesFile *data.File,

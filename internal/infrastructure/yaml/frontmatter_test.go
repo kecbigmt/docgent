@@ -11,20 +11,20 @@ import (
 func TestGenerateFrontmatter(t *testing.T) {
 	tests := []struct {
 		name          string
-		sources       []data.URI
+		sources       []*data.URI
 		expected      string
 		expectedError bool
 	}{
 		{
 			name: "正常系：単一の知識源",
-			sources: []data.URI{
+			sources: []*data.URI{
 				data.NewURIUnsafe("https://slack.com/archives/C01234567/p123456789"),
 			},
 			expected: "sources:\n  - https://slack.com/archives/C01234567/p123456789\n",
 		},
 		{
 			name: "正常系：複数の知識源",
-			sources: []data.URI{
+			sources: []*data.URI{
 				data.NewURIUnsafe("https://slack.com/archives/C01234567/p123456789"),
 				data.NewURIUnsafe("https://github.com/user/repo/pull/1"),
 			},
@@ -32,7 +32,7 @@ func TestGenerateFrontmatter(t *testing.T) {
 		},
 		{
 			name:     "正常系：空の知識源リスト",
-			sources:  []data.URI{},
+			sources:  []*data.URI{},
 			expected: "sources: []\n",
 		},
 	}
@@ -54,20 +54,20 @@ func TestParseFrontmatter(t *testing.T) {
 	tests := []struct {
 		name          string
 		frontmatter   string
-		expected      []data.URI
+		expected      []*data.URI
 		expectedError bool
 	}{
 		{
 			name:        "正常系：単一の知識源",
 			frontmatter: "sources:\n  - https://slack.com/archives/C01234567/p123456789\n",
-			expected: []data.URI{
+			expected: []*data.URI{
 				data.NewURIUnsafe("https://slack.com/archives/C01234567/p123456789"),
 			},
 		},
 		{
 			name:        "正常系：複数の知識源",
 			frontmatter: "sources:\n  - https://slack.com/archives/C01234567/p123456789\n  - https://github.com/user/repo/pull/1\n",
-			expected: []data.URI{
+			expected: []*data.URI{
 				data.NewURIUnsafe("https://slack.com/archives/C01234567/p123456789"),
 				data.NewURIUnsafe("https://github.com/user/repo/pull/1"),
 			},
@@ -75,12 +75,12 @@ func TestParseFrontmatter(t *testing.T) {
 		{
 			name:        "正常系：空の知識源リスト",
 			frontmatter: "sources: []\n",
-			expected:    []data.URI{},
+			expected:    []*data.URI{},
 		},
 		{
 			name:          "正常系：空のフロントマター",
 			frontmatter:   "",
-			expected:      []data.URI{},
+			expected:      []*data.URI{},
 			expectedError: false,
 		},
 		{

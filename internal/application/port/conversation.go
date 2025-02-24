@@ -5,7 +5,7 @@ import "docgent/internal/domain/data"
 type ConversationService interface {
 	Reply(input string) error
 	GetHistory() ([]ConversationMessage, error)
-	URI() data.URI
+	URI() *data.URI
 	MarkEyes() error
 	RemoveEyes() error
 }

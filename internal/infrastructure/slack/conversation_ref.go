@@ -33,7 +33,7 @@ func (u *ConversationRef) SourceMessageTimestamp() string {
 	return u.sourceMessageTimestamp
 }
 
-func (u *ConversationRef) ToURI() data.URI {
+func (u *ConversationRef) ToURI() *data.URI {
 	if u.threadTimestamp == u.sourceMessageTimestamp {
 		return data.NewURIUnsafe(fmt.Sprintf("https://app.slack.com/client/%s/%s/%s", u.teamID, u.channelID, u.threadTimestamp))
 	}

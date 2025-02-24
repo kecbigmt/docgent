@@ -14,7 +14,7 @@ type Frontmatter struct {
 }
 
 // GenerateFrontmatter は知識源のリストからYAMLフロントマターを生成します
-func GenerateFrontmatter(sources []data.URI) (string, error) {
+func GenerateFrontmatter(sources []*data.URI) (string, error) {
 	frontmatter := Frontmatter{
 		Sources: make([]string, len(sources)),
 	}
@@ -34,9 +34,9 @@ func GenerateFrontmatter(sources []data.URI) (string, error) {
 }
 
 // ParseFrontmatter はYAMLフロントマターから知識源情報を抽出します
-func ParseFrontmatter(frontmatter string) ([]data.URI, error) {
+func ParseFrontmatter(frontmatter string) ([]*data.URI, error) {
 	if frontmatter == "" {
-		return []data.URI{}, nil
+		return []*data.URI{}, nil
 	}
 
 	var fm Frontmatter
@@ -44,7 +44,7 @@ func ParseFrontmatter(frontmatter string) ([]data.URI, error) {
 		return nil, fmt.Errorf("failed to unmarshal frontmatter: %w", err)
 	}
 
-	sources := make([]data.URI, len(fm.Sources))
+	sources := make([]*data.URI, len(fm.Sources))
 	for i, uri := range fm.Sources {
 		source, err := data.NewURI(uri)
 		if err != nil {

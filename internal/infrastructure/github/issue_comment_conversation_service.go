@@ -40,7 +40,7 @@ func (s *IssueCommentConversationService) GetHistory() ([]port.ConversationMessa
 	return conversationMessages, nil
 }
 
-func (s *IssueCommentConversationService) URI() data.URI {
+func (s *IssueCommentConversationService) URI() *data.URI {
 	return s.ref.ToURI()
 }
 

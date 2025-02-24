@@ -47,8 +47,7 @@ func TestParseConversationRef(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			uri := data.NewURIUnsafe(tt.ref)
-			got, err := ParseConversationRef(&uri)
+			got, err := ParseConversationRef(data.NewURIUnsafe(tt.ref))
 			if tt.wantErr {
 				assert.Error(t, err)
 				return

@@ -139,7 +139,7 @@ func (r *FileRepository) Get(ctx context.Context, path string) (*data.File, erro
 	frontmatter, body := yaml.SplitContentAndFrontmatter(content)
 
 	// フロントマーターをパース
-	var sourceURIs []data.URI
+	var sourceURIs []*data.URI
 	if frontmatter != "" {
 		sourceURIs, err = yaml.ParseFrontmatter(frontmatter)
 		if err != nil {

@@ -35,7 +35,7 @@ func (h *FileChangeHandler) Handle(toolUse tooluse.ChangeFile) (string, bool, er
 }
 
 func (h *FileChangeHandler) handleCreateFile(c tooluse.CreateFile) (string, bool, error) {
-	sourceURIs := make([]data.URI, len(c.SourceURIs))
+	sourceURIs := make([]*data.URI, len(c.SourceURIs))
 	for i, uri := range c.SourceURIs {
 		sourceURI, err := data.NewURI(uri)
 		if err != nil {

@@ -30,7 +30,7 @@ func (s *ConversationService) Reply(input string) error {
 	return nil
 }
 
-func (s *ConversationService) URI() data.URI {
+func (s *ConversationService) URI() *data.URI {
 	return s.ref.ToURI()
 }
 

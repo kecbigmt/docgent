@@ -32,7 +32,7 @@ func (s *ReviewCommentConversationService) GetHistory() ([]port.ConversationMess
 	panic("not implemented")
 }
 
-func (s *ReviewCommentConversationService) URI() data.URI {
+func (s *ReviewCommentConversationService) URI() *data.URI {
 	panic("not implemented")
 }
 

@@ -56,14 +56,14 @@ func TestLinkSourcesHandler_Handle(t *testing.T) {
 				existingFile := &data.File{
 					Path:    "path/to/file.md",
 					Content: "# Hello\nWorld",
-					SourceURIs: []data.URI{
+					SourceURIs: []*data.URI{
 						data.NewURIUnsafe("https://slack.com/archives/C01234567/p123456789"),
 					},
 				}
 				expectedFile := &data.File{
 					Path:    "path/to/file.md",
 					Content: "# Hello\nWorld",
-					SourceURIs: []data.URI{
+					SourceURIs: []*data.URI{
 						data.NewURIUnsafe("https://slack.com/archives/C01234567/p123456789"),
 						data.NewURIUnsafe("https://github.com/user/repo/pull/1"),
 					},
@@ -90,14 +90,14 @@ func TestLinkSourcesHandler_Handle(t *testing.T) {
 				existingFile := &data.File{
 					Path:    "path/to/file.md",
 					Content: "# Hello\nWorld",
-					SourceURIs: []data.URI{
+					SourceURIs: []*data.URI{
 						data.NewURIUnsafe("https://slack.com/archives/C01234567/p123456789"),
 					},
 				}
 				expectedFile := &data.File{
 					Path:    "path/to/file.md",
 					Content: "# Hello\nWorld",
-					SourceURIs: []data.URI{
+					SourceURIs: []*data.URI{
 						data.NewURIUnsafe("https://slack.com/archives/C01234567/p123456789"),
 					},
 				}
@@ -134,14 +134,14 @@ func TestLinkSourcesHandler_Handle(t *testing.T) {
 				existingFile := &data.File{
 					Path:    "path/to/file.md",
 					Content: "# Hello\nWorld",
-					SourceURIs: []data.URI{
+					SourceURIs: []*data.URI{
 						data.NewURIUnsafe("https://slack.com/archives/C01234567/p123456789"),
 					},
 				}
 				expectedFile := &data.File{
 					Path:    "path/to/file.md",
 					Content: "# Hello\nWorld",
-					SourceURIs: []data.URI{
+					SourceURIs: []*data.URI{
 						data.NewURIUnsafe("https://slack.com/archives/C01234567/p123456789"),
 						data.NewURIUnsafe("https://github.com/user/repo/pull/1"),
 					},

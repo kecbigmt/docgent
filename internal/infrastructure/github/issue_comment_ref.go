@@ -18,7 +18,7 @@ func NewIssueCommentRef(owner, repo string, prNumber int, sourceCommentID int64)
 	return &IssueCommentRef{owner: owner, repo: repo, prNumber: prNumber, sourceCommentID: sourceCommentID}
 }
 
-func (u *IssueCommentRef) ToURI() data.URI {
+func (u *IssueCommentRef) ToURI() *data.URI {
 	rawURI := fmt.Sprintf("https://github.com/%s/%s/pull/%d#issuecomment-%d", u.owner, u.repo, u.prNumber, u.sourceCommentID)
 	return data.NewURIUnsafe(rawURI)
 }
@@ -42,7 +42,7 @@ func (u *IssueCommentRef) SourceCommentID() int64 {
 // https://github.com/{owner}/{repo}/pull/{prNumber}#issuecomment-{sourceCommentID}
 var re = regexp.MustCompile(`^https://github\.com/([^/]+)/([^/]+)/pull/([^/]+)#issuecomment-([^/]+)$`)
 
-func ParseIssueCommentRef(uri data.URI) (*IssueCommentRef, error) {
+func ParseIssueCommentRef(uri *data.URI) (*IssueCommentRef, error) {
 	rawURI := uri.String()
 	matches := re.FindStringSubmatch(rawURI)
 	if len(matches) == 5 {

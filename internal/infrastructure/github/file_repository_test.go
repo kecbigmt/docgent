@@ -25,7 +25,7 @@ func TestFileRepository_Create(t *testing.T) {
 			file: &data.File{
 				Path:    "test.md",
 				Content: "Hello, world!",
-				SourceURIs: []data.URI{
+				SourceURIs: []*data.URI{
 					data.NewURIUnsafe("https://slack.com/archives/C01234567/p123456789"),
 				},
 			},
@@ -72,7 +72,7 @@ func TestFileRepository_Create(t *testing.T) {
 			file: &data.File{
 				Path:    "test.md",
 				Content: "Hello, world!",
-				SourceURIs: []data.URI{
+				SourceURIs: []*data.URI{
 					data.NewURIUnsafe("https://slack.com/archives/C01234567/p123456789"),
 				},
 			},
@@ -101,7 +101,7 @@ func TestFileRepository_Create(t *testing.T) {
 			file: &data.File{
 				Path:    "test.md",
 				Content: "Hello, world!",
-				SourceURIs: []data.URI{
+				SourceURIs: []*data.URI{
 					data.NewURIUnsafe("https://slack.com/archives/C01234567/p123456789"),
 				},
 			},
@@ -162,7 +162,7 @@ func TestFileRepository_Update(t *testing.T) {
 			file: &data.File{
 				Path:    "test.md",
 				Content: "Hello, world!",
-				SourceURIs: []data.URI{
+				SourceURIs: []*data.URI{
 					data.NewURIUnsafe("https://slack.com/archives/C01234567/p123456789"),
 				},
 			},
@@ -207,7 +207,7 @@ func TestFileRepository_Update(t *testing.T) {
 			file: &data.File{
 				Path:    "test.md",
 				Content: "Hello, world!",
-				SourceURIs: []data.URI{
+				SourceURIs: []*data.URI{
 					data.NewURIUnsafe("https://slack.com/archives/C01234567/p123456789"),
 				},
 			},
@@ -235,7 +235,7 @@ func TestFileRepository_Update(t *testing.T) {
 			file: &data.File{
 				Path:    "test.md",
 				Content: "Hello, world!",
-				SourceURIs: []data.URI{
+				SourceURIs: []*data.URI{
 					data.NewURIUnsafe("https://slack.com/archives/C01234567/p123456789"),
 				},
 			},
@@ -312,7 +312,7 @@ func TestFileRepository_Get(t *testing.T) {
 			want: &data.File{
 				Path:    "test.md",
 				Content: "Hello, world!",
-				SourceURIs: []data.URI{
+				SourceURIs: []*data.URI{
 					data.NewURIUnsafe("https://slack.com/archives/C01234567/p123456789"),
 				},
 			},

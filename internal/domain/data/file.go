@@ -6,7 +6,7 @@ import "context"
 type File struct {
 	Path       string
 	Content    string
-	SourceURIs []URI
+	SourceURIs []*URI
 }
 
 // FileRepository はファイルの永続化を担当

@@ -49,9 +49,9 @@ func (m *MockConversationService) Reply(input string) error {
 	return args.Error(0)
 }
 
-func (m *MockConversationService) URI() data.URI {
+func (m *MockConversationService) URI() *data.URI {
 	args := m.Called()
-	return args.Get(0).(data.URI)
+	return args.Get(0).(*data.URI)
 }
 
 func (m *MockConversationService) GetHistory() ([]port.ConversationMessage, error) {
@@ -178,7 +178,7 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileRepository *MockFileRepository, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus) {
 				conversationService.On("MarkEyes").Return(nil).Once()
 				conversationService.On("RemoveEyes").Return(nil).Once()
-				conversationService.On("GetURI").Return("https://app.slack.com/client/T00000000/C00000000/thread/T00000000-00000000").Once()
+				conversationService.On("URI").Return(data.NewURIUnsafe("https://app.slack.com/client/T00000000/C00000000/thread/T00000000-00000000")).Once()
 
 				conversationService.On("GetHistory").Return([]port.ConversationMessage{
 					{Author: "user", Content: "APIの仕様書を作成してください"},
@@ -228,7 +228,7 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileRepository *MockFileRepository, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus) {
 				conversationService.On("MarkEyes").Return(nil).Once()
 				conversationService.On("RemoveEyes").Return(nil).Once()
-				conversationService.On("GetURI").Return("https://app.slack.com/client/T00000000/C00000000/thread/T00000000-00000000").Once()
+				conversationService.On("URI").Return(data.NewURIUnsafe("https://app.slack.com/client/T00000000/C00000000/thread/T00000000-00000000")).Once()
 				conversationService.On("GetHistory").Return([]port.ConversationMessage{
 					{Author: "user", Content: "APIの仕様書を作成してください"},
 					{Author: "assistant", Content: "承知しました。どのような内容を含めるべきでしょうか？"},
@@ -249,7 +249,7 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileRepository *MockFileRepository, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus) {
 				conversationService.On("MarkEyes").Return(nil).Once()
 				conversationService.On("RemoveEyes").Return(nil).Once()
-				conversationService.On("GetURI").Return("https://app.slack.com/client/T00000000/C00000000/thread/T00000000-00000000").Once()
+				conversationService.On("URI").Return(data.NewURIUnsafe("https://app.slack.com/client/T00000000/C00000000/thread/T00000000-00000000")).Once()
 
 				conversationService.On("GetHistory").Return([]port.ConversationMessage{
 					{Author: "user", Content: "APIの仕様書を作成してください"},
