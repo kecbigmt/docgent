@@ -111,7 +111,7 @@ func (w *ProposalGenerateUsecase) Execute(ctx context.Context) (domain.ProposalH
 
 	var task strings.Builder
 	task.WriteString("<task>\n")
-	task.WriteString("Create/update documents based on the conversation history. And create a proposal for the changes.\n")
+	task.WriteString("Create a new proposal by following the proposal generation workflow.\n")
 	task.WriteString("</task>\n")
 	task.WriteString(fmt.Sprintf("<conversation uri=%q>\n", conversationURI.String()))
 	for _, msg := range chatHistory {
@@ -146,7 +146,7 @@ func buildSystemInstructionToGenerateProposal(
 
 	environments := []domain.EnvironmentContext{
 		domain.NewEnvironmentContext("Approved documents file tree", fileTreeStr.String()),
-		domain.NewEnvironmentContext("Effective proposal generation workflow", `1. RESEARCH relevant knowledge from approved documents (secondary sources)
+		domain.NewEnvironmentContext("Proposal generation workflow", `1. RESEARCH relevant knowledge from approved documents (secondary sources)
   a. Use query_rag to search for related existing documents
   b. Use find_file to examine full content of existing documents
   c. Determine whether to update existing documents or create new ones

@@ -118,7 +118,7 @@ func (w *ProposalRefineUsecase) Refine(proposalHandle domain.ProposalHandle, use
 
 	task := fmt.Sprintf(`<task>
 You've submitted a proposal to create/update documents.
-Now, you are given a user feedback. You should refine the proposal based on the user feedback.
+Now, you are given a user feedback. Refine the proposal based on the user feedback by following the proposal refinement workflow.
 </task>
 <user_feedback uri=%q>
 %s
@@ -150,7 +150,7 @@ func buildSystemInstructionToRefineProposal(fileTree []port.TreeMetadata, propos
 	environments := []domain.EnvironmentContext{
 		domain.NewEnvironmentContext("Approved documents file tree", fileTreeStr.String()),
 		domain.NewEnvironmentContext("Current proposal files", newFilesStr),
-		domain.NewEnvironmentContext("Effective document refinement workflow", `1. DISCOVER context with find_file (locate source URLs in documents)
+		domain.NewEnvironmentContext("Proposal refinement workflow", `1. DISCOVER context with find_file (locate source URLs in documents)
 2. UNDERSTAND original discussions with find_source (primary sources)
 3. EXPAND knowledge with query_rag (secondary sources)
 4. PRESERVE context when modifying documents
