@@ -156,7 +156,7 @@ func buildSystemInstructionToGenerateProposal(
   b. UPDATE existing documents with modify_file, rename_file, or delete_file
   c. Add primary source URLs to the existing documents with link_sources
   d. YAML frontmatter is auto-generated, manual creation not required
-4. CREATE new proposal with create_proposal. Title should be brief and descriptive. Description should be detailed and include all the changes you made. You should use create_proposal only after you changed files.
+4. CREATE new proposal with create_proposal. Title should be brief and descriptive. Description should be detailed and include all the changes you made and the primary source URLs. You should use create_proposal only after you changed files.
 5. COMPLETE the task with attempt_complete.`),
 	}
 
