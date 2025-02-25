@@ -15,7 +15,7 @@ func (c *Corpus) Query(ctx context.Context, query string, similarityTopK int32, 
 	documents := make([]port.RAGDocument, len(response.Contexts.Contexts))
 	for i, context := range response.Contexts.Contexts {
 		documents[i] = port.RAGDocument{
-			Source:  context.SourceUri,
+			Source:  context.SourceURI,
 			Content: context.Text,
 			Score:   context.Score,
 		}

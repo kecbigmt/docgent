@@ -33,12 +33,12 @@ func TestClient_RetrieveContexts(t *testing.T) {
 								Contexts: []*RetrievalContext{
 									{
 										Text:      "test content 1",
-										SourceUri: "source1.md",
+										SourceURI: "source1.md",
 										Score:     0.9,
 									},
 									{
 										Text:      "test content 2",
-										SourceUri: "source2.md",
+										SourceURI: "source2.md",
 										Score:     0.8,
 									},
 								},
@@ -52,12 +52,12 @@ func TestClient_RetrieveContexts(t *testing.T) {
 					Contexts: []*RetrievalContext{
 						{
 							Text:      "test content 1",
-							SourceUri: "source1.md",
+							SourceURI: "source1.md",
 							Score:     0.9,
 						},
 						{
 							Text:      "test content 2",
-							SourceUri: "source2.md",
+							SourceURI: "source2.md",
 							Score:     0.8,
 						},
 					},
