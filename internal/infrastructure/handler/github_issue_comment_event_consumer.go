@@ -57,8 +57,8 @@ func (c *GitHubIssueCommentEventConsumer) ConsumeEvent(event interface{}) {
 		c.logger.Error("Failed to convert event data to IssueCommentEvent")
 		return
 	}
-	c.logger.Info("Processing issue comment event", zap.String("action", ev.GetAction()))
 
+	action := ev.GetAction()
 	installationID := ev.GetInstallation().GetID()
 	repo := ev.GetRepo()
 	repoName := repo.GetName()
@@ -66,13 +66,11 @@ func (c *GitHubIssueCommentEventConsumer) ConsumeEvent(event interface{}) {
 	ownerName := repo.GetOwner().GetLogin()
 	issueNumber := strconv.Itoa(ev.Issue.GetNumber())
 
-	workspace, err := c.applicationConfigService.GetWorkspaceByGitHubInstallationID(installationID)
-	if err != nil {
-		if err == ErrWorkspaceNotFound {
-			c.logger.Warn("Unknown GitHub installation ID", zap.Int64("installation_id", installationID))
-			return
-		}
-		c.logger.Error("Failed to get workspace", zap.Error(err))
+	if action != "created" {
+		c.logger.Debug(
+			"Skip non-created issue comment event",
+			zap.String("action", action),
+		)
 		return
 	}
 
@@ -92,6 +90,16 @@ func (c *GitHubIssueCommentEventConsumer) ConsumeEvent(event interface{}) {
 			"Skipping non-user comment",
 			zap.String("pull_request", pullRequestPath),
 		)
+		return
+	}
+
+	workspace, err := c.applicationConfigService.GetWorkspaceByGitHubInstallationID(installationID)
+	if err != nil {
+		if err == ErrWorkspaceNotFound {
+			c.logger.Warn("Unknown GitHub installation ID", zap.Int64("installation_id", installationID))
+			return
+		}
+		c.logger.Error("Failed to get workspace", zap.Error(err))
 		return
 	}
 
