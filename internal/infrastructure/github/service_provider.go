@@ -53,6 +53,11 @@ func (p *ServiceProvider) NewFileRepository(installationID int64, owner, repo, b
 	return NewFileRepository(p.api.NewClient(installationID), owner, repo, branch)
 }
 
+// NewSourceRepository creates a source repository with the proper context
+func (p *ServiceProvider) NewSourceRepository(installationID int64) *SourceRepository {
+	return NewSourceRepository(p.api.NewClient(installationID))
+}
+
 // NewBranchService creates a branch service with the proper context
 func (p *ServiceProvider) NewBranchService(installationID int64, owner, repo string) *BranchService {
 	return NewBranchService(p.api.NewClient(installationID), owner, repo)
