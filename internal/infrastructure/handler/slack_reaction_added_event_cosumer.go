@@ -86,6 +86,11 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 	fileQueryService := h.githubServiceProvider.NewFileQueryService(workspace.GitHubInstallationID, workspace.GitHubOwner, workspace.GitHubRepo, newBranchName)
 	fileRepository := h.githubServiceProvider.NewFileRepository(workspace.GitHubInstallationID, workspace.GitHubOwner, workspace.GitHubRepo, newBranchName)
 
+	sourceRepositories := []port.SourceRepository{
+		h.slackServiceProvider.NewSourceRepository(),
+		h.githubServiceProvider.NewSourceRepository(workspace.GitHubInstallationID),
+	}
+
 	githubPullRequestAPI := h.githubServiceProvider.NewPullRequestAPI(workspace.GitHubInstallationID, workspace.GitHubOwner, workspace.GitHubRepo, baseBranchName, newBranchName)
 
 	var options []application.NewProposalGenerateUsecaseOption
@@ -100,6 +105,7 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 		conversationService,
 		fileQueryService,
 		fileRepository,
+		sourceRepositories,
 		githubPullRequestAPI,
 		options...,
 	)

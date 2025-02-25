@@ -13,6 +13,7 @@ import (
 	"docgent/internal/application/port"
 	"docgent/internal/domain"
 	infragithub "docgent/internal/infrastructure/github"
+	"docgent/internal/infrastructure/slack"
 )
 
 type GitHubIssueCommentEventConsumerParams struct {
@@ -21,6 +22,7 @@ type GitHubIssueCommentEventConsumerParams struct {
 	ChatModel                domain.ChatModel
 	Logger                   *zap.Logger
 	GitHubServiceProvider    *infragithub.ServiceProvider
+	SlackServiceProvider     *slack.ServiceProvider
 	RAGService               port.RAGService
 	ApplicationConfigService ApplicationConfigService
 }
@@ -29,6 +31,7 @@ type GitHubIssueCommentEventConsumer struct {
 	chatModel                domain.ChatModel
 	logger                   *zap.Logger
 	githubServiceProvider    *infragithub.ServiceProvider
+	slackServiceProvider     *slack.ServiceProvider
 	ragService               port.RAGService
 	applicationConfigService ApplicationConfigService
 }
@@ -38,6 +41,7 @@ func NewGitHubIssueCommentEventConsumer(params GitHubIssueCommentEventConsumerPa
 		chatModel:                params.ChatModel,
 		logger:                   params.Logger,
 		githubServiceProvider:    params.GitHubServiceProvider,
+		slackServiceProvider:     params.SlackServiceProvider,
 		ragService:               params.RAGService,
 		applicationConfigService: params.ApplicationConfigService,
 	}
@@ -111,6 +115,11 @@ func (c *GitHubIssueCommentEventConsumer) ConsumeEvent(event interface{}) {
 	// Create file change service
 	fileRepository := c.githubServiceProvider.NewFileRepository(installationID, ownerName, repoName, headBranch)
 
+	sourceRepositories := []port.SourceRepository{
+		c.githubServiceProvider.NewSourceRepository(installationID),
+		c.slackServiceProvider.NewSourceRepository(),
+	}
+
 	// Create proposal service
 	// TODO: PRの作成以外ではブランチ名が不要なので、サービスを分ける
 	proposalService := c.githubServiceProvider.NewPullRequestAPI(installationID, ownerName, repoName, defaultBranch, "")
@@ -127,7 +136,8 @@ func (c *GitHubIssueCommentEventConsumer) ConsumeEvent(event interface{}) {
 		conversationService, // Comment management
 		fileQueryService,    // File operations
 		fileRepository,      // File operations
-		proposalService,     // PR management
+		sourceRepositories,
+		proposalService, // PR management
 		options...,
 	)
 
