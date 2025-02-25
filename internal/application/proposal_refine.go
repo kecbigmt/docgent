@@ -113,7 +113,7 @@ func (w *ProposalRefineUsecase) Refine(proposalHandle domain.ProposalHandle, use
 You submitted a proposal to create/update documents.
 Now, you are given a user feedback.
 Use query_rag to find relevant existing documents and refine the proposal based on the user feedback.
-When you change any files, you should set uri to each file as a knowledge source using create_file or add_knowledge_sources.
+When you change any files, you should set uri to each file as a knowledge source using create_file or link_sources.
 </task>
 <user_feedback uri=%q>
 %s
