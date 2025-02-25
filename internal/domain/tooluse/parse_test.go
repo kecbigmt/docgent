@@ -100,6 +100,14 @@ func TestParse(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "find_source",
+			xmlStr: `<find_source>
+				<uri>https://slack.com/archives/C01234567/p123456789</uri>
+			</find_source>`,
+			want:    NewFindSource("https://slack.com/archives/C01234567/p123456789"),
+			wantErr: false,
+		},
+		{
 			name: "invalid_command",
 			xmlStr: `<unknown_command>
 				<path>test.txt</path>
@@ -173,6 +181,11 @@ func TestParse(t *testing.T) {
 					assert.Equal(t, wantLink.FilePath, gotLink.FilePath)
 					assert.Equal(t, wantLink.URIs, gotLink.URIs)
 					return "knowledge sources added", false, nil
+				},
+				FindSource: func(gotFindSource FindSource) (string, bool, error) {
+					wantFindSource := tt.want.(FindSource)
+					assert.Equal(t, wantFindSource.URI, gotFindSource.URI)
+					return "knowledge source found", false, nil
 				},
 			})
 		})

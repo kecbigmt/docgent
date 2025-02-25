@@ -86,6 +86,12 @@ func Parse(xmlStr string) (Union, error) {
 			return nil, fmt.Errorf("failed to unmarshal query_rag: %w", err)
 		}
 		return qr, nil
+	case "find_source":
+		var fs FindSource
+		if err := xml.Unmarshal([]byte(xmlStr), &fs); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal find_source: %w", err)
+		}
+		return fs, nil
 	default:
 		return nil, fmt.Errorf("unknown command: %s", startElement.Name.Local)
 	}

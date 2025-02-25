@@ -12,4 +12,5 @@ type Cases struct {
 	UpdateProposal  func(UpdateProposal) (string, bool, error)
 	QueryRAG        func(QueryRAG) (string, bool, error)
 	LinkSources     func(LinkSources) (string, bool, error)
+	FindSource      func(FindSource) (string, bool, error)
 }
