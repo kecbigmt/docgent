@@ -123,6 +123,7 @@ func TestProposalRefineUsecase_Refine(t *testing.T) {
 				conversationService,
 				fileQueryService,
 				fileRepository,
+				[]port.SourceRepository{},
 				proposalRepository,
 				WithProposalRefineRAGCorpus(ragCorpus),
 			)

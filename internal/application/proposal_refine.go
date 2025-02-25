@@ -17,6 +17,7 @@ type ProposalRefineUsecase struct {
 	conversationService port.ConversationService
 	fileQueryService    port.FileQueryService
 	fileRepository      data.FileRepository
+	sourceRepositories  []port.SourceRepository
 	proposalRepository  domain.ProposalRepository
 	ragCorpus           port.RAGCorpus
 	remainingStepCount  int
@@ -35,6 +36,7 @@ func NewProposalRefineUsecase(
 	conversationService port.ConversationService,
 	fileQueryService port.FileQueryService,
 	fileRepository data.FileRepository,
+	sourceRepositories []port.SourceRepository,
 	proposalRepository domain.ProposalRepository,
 	options ...NewProposalRefineUsecaseOption,
 ) *ProposalRefineUsecase {
@@ -43,6 +45,7 @@ func NewProposalRefineUsecase(
 		conversationService: conversationService,
 		fileQueryService:    fileQueryService,
 		fileRepository:      fileRepository,
+		sourceRepositories:  sourceRepositories,
 		proposalRepository:  proposalRepository,
 		remainingStepCount:  10,
 	}
@@ -85,6 +88,8 @@ func (w *ProposalRefineUsecase) Refine(proposalHandle domain.ProposalHandle, use
 		return fmt.Errorf("failed to get docgent rules file: %w", err)
 	}
 
+	sourceRepositoryManager := port.NewSourceRepositoryManager(w.sourceRepositories)
+
 	var fileChanged bool
 
 	// ハンドラーの初期化
@@ -93,6 +98,7 @@ func (w *ProposalRefineUsecase) Refine(proposalHandle domain.ProposalHandle, use
 	fileChangeHandler := tooluse.NewFileChangeHandler(ctx, w.fileRepository, &fileChanged)
 	queryRAGHandler := tooluse.NewQueryRAGHandler(ctx, w.ragCorpus)
 	linkSourcesHandler := tooluse.NewLinkSourcesHandler(ctx, w.fileRepository, &fileChanged)
+	findSourceHandler := tooluse.NewFindSourceHandler(ctx, sourceRepositoryManager)
 
 	// ツールケースの設定
 	cases := domaintooluse.Cases{
@@ -101,6 +107,7 @@ func (w *ProposalRefineUsecase) Refine(proposalHandle domain.ProposalHandle, use
 		ChangeFile:      fileChangeHandler.Handle,
 		QueryRAG:        queryRAGHandler.Handle,
 		LinkSources:     linkSourcesHandler.Handle,
+		FindSource:      findSourceHandler.Handle,
 	}
 
 	agent := domain.NewAgent(
@@ -156,6 +163,7 @@ func buildSystemInstructionToRefineProposal(fileTree []port.TreeMetadata, propos
 		domaintooluse.FindFileUsage,
 		domaintooluse.AttemptCompleteUsage,
 		domaintooluse.LinkSourcesUsage,
+		domaintooluse.FindSourceUsage,
 	}
 
 	if docgentRulesFile != nil {

@@ -18,6 +18,7 @@ type ProposalGenerateUsecase struct {
 	conversationService port.ConversationService
 	fileQueryService    port.FileQueryService
 	fileRepository      data.FileRepository
+	sourceRepositories  []port.SourceRepository
 	proposalRepository  domain.ProposalRepository
 	ragCorpus           port.RAGCorpus
 	remainingStepCount  int
@@ -36,6 +37,7 @@ func NewProposalGenerateUsecase(
 	conversationService port.ConversationService,
 	fileQueryService port.FileQueryService,
 	fileRepository data.FileRepository,
+	sourceRepositories []port.SourceRepository,
 	proposalRepository domain.ProposalRepository,
 	options ...NewProposalGenerateUsecaseOption,
 ) *ProposalGenerateUsecase {
@@ -75,6 +77,8 @@ func (w *ProposalGenerateUsecase) Execute(ctx context.Context) (domain.ProposalH
 		return domain.ProposalHandle{}, fmt.Errorf("failed to get docgent rules file: %w", err)
 	}
 
+	sourceRepositoryManager := port.NewSourceRepositoryManager(w.sourceRepositories)
+
 	var proposalHandle domain.ProposalHandle
 	var fileChanged bool
 
@@ -85,6 +89,7 @@ func (w *ProposalGenerateUsecase) Execute(ctx context.Context) (domain.ProposalH
 	queryRAGHandler := tooluse.NewQueryRAGHandler(ctx, w.ragCorpus)
 	generateProposalHandler := tooluse.NewGenerateProposalHandler(w.proposalRepository, &fileChanged, &proposalHandle)
 	linkSourcesHandler := tooluse.NewLinkSourcesHandler(ctx, w.fileRepository, &fileChanged)
+	findSourceHandler := tooluse.NewFindSourceHandler(ctx, sourceRepositoryManager)
 
 	// ツールケースの設定
 	cases := domaintooluse.Cases{
@@ -94,6 +99,7 @@ func (w *ProposalGenerateUsecase) Execute(ctx context.Context) (domain.ProposalH
 		QueryRAG:        queryRAGHandler.Handle,
 		CreateProposal:  generateProposalHandler.Handle,
 		LinkSources:     linkSourcesHandler.Handle,
+		FindSource:      findSourceHandler.Handle,
 	}
 
 	agent := domain.NewAgent(
@@ -168,6 +174,7 @@ func buildSystemInstructionToGenerateProposal(
 		domaintooluse.CreateProposalUsage,
 		domaintooluse.AttemptCompleteUsage,
 		domaintooluse.LinkSourcesUsage,
+		domaintooluse.FindSourceUsage,
 	}
 
 	if ragEnabled {

@@ -298,6 +298,7 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 				conversationService,
 				fileQueryService,
 				fileRepository,
+				[]port.SourceRepository{},
 				proposalRepository,
 				WithProposalGenerateRAGCorpus(ragCorpus),
 			)
