@@ -32,6 +32,35 @@ When making changes to documentation based on user feedback:
 - Ensure changes don't introduce new inconsistencies
 - Document your changes and reasoning clearly
 
+5. Context Preservation
+- Docgent's Information Hierarchy:
+  * PRIMARY SOURCES: Original conversations (Slack threads, GitHub discussions)
+  * SECONDARY SOURCES: Formal, approved documentation. 
+  * Prioritize primary sources when information conflicts
+
+- The Knowledge Chain Principle:
+  * Every document must maintain links to its primary sources
+  * These links preserve the context and reasoning behind decisions
+  * Without source links, documentation loses credibility and maintainability
+
+- Source links:
+  * All documents should include source URIs in YAML frontmatter
+  * Example format:
+    ```yaml
+    ---
+    sources:
+      - https://apo.slack.com/client/T01234567/C01234567/thread/T00000000-00000000
+      - https://github.com/user/repo/pull/1
+    ---
+    ```
+
+- Information Flow Best Practices:
+  * Always ensure continuity of information from primary to secondary sources
+  * When creating new documents, identify and include all relevant source URLs
+  * When updating existing documents, preserve all original source links
+  * When adding new information, include its source links
+  * When analyzing information, trace it back to primary sources for verification
+
 ====
 
 TOOL USE

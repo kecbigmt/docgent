@@ -62,6 +62,7 @@ func (w *ProposalGenerateUsecase) Execute(ctx context.Context) (domain.ProposalH
 	defer w.conversationService.RemoveEyes()
 
 	conversationURI := w.conversationService.URI()
+
 	chatHistory, err := w.conversationService.GetHistory()
 	if err != nil {
 		return domain.ProposalHandle{}, fmt.Errorf("failed to get chat history: %w", err)
@@ -104,22 +105,21 @@ func (w *ProposalGenerateUsecase) Execute(ctx context.Context) (domain.ProposalH
 
 	agent := domain.NewAgent(
 		w.chatModel,
-		buildSystemInstructionToGenerateProposal(conversationURI, chatHistory, tree, docgentRulesFile, w.ragCorpus != nil),
+		buildSystemInstructionToGenerateProposal(tree, docgentRulesFile, w.ragCorpus != nil),
 		cases,
 	)
 
-	task := `<task>
-1. Analyze the chat history. Use query_rag to find relevant existing documents and find_file to check the file content.
-2. Use create_file, modify_file, rename_file, delete_file to change files for the best documentation. You should set conversation uri to each file as a knowledge source using create_file or add_knowledge_sources.
-3. Use create_proposal to create a proposal based on the document file changes.
-4. Use attempt_complete to complete the task.
+	var task strings.Builder
+	task.WriteString("<task>\n")
+	task.WriteString("Create/update documents based on the conversation history. And create a proposal for the changes.\n")
+	task.WriteString("</task>\n")
+	task.WriteString(fmt.Sprintf("<conversation uri=%q>\n", conversationURI.String()))
+	for _, msg := range chatHistory {
+		task.WriteString(fmt.Sprintf("<message author=%q>\n%s\n</message>\n", msg.Author, msg.Content))
+	}
+	task.WriteString("</conversation>\n")
 
-You should use create_proposal only after you changed files.
-You should not use modify_file unless the file is obviously relevant to your chat history. Basically, use create_file instead.
-</task>
-`
-
-	err = agent.InitiateTaskLoop(ctx, task, w.remainingStepCount)
+	err = agent.InitiateTaskLoop(ctx, task.String(), w.remainingStepCount)
 	if err != nil {
 		if err := w.conversationService.Reply("Something went wrong while generating the proposal"); err != nil {
 			return domain.ProposalHandle{}, fmt.Errorf("failed to reply error message: %w", err)
@@ -135,28 +135,29 @@ You should not use modify_file unless the file is obviously relevant to your cha
 }
 
 func buildSystemInstructionToGenerateProposal(
-	conversationURI *data.URI,
-	chatHistory []port.ConversationMessage,
 	fileTree []port.TreeMetadata,
 	docgentRulesFile *data.File,
 	ragEnabled bool,
 ) *domain.SystemInstruction {
-
-	var conversationStr strings.Builder
-	conversationStr.WriteString(fmt.Sprintf("<conversation uri=%q>\n", conversationURI.String()))
-	for _, msg := range chatHistory {
-		conversationStr.WriteString(fmt.Sprintf("<message author=%q>\n%s\n</message>\n", msg.Author, msg.Content))
-	}
-	conversationStr.WriteString("</conversation>\n")
-
 	var fileTreeStr strings.Builder
 	for _, metadata := range fileTree {
 		fileTreeStr.WriteString(fmt.Sprintf("- %s\n", metadata.Path))
 	}
 
 	environments := []domain.EnvironmentContext{
-		domain.NewEnvironmentContext("Conversation", conversationStr.String()),
-		domain.NewEnvironmentContext("File tree", fileTreeStr.String()),
+		domain.NewEnvironmentContext("Approved documents file tree", fileTreeStr.String()),
+		domain.NewEnvironmentContext("Effective proposal generation workflow", `1. RESEARCH relevant knowledge from approved documents (secondary sources)
+  a. Use query_rag to search for related existing documents
+  b. Use find_file to examine full content of existing documents
+  c. Determine whether to update existing documents or create new ones
+2. (Optional) UNDERSTAND original discussions (primary sources) with find_source. You can find source URIs in YAML frontmatter of existing documents.
+3. GENERATE document increments
+  a. CREATE new documents with create_file. You should specify primary source URLs within create_file.
+  b. UPDATE existing documents with modify_file, rename_file, or delete_file
+  c. Add primary source URLs to the existing documents with link_sources
+  d. YAML frontmatter is auto-generated, manual creation not required
+4. CREATE new proposal with create_proposal. Title should be brief and descriptive. Description should be detailed and include all the changes you made. You should use create_proposal only after you changed files.
+5. COMPLETE the task with attempt_complete.`),
 	}
 
 	if docgentRulesFile != nil {

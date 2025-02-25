@@ -117,15 +117,12 @@ func (w *ProposalRefineUsecase) Refine(proposalHandle domain.ProposalHandle, use
 	)
 
 	task := fmt.Sprintf(`<task>
-You submitted a proposal to create/update documents.
-Now, you are given a user feedback.
-Use query_rag to find relevant existing documents and refine the proposal based on the user feedback.
-When you change any files, you should set uri to each file as a knowledge source using create_file or link_sources.
+You've submitted a proposal to create/update documents.
+Now, you are given a user feedback. You should refine the proposal based on the user feedback.
 </task>
 <user_feedback uri=%q>
 %s
-</user_feedback>
-`, conversationURI.String(), userFeedback)
+</user_feedback>`, conversationURI.String(), userFeedback)
 
 	err = agent.InitiateTaskLoop(ctx, task, w.remainingStepCount)
 	if err != nil {
@@ -151,8 +148,13 @@ func buildSystemInstructionToRefineProposal(fileTree []port.TreeMetadata, propos
 	newFilesStr := strings.Join(newFiles, "\n")
 
 	environments := []domain.EnvironmentContext{
-		domain.NewEnvironmentContext("File tree", fileTreeStr.String()),
+		domain.NewEnvironmentContext("Approved documents file tree", fileTreeStr.String()),
 		domain.NewEnvironmentContext("Current proposal files", newFilesStr),
+		domain.NewEnvironmentContext("Effective document refinement workflow", `1. DISCOVER context with find_file (locate source URLs in documents)
+2. UNDERSTAND original discussions with find_source (primary sources)
+3. EXPAND knowledge with query_rag (secondary sources)
+4. PRESERVE context when modifying documents
+5. ADD new context with link_sources`),
 	}
 
 	toolUses := []domaintooluse.Usage{
