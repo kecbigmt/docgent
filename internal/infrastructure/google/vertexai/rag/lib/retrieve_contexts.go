@@ -41,8 +41,8 @@ type RetrieveContexts struct {
 }
 
 type RetrievalContext struct {
-	SourceUri         string  `json:"source_uri"`
-	SourceDisplayName string  `json:"source_display_name"`
+	SourceURI         string  `json:"sourceUri"`
+	SourceDisplayName string  `json:"sourceDisplayName"`
 	Text              string  `json:"text"`
 	Score             float64 `json:"score"`
 }

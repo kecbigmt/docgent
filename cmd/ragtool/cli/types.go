@@ -19,6 +19,13 @@ type CLI struct {
 		Delete struct {
 			CorpusID string `arg:"" required:"" help:"ID of the RAG corpus to delete"`
 		} `cmd:"" help:"Delete a RAG corpus"`
+
+		Retrieve struct {
+			CorpusID                string  `arg:"" required:"" help:"ID of the RAG corpus to search"`
+			Query                   string  `required:"" help:"Search query text"`
+			TopK                    int32   `help:"Number of top results to return" default:"5"`
+			VectorDistanceThreshold float64 `help:"Threshold for vector distance matching" default:"0.7"`
+		} `cmd:"" help:"Search in a RAG corpus"`
 	} `cmd:"" help:"Manage RAG corpus"`
 
 	File struct {
@@ -27,7 +34,7 @@ type CLI struct {
 			CorpusID    string `required:"" help:"ID of the RAG corpus"`
 			Description string `help:"Description of the file"`
 			ChunkSize   int    `help:"Size of each chunk" default:"1000"`
-			Overlap     int    `help:"Overlap size between chunks" default:"100"`
+			Overlap     int    `help:"Overlap between chunks" default:"100"`
 		} `cmd:"" help:"Upload a file to the RAG corpus"`
 
 		Delete struct {

@@ -68,7 +68,8 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 
 	threadTimestamp := ev.Item.Timestamp
 
-	conversationService := h.slackServiceProvider.NewConversationService(ev.Item.Channel, threadTimestamp, threadTimestamp)
+	ref := slack.NewConversationRef(workspace.SlackWorkspaceID, ev.Item.Channel, threadTimestamp, threadTimestamp)
+	conversationService := h.slackServiceProvider.NewConversationService(ref)
 
 	ctx := context.Background()
 	baseBranchName := workspace.GitHubDefaultBranch
@@ -83,7 +84,12 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 	}
 
 	fileQueryService := h.githubServiceProvider.NewFileQueryService(workspace.GitHubInstallationID, workspace.GitHubOwner, workspace.GitHubRepo, newBranchName)
-	fileChangeService := h.githubServiceProvider.NewFileChangeService(workspace.GitHubInstallationID, workspace.GitHubOwner, workspace.GitHubRepo, newBranchName)
+	fileRepository := h.githubServiceProvider.NewFileRepository(workspace.GitHubInstallationID, workspace.GitHubOwner, workspace.GitHubRepo, newBranchName)
+
+	sourceRepositories := []port.SourceRepository{
+		h.slackServiceProvider.NewSourceRepository(),
+		h.githubServiceProvider.NewSourceRepository(workspace.GitHubInstallationID),
+	}
 
 	githubPullRequestAPI := h.githubServiceProvider.NewPullRequestAPI(workspace.GitHubInstallationID, workspace.GitHubOwner, workspace.GitHubRepo, baseBranchName, newBranchName)
 
@@ -98,7 +104,8 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 		h.chatModel,
 		conversationService,
 		fileQueryService,
-		fileChangeService,
+		fileRepository,
+		sourceRepositories,
 		githubPullRequestAPI,
 		options...,
 	)

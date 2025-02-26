@@ -7,15 +7,18 @@ import (
 	"strings"
 
 	"docgent/internal/application/port"
+	"docgent/internal/application/tooluse"
 	"docgent/internal/domain"
-	"docgent/internal/domain/tooluse"
+	"docgent/internal/domain/data"
+	domaintooluse "docgent/internal/domain/tooluse"
 )
 
 type ProposalGenerateUsecase struct {
 	chatModel           domain.ChatModel
 	conversationService port.ConversationService
 	fileQueryService    port.FileQueryService
-	fileChangeService   port.FileChangeService
+	fileRepository      data.FileRepository
+	sourceRepositories  []port.SourceRepository
 	proposalRepository  domain.ProposalRepository
 	ragCorpus           port.RAGCorpus
 	remainingStepCount  int
@@ -33,7 +36,8 @@ func NewProposalGenerateUsecase(
 	chatModel domain.ChatModel,
 	conversationService port.ConversationService,
 	fileQueryService port.FileQueryService,
-	fileChangeService port.FileChangeService,
+	fileRepository data.FileRepository,
+	sourceRepositories []port.SourceRepository,
 	proposalRepository domain.ProposalRepository,
 	options ...NewProposalGenerateUsecaseOption,
 ) *ProposalGenerateUsecase {
@@ -41,7 +45,7 @@ func NewProposalGenerateUsecase(
 		chatModel:           chatModel,
 		conversationService: conversationService,
 		fileQueryService:    fileQueryService,
-		fileChangeService:   fileChangeService,
+		fileRepository:      fileRepository,
 		proposalRepository:  proposalRepository,
 		remainingStepCount:  10,
 	}
@@ -56,6 +60,8 @@ func NewProposalGenerateUsecase(
 func (w *ProposalGenerateUsecase) Execute(ctx context.Context) (domain.ProposalHandle, error) {
 	go w.conversationService.MarkEyes()
 	defer w.conversationService.RemoveEyes()
+
+	conversationURI := w.conversationService.URI()
 
 	chatHistory, err := w.conversationService.GetHistory()
 	if err != nil {
@@ -72,113 +78,48 @@ func (w *ProposalGenerateUsecase) Execute(ctx context.Context) (domain.ProposalH
 		return domain.ProposalHandle{}, fmt.Errorf("failed to get docgent rules file: %w", err)
 	}
 
+	sourceRepositoryManager := port.NewSourceRepositoryManager(w.sourceRepositories)
+
 	var proposalHandle domain.ProposalHandle
 	var fileChanged bool
 
+	// ハンドラーの初期化
+	attemptCompleteHandler := tooluse.NewAttemptCompleteHandler(w.conversationService)
+	findFileHandler := tooluse.NewFindFileHandler(ctx, w.fileQueryService)
+	fileChangeHandler := tooluse.NewFileChangeHandler(ctx, w.fileRepository, &fileChanged)
+	queryRAGHandler := tooluse.NewQueryRAGHandler(ctx, w.ragCorpus)
+	generateProposalHandler := tooluse.NewGenerateProposalHandler(w.proposalRepository, &fileChanged, &proposalHandle)
+	linkSourcesHandler := tooluse.NewLinkSourcesHandler(ctx, w.fileRepository, &fileChanged)
+	findSourceHandler := tooluse.NewFindSourceHandler(ctx, sourceRepositoryManager)
+
+	// ツールケースの設定
+	cases := domaintooluse.Cases{
+		AttemptComplete: attemptCompleteHandler.Handle,
+		FindFile:        findFileHandler.Handle,
+		ChangeFile:      fileChangeHandler.Handle,
+		QueryRAG:        queryRAGHandler.Handle,
+		CreateProposal:  generateProposalHandler.Handle,
+		LinkSources:     linkSourcesHandler.Handle,
+		FindSource:      findSourceHandler.Handle,
+	}
+
 	agent := domain.NewAgent(
 		w.chatModel,
-		buildSystemInstructionToGenerateProposal(chatHistory, tree, docgentRulesFile, w.ragCorpus != nil),
-		tooluse.Cases{
-			AttemptComplete: func(toolUse tooluse.AttemptComplete) (string, bool, error) {
-				if err := w.conversationService.Reply(toolUse.Message); err != nil {
-					return "", false, fmt.Errorf("failed to reply: %w", err)
-				}
-				return "", true, nil
-			},
-			FindFile: func(toolUse tooluse.FindFile) (string, bool, error) {
-				file, err := w.fileQueryService.FindFile(ctx, toolUse.Path)
-				if err != nil {
-					if errors.Is(err, port.ErrFileNotFound) {
-						return fmt.Sprintf("<error>File not found: %s</error>", toolUse.Path), false, nil
-					}
-					return "", false, err
-				}
-				return fmt.Sprintf("<success>\n<content>%s</content>\n</success>", file.Content), false, nil
-			},
-			ChangeFile: func(toolUse tooluse.ChangeFile) (string, bool, error) {
-				change := toolUse.Unwrap()
-				cases := tooluse.ChangeFileCases{
-					CreateFile: func(c tooluse.CreateFile) (string, bool, error) {
-						err := w.fileChangeService.CreateFile(ctx, c.Path, c.Content)
-						if err != nil {
-							return "", false, err
-						}
-						fileChanged = true
-						return "<success>File created</success>", false, nil
-					},
-					ModifyFile: func(c tooluse.ModifyFile) (string, bool, error) {
-						err := w.fileChangeService.ModifyFile(ctx, c.Path, c.Hunks)
-						if err != nil {
-							return "", false, err
-						}
-						fileChanged = true
-						return "<success>File modified</success>", false, nil
-					},
-					RenameFile: func(c tooluse.RenameFile) (string, bool, error) {
-						err := w.fileChangeService.RenameFile(ctx, c.OldPath, c.NewPath, c.Hunks)
-						if err != nil {
-							return "", false, err
-						}
-						fileChanged = true
-						return "<success>File renamed</success>", false, nil
-					},
-					DeleteFile: func(c tooluse.DeleteFile) (string, bool, error) {
-						err := w.fileChangeService.DeleteFile(ctx, c.Path)
-						if err != nil {
-							return "", false, err
-						}
-						fileChanged = true
-						return "<success>File deleted</success>", false, nil
-					},
-				}
-				return change.Match(cases)
-			},
-			CreateProposal: func(toolUse tooluse.CreateProposal) (string, bool, error) {
-				if !fileChanged {
-					return "<error>No file changes. You should change files before creating a proposal.</error>", false, nil
-				}
-				content := domain.NewProposalContent(toolUse.Title, toolUse.Description)
-				handle, err := w.proposalRepository.CreateProposal(domain.Diffs{}, content)
-				if err != nil {
-					return "", false, err
-				}
-				proposalHandle = handle
-				return fmt.Sprintf("<success>Proposal created: %s</success>", handle.Value), false, nil
-			},
-			QueryRAG: func(toolUse tooluse.QueryRAG) (string, bool, error) {
-				if w.ragCorpus == nil {
-					return "<error>RAG corpus is not set.</error>", false, nil
-				}
-				docs, err := w.ragCorpus.Query(ctx, toolUse.Query, 10, 0.7)
-				if err != nil {
-					return fmt.Sprintf("<error>Failed to query RAG: %s</error>", err), false, nil
-				}
-				if len(docs) == 0 {
-					return "<success>No relevant documents found.</success>", false, nil
-				}
-				var result strings.Builder
-				result.WriteString("<success>\n")
-				for _, doc := range docs {
-					result.WriteString(fmt.Sprintf("<document source=%q score=%.2f>\n%s\n</document>\n", doc.Source, doc.Score, doc.Content))
-				}
-				result.WriteString("</success>")
-				return result.String(), false, nil
-			},
-		},
+		buildSystemInstructionToGenerateProposal(tree, docgentRulesFile, w.ragCorpus != nil),
+		cases,
 	)
 
-	task := `<task>
-1. Analyze the chat history. Use query_rag to find relevant existing documents and find_file to check the file content.
-2. Use create_file, modify_file, rename_file, delete_file to change files for the best documentation.
-3. Use create_proposal to create a proposal based on the document file changes. You should contain the chat history in the proposal description as a reference.
-4. Use attempt_complete to complete the task.
+	var task strings.Builder
+	task.WriteString("<task>\n")
+	task.WriteString("Create a new proposal by following the proposal generation workflow.\n")
+	task.WriteString("</task>\n")
+	task.WriteString(fmt.Sprintf("<conversation uri=%q>\n", conversationURI.String()))
+	for _, msg := range chatHistory {
+		task.WriteString(fmt.Sprintf("<message author=%q>\n%s\n</message>\n", msg.Author, msg.Content))
+	}
+	task.WriteString("</conversation>\n")
 
-You should use create_proposal only after you changed files.
-You should not use modify_file unless the file is obviously relevant to your chat history. Basically, use create_file instead.
-</task>
-`
-
-	err = agent.InitiateTaskLoop(ctx, task, w.remainingStepCount)
+	err = agent.InitiateTaskLoop(ctx, task.String(), w.remainingStepCount)
 	if err != nil {
 		if err := w.conversationService.Reply("Something went wrong while generating the proposal"); err != nil {
 			return domain.ProposalHandle{}, fmt.Errorf("failed to reply error message: %w", err)
@@ -194,24 +135,29 @@ You should not use modify_file unless the file is obviously relevant to your cha
 }
 
 func buildSystemInstructionToGenerateProposal(
-	chatHistory []port.ConversationMessage,
 	fileTree []port.TreeMetadata,
-	docgentRulesFile *port.File,
+	docgentRulesFile *data.File,
 	ragEnabled bool,
 ) *domain.SystemInstruction {
-	var chatHistoryStr strings.Builder
-	for _, msg := range chatHistory {
-		chatHistoryStr.WriteString(fmt.Sprintf("<message author=%q>\n%s\n</message>\n", msg.Author, msg.Content))
-	}
-
 	var fileTreeStr strings.Builder
 	for _, metadata := range fileTree {
 		fileTreeStr.WriteString(fmt.Sprintf("- %s\n", metadata.Path))
 	}
 
 	environments := []domain.EnvironmentContext{
-		domain.NewEnvironmentContext("Chat history", chatHistoryStr.String()),
-		domain.NewEnvironmentContext("File tree", fileTreeStr.String()),
+		domain.NewEnvironmentContext("Approved documents file tree", fileTreeStr.String()),
+		domain.NewEnvironmentContext("Proposal generation workflow", `1. RESEARCH relevant knowledge from approved documents (secondary sources)
+  a. Use query_rag to search for related existing documents
+  b. Use find_file to examine full content of existing documents
+  c. Determine whether to update existing documents or create new ones
+2. (Optional) UNDERSTAND original discussions (primary sources) with find_source. You can find source URIs in YAML frontmatter of existing documents.
+3. GENERATE document increments
+  a. CREATE new documents with create_file. You should specify primary source URLs within create_file.
+  b. UPDATE existing documents with modify_file, rename_file, or delete_file
+  c. Add primary source URLs to the existing documents with link_sources
+  d. YAML frontmatter is auto-generated, manual creation not required
+4. CREATE new proposal with create_proposal. Title should be brief and descriptive. Description should be detailed and include all the changes you made and the primary source URLs. You should use create_proposal only after you changed files.
+5. COMPLETE the task with attempt_complete.`),
 	}
 
 	if docgentRulesFile != nil {
@@ -220,18 +166,20 @@ func buildSystemInstructionToGenerateProposal(
 %s`, docgentRulesFile.Content)))
 	}
 
-	toolUses := []tooluse.Usage{
-		tooluse.CreateFileUsage,
-		tooluse.ModifyFileUsage,
-		tooluse.DeleteFileUsage,
-		tooluse.RenameFileUsage,
-		tooluse.FindFileUsage,
-		tooluse.CreateProposalUsage,
-		tooluse.AttemptCompleteUsage,
+	toolUses := []domaintooluse.Usage{
+		domaintooluse.CreateFileUsage,
+		domaintooluse.ModifyFileUsage,
+		domaintooluse.DeleteFileUsage,
+		domaintooluse.RenameFileUsage,
+		domaintooluse.FindFileUsage,
+		domaintooluse.CreateProposalUsage,
+		domaintooluse.AttemptCompleteUsage,
+		domaintooluse.LinkSourcesUsage,
+		domaintooluse.FindSourceUsage,
 	}
 
 	if ragEnabled {
-		toolUses = append(toolUses, tooluse.QueryRAGUsage)
+		toolUses = append(toolUses, domaintooluse.QueryRAGUsage)
 	}
 
 	systemInstruction := domain.NewSystemInstruction(
@@ -242,7 +190,7 @@ func buildSystemInstructionToGenerateProposal(
 	return systemInstruction
 }
 
-func getDocgentRulesFileIfExists(ctx context.Context, fileQueryService port.FileQueryService, fileTree []port.TreeMetadata) (*port.File, error) {
+func getDocgentRulesFileIfExists(ctx context.Context, fileQueryService port.FileQueryService, fileTree []port.TreeMetadata) (*data.File, error) {
 	for _, metadata := range fileTree {
 		if metadata.Path == ".docgentrules" {
 			file, err := fileQueryService.FindFile(ctx, ".docgentrules")

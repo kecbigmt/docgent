@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"docgent/internal/application/port"
+	"docgent/internal/domain/data"
 
 	"github.com/google/go-github/v68/github"
 )
@@ -25,7 +26,7 @@ func NewFileQueryService(client *github.Client, owner, repo, branch string) *Fil
 	}
 }
 
-func (s *FileQueryService) FindFile(ctx context.Context, path string) (port.File, error) {
+func (s *FileQueryService) FindFile(ctx context.Context, path string) (data.File, error) {
 	// ファイルの内容を取得
 	fileContent, _, _, err := s.client.Repositories.GetContents(
 		ctx,
@@ -38,18 +39,18 @@ func (s *FileQueryService) FindFile(ctx context.Context, path string) (port.File
 	)
 	if err != nil {
 		if _, ok := err.(*github.ErrorResponse); ok && err.(*github.ErrorResponse).Response.StatusCode == 404 {
-			return port.File{}, port.ErrFileNotFound
+			return data.File{}, port.ErrFileNotFound
 		}
-		return port.File{}, fmt.Errorf("failed to get file contents: %w", err)
+		return data.File{}, fmt.Errorf("failed to get file contents: %w", err)
 	}
 
 	// ファイルの内容をデコード
 	content, err := fileContent.GetContent()
 	if err != nil {
-		return port.File{}, fmt.Errorf("failed to decode file content: %w", err)
+		return data.File{}, fmt.Errorf("failed to decode file content: %w", err)
 	}
 
-	return port.File{
+	return data.File{
 		Path:    path,
 		Content: content,
 	}, nil

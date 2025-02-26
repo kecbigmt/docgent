@@ -1,6 +1,8 @@
 package slack
 
-import "docgent/internal/application/port"
+import (
+	"docgent/internal/application/port"
+)
 
 type ServiceProvider struct {
 	slackAPI *API
@@ -12,6 +14,10 @@ func NewServiceProvider(slackAPI *API) *ServiceProvider {
 	}
 }
 
-func (s *ServiceProvider) NewConversationService(channelID, threadTimestamp, sourceMessageTimestamp string) port.ConversationService {
-	return NewConversationService(s.slackAPI, channelID, threadTimestamp, sourceMessageTimestamp)
+func (s *ServiceProvider) NewConversationService(uri *ConversationRef) port.ConversationService {
+	return NewConversationService(s.slackAPI, uri)
+}
+
+func (s *ServiceProvider) NewSourceRepository() *SourceRepository {
+	return NewSourceRepository(s.slackAPI)
 }

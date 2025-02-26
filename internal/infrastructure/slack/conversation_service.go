@@ -2,43 +2,44 @@ package slack
 
 import (
 	"docgent/internal/application/port"
+	"docgent/internal/domain/data"
 	"fmt"
 
 	"github.com/slack-go/slack"
 )
 
 type ConversationService struct {
-	slackAPI               *API
-	channelID              string
-	threadTimestamp        string
-	sourceMessageTimestamp string
-	userNameMap            map[string]string
+	slackAPI    *API
+	ref         *ConversationRef
+	userNameMap map[string]string
 }
 
-func NewConversationService(slackAPI *API, channelID string, threadTimestamp string, sourceMessageTimestamp string) port.ConversationService {
+func NewConversationService(slackAPI *API, ref *ConversationRef) port.ConversationService {
 	return &ConversationService{
-		slackAPI:               slackAPI,
-		channelID:              channelID,
-		threadTimestamp:        threadTimestamp,
-		sourceMessageTimestamp: sourceMessageTimestamp,
-		userNameMap:            make(map[string]string),
+		slackAPI:    slackAPI,
+		ref:         ref,
+		userNameMap: make(map[string]string),
 	}
 }
 
 func (s *ConversationService) Reply(input string) error {
 	slackClient := s.slackAPI.GetClient()
 
-	slackClient.PostMessage(s.channelID, slack.MsgOptionText(input, false), slack.MsgOptionTS(s.threadTimestamp))
+	slackClient.PostMessage(s.ref.ChannelID(), slack.MsgOptionText(input, false), slack.MsgOptionTS(s.ref.ThreadTimestamp()))
 
 	return nil
+}
+
+func (s *ConversationService) URI() *data.URI {
+	return s.ref.ToURI()
 }
 
 func (s *ConversationService) GetHistory() ([]port.ConversationMessage, error) {
 	client := s.slackAPI.GetClient()
 
 	messages, _, _, err := client.GetConversationReplies(&slack.GetConversationRepliesParameters{
-		ChannelID: s.channelID,
-		Timestamp: s.threadTimestamp,
+		ChannelID: s.ref.ChannelID(),
+		Timestamp: s.ref.ThreadTimestamp(),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get thread messages: %w", err)
@@ -63,8 +64,8 @@ func (s *ConversationService) GetHistory() ([]port.ConversationMessage, error) {
 func (s *ConversationService) MarkEyes() error {
 	slackClient := s.slackAPI.GetClient()
 	err := slackClient.AddReaction("eyes", slack.ItemRef{
-		Channel:   s.channelID,
-		Timestamp: s.sourceMessageTimestamp,
+		Channel:   s.ref.ChannelID(),
+		Timestamp: s.ref.SourceMessageTimestamp(),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to add eyes reaction: %w", err)
@@ -75,8 +76,8 @@ func (s *ConversationService) MarkEyes() error {
 func (s *ConversationService) RemoveEyes() error {
 	slackClient := s.slackAPI.GetClient()
 	err := slackClient.RemoveReaction("eyes", slack.ItemRef{
-		Channel:   s.channelID,
-		Timestamp: s.sourceMessageTimestamp,
+		Channel:   s.ref.ChannelID(),
+		Timestamp: s.ref.SourceMessageTimestamp(),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to remove eyes reaction: %w", err)

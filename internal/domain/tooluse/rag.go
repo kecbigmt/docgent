@@ -13,17 +13,25 @@ type QueryRAG struct {
 
 var QueryRAGUsage = Usage{
 	Name:        "query_rag",
-	Description: "Searches for domain-specific related information from existing documents. Returns up to 10 documents sorted by descending relevance, but they may not necessarily be directly related. You should not use this tool if the question is not related to the domain.",
+	Description: "Search for domain-specific information in APPROVED DOCUMENTS (secondary sources)",
 	Parameters: []Parameter{
 		{
 			Name:        "query",
-			Description: "The query to search for. It is recommended to incorporate as many domain-specific terms as possible.",
+			Description: "The query to search for in the knowledge base of approved documents",
 			Required:    true,
 		},
 	},
 	Example: `<query_rag>
-    <query>Search query here</query>
-</query_rag>`,
+<query>What are the API endpoints for the user service?</query>
+</query_rag>
+
+IMPORTANT: This tool searches SECONDARY SOURCES (approved documents):
+- Use for broad knowledge discovery across all approved documents
+- Returns curated, organized information from multiple documents
+- Complements find_source which accesses primary sources
+- Best for general queries about documented knowledge
+- Not as detailed as primary sources for specific conversations
+- Use same language as the conversation history or the approved documents`,
 }
 
 func (t QueryRAG) Match(cases Cases) (string, bool, error) {

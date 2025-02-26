@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"docgent/internal/application/port"
+	"docgent/internal/domain/data"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -26,7 +27,7 @@ func TestRagFileSyncUsecase_Execute(t *testing.T) {
 			deletedFiles:  []string{},
 			setupMocks: func(ragCorpus *MockRAGCorpus, fileQueryService *MockFileQueryService) {
 				ragCorpus.On("ListFiles", mock.Anything).Return([]port.RAGFile{}, nil)
-				fileQueryService.On("FindFile", mock.Anything, "docs/new.md").Return(port.File{
+				fileQueryService.On("FindFile", mock.Anything, "docs/new.md").Return(data.File{
 					Path:    "docs/new.md",
 					Content: "新規ファイルの内容",
 				}, nil)
@@ -43,7 +44,7 @@ func TestRagFileSyncUsecase_Execute(t *testing.T) {
 				ragCorpus.On("ListFiles", mock.Anything).Return([]port.RAGFile{
 					{ID: 1, FileName: "docs/modified.md"},
 				}, nil)
-				fileQueryService.On("FindFile", mock.Anything, "docs/modified.md").Return(port.File{
+				fileQueryService.On("FindFile", mock.Anything, "docs/modified.md").Return(data.File{
 					Path:    "docs/modified.md",
 					Content: "更新されたファイルの内容",
 				}, nil)
@@ -82,7 +83,7 @@ func TestRagFileSyncUsecase_Execute(t *testing.T) {
 			deletedFiles:  []string{},
 			setupMocks: func(ragCorpus *MockRAGCorpus, fileQueryService *MockFileQueryService) {
 				ragCorpus.On("ListFiles", mock.Anything).Return([]port.RAGFile{}, nil)
-				fileQueryService.On("FindFile", mock.Anything, "docs/new.md").Return(port.File{}, errors.New("failed to find file"))
+				fileQueryService.On("FindFile", mock.Anything, "docs/new.md").Return(data.File{}, errors.New("failed to find file"))
 			},
 			expectedError: errors.New("failed to find file"),
 		},
@@ -93,7 +94,7 @@ func TestRagFileSyncUsecase_Execute(t *testing.T) {
 			deletedFiles:  []string{},
 			setupMocks: func(ragCorpus *MockRAGCorpus, fileQueryService *MockFileQueryService) {
 				ragCorpus.On("ListFiles", mock.Anything).Return([]port.RAGFile{}, nil)
-				fileQueryService.On("FindFile", mock.Anything, "docs/new.md").Return(port.File{
+				fileQueryService.On("FindFile", mock.Anything, "docs/new.md").Return(data.File{
 					Path:    "docs/new.md",
 					Content: "新規ファイルの内容",
 				}, nil)

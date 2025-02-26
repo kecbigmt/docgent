@@ -2,18 +2,13 @@ package port
 
 import (
 	"context"
-	"docgent/internal/domain/tooluse"
+	"docgent/internal/domain/data"
 	"errors"
 )
 
 var (
 	ErrFileNotFound = errors.New("file not found")
 )
-
-type File struct {
-	Path    string
-	Content string
-}
 
 type TreeMetadata struct {
 	Type TreeType
@@ -30,15 +25,8 @@ const (
 )
 
 type FileQueryService interface {
-	FindFile(ctx context.Context, path string) (File, error)
+	FindFile(ctx context.Context, path string) (data.File, error)
 	GetTree(ctx context.Context, options ...GetTreeOption) ([]TreeMetadata, error)
-}
-
-type FileChangeService interface {
-	CreateFile(ctx context.Context, path, content string) error
-	DeleteFile(ctx context.Context, path string) error
-	ModifyFile(ctx context.Context, path string, hunks []tooluse.Hunk) error
-	RenameFile(ctx context.Context, oldPath, newPath string, hunks []tooluse.Hunk) error
 }
 
 type GetTreeOption func(*GetTreeOptions)

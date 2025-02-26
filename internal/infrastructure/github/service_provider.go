@@ -20,13 +20,10 @@ func NewServiceProvider(api *API) *ServiceProvider {
 }
 
 // NewIssueCommentConversationService creates a conversation service with the proper context
-func (p *ServiceProvider) NewIssueCommentConversationService(installationID int64, owner, repo string, prNumber int, sourceCommentID int64) port.ConversationService {
+func (p *ServiceProvider) NewIssueCommentConversationService(installationID int64, ref *IssueCommentRef) port.ConversationService {
 	return NewIssueCommentConversationService(
 		p.api.NewClient(installationID),
-		owner,
-		repo,
-		prNumber,
-		sourceCommentID,
+		ref,
 	)
 }
 
@@ -46,9 +43,14 @@ func (p *ServiceProvider) NewFileQueryService(installationID int64, owner, repo,
 	return NewFileQueryService(p.api.NewClient(installationID), owner, repo, branch)
 }
 
-// NewFileChangeService creates a file change service with the proper context
-func (p *ServiceProvider) NewFileChangeService(installationID int64, owner, repo, branch string) port.FileChangeService {
-	return NewFileChangeService(p.api.NewClient(installationID), owner, repo, branch)
+// NewFileRepository creates a file repository with the proper context
+func (p *ServiceProvider) NewFileRepository(installationID int64, owner, repo, branch string) *FileRepository {
+	return NewFileRepository(p.api.NewClient(installationID), owner, repo, branch)
+}
+
+// NewSourceRepository creates a source repository with the proper context
+func (p *ServiceProvider) NewSourceRepository(installationID int64) *SourceRepository {
+	return NewSourceRepository(p.api.NewClient(installationID))
 }
 
 // NewBranchService creates a branch service with the proper context

@@ -13,6 +13,7 @@ import (
 	"docgent/internal/application/port"
 	"docgent/internal/domain"
 	infragithub "docgent/internal/infrastructure/github"
+	"docgent/internal/infrastructure/slack"
 )
 
 type GitHubIssueCommentEventConsumerParams struct {
@@ -21,6 +22,7 @@ type GitHubIssueCommentEventConsumerParams struct {
 	ChatModel                domain.ChatModel
 	Logger                   *zap.Logger
 	GitHubServiceProvider    *infragithub.ServiceProvider
+	SlackServiceProvider     *slack.ServiceProvider
 	RAGService               port.RAGService
 	ApplicationConfigService ApplicationConfigService
 }
@@ -29,6 +31,7 @@ type GitHubIssueCommentEventConsumer struct {
 	chatModel                domain.ChatModel
 	logger                   *zap.Logger
 	githubServiceProvider    *infragithub.ServiceProvider
+	slackServiceProvider     *slack.ServiceProvider
 	ragService               port.RAGService
 	applicationConfigService ApplicationConfigService
 }
@@ -38,6 +41,7 @@ func NewGitHubIssueCommentEventConsumer(params GitHubIssueCommentEventConsumerPa
 		chatModel:                params.ChatModel,
 		logger:                   params.Logger,
 		githubServiceProvider:    params.GitHubServiceProvider,
+		slackServiceProvider:     params.SlackServiceProvider,
 		ragService:               params.RAGService,
 		applicationConfigService: params.ApplicationConfigService,
 	}
@@ -53,8 +57,8 @@ func (c *GitHubIssueCommentEventConsumer) ConsumeEvent(event interface{}) {
 		c.logger.Error("Failed to convert event data to IssueCommentEvent")
 		return
 	}
-	c.logger.Info("Processing issue comment event", zap.String("action", ev.GetAction()))
 
+	action := ev.GetAction()
 	installationID := ev.GetInstallation().GetID()
 	repo := ev.GetRepo()
 	repoName := repo.GetName()
@@ -62,13 +66,11 @@ func (c *GitHubIssueCommentEventConsumer) ConsumeEvent(event interface{}) {
 	ownerName := repo.GetOwner().GetLogin()
 	issueNumber := strconv.Itoa(ev.Issue.GetNumber())
 
-	workspace, err := c.applicationConfigService.GetWorkspaceByGitHubInstallationID(installationID)
-	if err != nil {
-		if err == ErrWorkspaceNotFound {
-			c.logger.Warn("Unknown GitHub installation ID", zap.Int64("installation_id", installationID))
-			return
-		}
-		c.logger.Error("Failed to get workspace", zap.Error(err))
+	if action != "created" {
+		c.logger.Debug(
+			"Skip non-created issue comment event",
+			zap.String("action", action),
+		)
 		return
 	}
 
@@ -91,11 +93,22 @@ func (c *GitHubIssueCommentEventConsumer) ConsumeEvent(event interface{}) {
 		return
 	}
 
+	workspace, err := c.applicationConfigService.GetWorkspaceByGitHubInstallationID(installationID)
+	if err != nil {
+		if err == ErrWorkspaceNotFound {
+			c.logger.Warn("Unknown GitHub installation ID", zap.Int64("installation_id", installationID))
+			return
+		}
+		c.logger.Error("Failed to get workspace", zap.Error(err))
+		return
+	}
+
 	ctx := context.Background()
 
 	// Create conversation service with PR and comment context
 	commentID := ev.Comment.GetID()
-	conversationService := c.githubServiceProvider.NewIssueCommentConversationService(installationID, ownerName, repoName, ev.Issue.GetNumber(), commentID)
+	ref := infragithub.NewIssueCommentRef(ownerName, repoName, ev.Issue.GetNumber(), commentID)
+	conversationService := c.githubServiceProvider.NewIssueCommentConversationService(installationID, ref)
 
 	// Get PR head branch using service provider
 	headBranch, err := c.githubServiceProvider.GetPullRequestHeadBranch(ctx, installationID, ownerName, repoName, ev.Issue.GetNumber())
@@ -108,7 +121,12 @@ func (c *GitHubIssueCommentEventConsumer) ConsumeEvent(event interface{}) {
 	fileQueryService := c.githubServiceProvider.NewFileQueryService(installationID, ownerName, repoName, headBranch)
 
 	// Create file change service
-	fileChangeService := c.githubServiceProvider.NewFileChangeService(installationID, ownerName, repoName, headBranch)
+	fileRepository := c.githubServiceProvider.NewFileRepository(installationID, ownerName, repoName, headBranch)
+
+	sourceRepositories := []port.SourceRepository{
+		c.githubServiceProvider.NewSourceRepository(installationID),
+		c.slackServiceProvider.NewSourceRepository(),
+	}
 
 	// Create proposal service
 	// TODO: PRの作成以外ではブランチ名が不要なので、サービスを分ける
@@ -125,8 +143,9 @@ func (c *GitHubIssueCommentEventConsumer) ConsumeEvent(event interface{}) {
 		c.chatModel,         // AI interaction
 		conversationService, // Comment management
 		fileQueryService,    // File operations
-		fileChangeService,   // File operations
-		proposalService,     // PR management
+		fileRepository,      // File operations
+		sourceRepositories,
+		proposalService, // PR management
 		options...,
 	)
 
