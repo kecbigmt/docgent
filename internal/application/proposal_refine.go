@@ -72,7 +72,7 @@ func (w *ProposalRefineUsecase) Refine(proposalHandle domain.ProposalHandle, use
 	conversationURI := w.conversationService.URI()
 	proposal, err := w.proposalRepository.GetProposal(proposalHandle)
 	if err != nil {
-		if err := w.conversationService.Reply("Failed to retrieve proposal"); err != nil {
+		if err := w.conversationService.Reply("Failed to retrieve proposal", true); err != nil {
 			return fmt.Errorf("failed to reply error message: %w", err)
 		}
 		return fmt.Errorf("failed to retrieve proposal: %w", err)
@@ -126,7 +126,7 @@ Now, you are given a user feedback. Refine the proposal based on the user feedba
 
 	err = agent.InitiateTaskLoop(ctx, task, w.remainingStepCount)
 	if err != nil {
-		if err := w.conversationService.Reply("Something went wrong while refining the proposal"); err != nil {
+		if err := w.conversationService.Reply("Something went wrong while refining the proposal", true); err != nil {
 			return fmt.Errorf("failed to reply error message: %w", err)
 		}
 		return fmt.Errorf("failed to initiate task loop: %w", err)

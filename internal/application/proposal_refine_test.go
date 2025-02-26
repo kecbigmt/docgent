@@ -68,7 +68,7 @@ func TestProposalRefineUsecase_Refine(t *testing.T) {
 
 				// 3回目のメッセージ：タスクを完了
 				chatSession.On("SendMessage", mock.Anything, mock.Anything).Return(`<attempt_complete><message>提案を更新しました</message></attempt_complete>`, nil).Once()
-				conversationService.On("Reply", "提案を更新しました").Return(nil)
+				conversationService.On("Reply", "提案を更新しました", true).Return(nil)
 
 			},
 			expectedError: nil,
@@ -96,7 +96,7 @@ func TestProposalRefineUsecase_Refine(t *testing.T) {
 
 				chatModel.On("StartChat", mock.Anything).Return(chatSession)
 				chatSession.On("SendMessage", mock.Anything, mock.Anything).Return("", errors.New("failed to generate response"))
-				conversationService.On("Reply", "Something went wrong while refining the proposal").Return(nil)
+				conversationService.On("Reply", "Something went wrong while refining the proposal", true).Return(nil)
 			},
 			expectedError: errors.New("failed to initiate task loop: failed to generate response: failed to generate response"),
 		},

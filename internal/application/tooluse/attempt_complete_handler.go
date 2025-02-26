@@ -19,7 +19,7 @@ func NewAttemptCompleteHandler(conversationService port.ConversationService) *At
 }
 
 func (h *AttemptCompleteHandler) Handle(toolUse tooluse.AttemptComplete) (string, bool, error) {
-	if err := h.conversationService.Reply(toolUse.Message); err != nil {
+	if err := h.conversationService.Reply(toolUse.Message, true); err != nil {
 		return "", false, fmt.Errorf("failed to reply: %w", err)
 	}
 	return "", true, nil
