@@ -69,7 +69,7 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 	threadTimestamp := ev.Item.Timestamp
 
 	ref := slack.NewConversationRef(workspace.SlackWorkspaceID, ev.Item.Channel, threadTimestamp, threadTimestamp)
-	conversationService := h.slackServiceProvider.NewConversationService(ref)
+	conversationService := h.slackServiceProvider.NewConversationService(ref, ev.User)
 
 	ctx := context.Background()
 	baseBranchName := workspace.GitHubDefaultBranch
@@ -79,7 +79,7 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 	err := branchService.CreateBranch(ctx, baseBranchName, newBranchName)
 	if err != nil {
 		h.logger.Error("Failed to create branch", zap.Error(err))
-		conversationService.Reply(":warning: エラー: ブランチの作成に失敗しました")
+		conversationService.Reply(":warning: エラー: ブランチの作成に失敗しました", true)
 		return
 	}
 
@@ -112,15 +112,15 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 	proposalHandle, err := proposalGenerateUsecase.Execute(ctx)
 	if err != nil {
 		h.logger.Error("Failed to generate increment", zap.Error(err))
-		conversationService.Reply(":warning: エラー: ドキュメントの生成に失敗しました")
+		conversationService.Reply(":warning: エラー: ドキュメントの生成に失敗しました", true)
 		return
 	}
 
 	// 成功メッセージを投稿
 	conversationService.Reply(fmt.Sprintf(
-		"ドキュメントを生成しました！\nPR: https://github.com/%s/%s/pull/%s",
+		"PR: https://github.com/%s/%s/pull/%s",
 		workspace.GitHubOwner,
 		workspace.GitHubRepo,
 		proposalHandle.Value,
-	))
+	), false)
 }

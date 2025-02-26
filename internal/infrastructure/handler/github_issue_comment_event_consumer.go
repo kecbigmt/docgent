@@ -108,7 +108,8 @@ func (c *GitHubIssueCommentEventConsumer) ConsumeEvent(event interface{}) {
 	// Create conversation service with PR and comment context
 	commentID := ev.Comment.GetID()
 	ref := infragithub.NewIssueCommentRef(ownerName, repoName, ev.Issue.GetNumber(), commentID)
-	conversationService := c.githubServiceProvider.NewIssueCommentConversationService(installationID, ref)
+	fromUserID := ev.Comment.GetUser().GetLogin()
+	conversationService := c.githubServiceProvider.NewIssueCommentConversationService(installationID, ref, fromUserID)
 
 	// Get PR head branch using service provider
 	headBranch, err := c.githubServiceProvider.GetPullRequestHeadBranch(ctx, installationID, ownerName, repoName, ev.Issue.GetNumber())
