@@ -45,7 +45,7 @@ type UploadFileResponse struct {
 // References:
 // - Example: https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/rag-api-v1#upload-a-rag-file-example-api
 // - Parameters: https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/rag-api-v1#parameters-list
-func (c *Client) UploadFile(ctx context.Context, corpusId int64, file io.Reader, fileName string, options ...UploadFileOption) (File, error) {
+func (c *Client) UploadFile(ctx context.Context, corpusId int64, file io.Reader, displayName string, options ...UploadFileOption) (File, error) {
 	uploadFileOptions := &UploadFileOptions{}
 	for _, option := range options {
 		option(uploadFileOptions)
@@ -53,7 +53,7 @@ func (c *Client) UploadFile(ctx context.Context, corpusId int64, file io.Reader,
 
 	metadata := &UploadFileMetadata{
 		RagFile: &UploadFileMetadataRagFile{
-			DisplayName: fileName,
+			DisplayName: displayName,
 		},
 	}
 
@@ -86,7 +86,7 @@ func (c *Client) UploadFile(ctx context.Context, corpusId int64, file io.Reader,
 		return File{}, err
 	}
 
-	filePart, err := writer.CreateFormFile("file", fileName)
+	filePart, err := writer.CreateFormFile("file", displayName)
 	if err != nil {
 		return File{}, err
 	}
