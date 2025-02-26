@@ -16,15 +16,17 @@ type ReviewCommentConversationService struct {
 	prNumber        int
 	sourceCommentID int64
 	eyesReactionID  int64
+	fromUserID      string // ソースコメントの作者のID
 }
 
-func NewReviewCommentConversationService(client *github.Client, owner, repo string, prNumber int, sourceCommentID int64) port.ConversationService {
+func NewReviewCommentConversationService(client *github.Client, owner, repo string, prNumber int, sourceCommentID int64, fromUserID string) port.ConversationService {
 	return &ReviewCommentConversationService{
 		client:          client,
 		owner:           owner,
 		repo:            repo,
 		prNumber:        prNumber,
 		sourceCommentID: sourceCommentID,
+		fromUserID:      fromUserID,
 	}
 }
 
@@ -36,8 +38,13 @@ func (s *ReviewCommentConversationService) URI() *data.URI {
 	panic("not implemented")
 }
 
-func (s *ReviewCommentConversationService) Reply(input string) error {
+func (s *ReviewCommentConversationService) Reply(input string, withMention bool) error {
 	ctx := context.Background()
+
+	message := input
+	if withMention && s.fromUserID != "" {
+		message = fmt.Sprintf("@%s %s", s.fromUserID, input)
+	}
 
 	// ReviewCommentの場合は返信として新しいReviewCommentを作成
 	_, _, err := s.client.PullRequests.CreateCommentInReplyTo(
@@ -45,7 +52,7 @@ func (s *ReviewCommentConversationService) Reply(input string) error {
 		s.owner,
 		s.repo,
 		s.prNumber,
-		input,
+		message,
 		s.sourceCommentID,
 	)
 	if err != nil {

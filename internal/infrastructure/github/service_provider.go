@@ -20,21 +20,23 @@ func NewServiceProvider(api *API) *ServiceProvider {
 }
 
 // NewIssueCommentConversationService creates a conversation service with the proper context
-func (p *ServiceProvider) NewIssueCommentConversationService(installationID int64, ref *IssueCommentRef) port.ConversationService {
+func (p *ServiceProvider) NewIssueCommentConversationService(installationID int64, ref *IssueCommentRef, fromUserID string) port.ConversationService {
 	return NewIssueCommentConversationService(
 		p.api.NewClient(installationID),
 		ref,
+		fromUserID,
 	)
 }
 
 // NewReviewCommentConversationService creates a conversation service with the proper context
-func (p *ServiceProvider) NewReviewCommentConversationService(installationID int64, owner, repo string, prNumber int, sourceCommentID int64) port.ConversationService {
+func (p *ServiceProvider) NewReviewCommentConversationService(installationID int64, owner, repo string, prNumber int, sourceCommentID int64, fromUserID string) port.ConversationService {
 	return NewReviewCommentConversationService(
 		p.api.NewClient(installationID),
 		owner,
 		repo,
 		prNumber,
 		sourceCommentID,
+		fromUserID,
 	)
 }
 
