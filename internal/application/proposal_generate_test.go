@@ -44,8 +44,8 @@ type MockConversationService struct {
 	markEyesWaitGroup *sync.WaitGroup
 }
 
-func (m *MockConversationService) Reply(input string) error {
-	args := m.Called(input)
+func (m *MockConversationService) Reply(input string, withMention bool) error {
+	args := m.Called(input, withMention)
 	return args.Error(0)
 }
 
@@ -218,7 +218,7 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 
 				// 4回目のメッセージ：タスクを完了
 				chatSession.On("SendMessage", mock.Anything, mock.Anything).Return(`<attempt_complete><message>提案を作成しました</message></attempt_complete>`, nil).Once()
-				conversationService.On("Reply", "提案を作成しました").Return(nil)
+				conversationService.On("Reply", "提案を作成しました", true).Return(nil)
 			},
 			expectedHandle: domain.NewProposalHandle("github", "123"),
 			expectedError:  nil,
@@ -239,7 +239,7 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 				}, nil)
 				chatModel.On("StartChat", mock.Anything).Return(chatSession)
 				chatSession.On("SendMessage", mock.Anything, mock.Anything).Return("", errors.New("failed to generate response"))
-				conversationService.On("Reply", "Something went wrong while generating the proposal").Return(nil)
+				conversationService.On("Reply", "Something went wrong while generating the proposal", true).Return(nil)
 			},
 			expectedHandle: domain.ProposalHandle{},
 			expectedError:  errors.New("failed to initiate task loop: failed to generate response: failed to generate response"),
@@ -270,7 +270,7 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 				chatSession.On("SendMessage", mock.Anything, mock.Anything).Return(`<create_proposal><title>API仕様書の作成</title><description>APIの仕様書を作成します。</description></create_proposal>`, nil).Once()
 
 				proposalRepository.On("CreateProposal", domain.Diffs{}, mock.Anything).Return(domain.ProposalHandle{}, errors.New("failed to create proposal"))
-				conversationService.On("Reply", mock.Anything).Return(nil)
+				conversationService.On("Reply", mock.Anything, mock.Anything).Return(nil)
 			},
 			expectedHandle: domain.ProposalHandle{},
 			expectedError:  errors.New("failed to initiate task loop: failed to match tool use: failed to create proposal"),

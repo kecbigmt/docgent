@@ -121,7 +121,7 @@ func (w *ProposalGenerateUsecase) Execute(ctx context.Context) (domain.ProposalH
 
 	err = agent.InitiateTaskLoop(ctx, task.String(), w.remainingStepCount)
 	if err != nil {
-		if err := w.conversationService.Reply("Something went wrong while generating the proposal"); err != nil {
+		if err := w.conversationService.Reply("Something went wrong while generating the proposal", true); err != nil {
 			return domain.ProposalHandle{}, fmt.Errorf("failed to reply error message: %w", err)
 		}
 		return domain.ProposalHandle{}, fmt.Errorf("failed to initiate task loop: %w", err)

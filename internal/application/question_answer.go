@@ -63,7 +63,7 @@ func (u *QuestionAnswerUsecase) Execute(question string) error {
 		return err
 	}
 
-	if err := u.conversationService.Reply(response); err != nil {
+	if err := u.conversationService.Reply(response, false); err != nil {
 		return err
 	}
 

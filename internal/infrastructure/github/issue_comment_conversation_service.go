@@ -13,12 +13,14 @@ type IssueCommentConversationService struct {
 	client         *github.Client
 	ref            *IssueCommentRef
 	eyesReactionID int64
+	fromUserID     string // ソースコメントの作者のID
 }
 
-func NewIssueCommentConversationService(client *github.Client, ref *IssueCommentRef) port.ConversationService {
+func NewIssueCommentConversationService(client *github.Client, ref *IssueCommentRef, fromUserID string) port.ConversationService {
 	return &IssueCommentConversationService{
-		client: client,
-		ref:    ref,
+		client:     client,
+		ref:        ref,
+		fromUserID: fromUserID,
 	}
 }
 
@@ -44,12 +46,17 @@ func (s *IssueCommentConversationService) URI() *data.URI {
 	return s.ref.ToURI()
 }
 
-func (s *IssueCommentConversationService) Reply(input string) error {
+func (s *IssueCommentConversationService) Reply(input string, withMention bool) error {
 	ctx := context.Background()
+
+	message := input
+	if withMention && s.fromUserID != "" {
+		message = fmt.Sprintf("@%s\n%s", s.fromUserID, input)
+	}
 
 	// IssueCommentの場合は新しいIssueCommentを作成
 	comment := &github.IssueComment{
-		Body: github.Ptr(input),
+		Body: github.Ptr(message),
 	}
 	_, _, err := s.client.Issues.CreateComment(ctx, s.ref.Owner(), s.ref.Repo(), s.ref.PRNumber(), comment)
 	if err != nil {

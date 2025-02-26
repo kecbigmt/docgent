@@ -42,7 +42,7 @@ func TestQuestionAnswerUsecase_Execute(t *testing.T) {
 				chatSession.On("SendMessage", mock.Anything, "How do I use the API?").Return("Let me explain how to use the API.", nil)
 
 				// Reply
-				conversationService.On("Reply", "Let me explain how to use the API.").Return(nil)
+				conversationService.On("Reply", "Let me explain how to use the API.", false).Return(nil)
 			},
 			expectedError: nil,
 		},
@@ -55,7 +55,7 @@ func TestQuestionAnswerUsecase_Execute(t *testing.T) {
 
 				chatModel.On("StartChat", "You are a helpful assistant. Unfortunately, you do not have access to any domain-specific knowledge. Answer the question based on the general knowledge.").Return(chatSession)
 				chatSession.On("SendMessage", mock.Anything, "How do I use the API?").Return("Let me explain how to use the API.", nil)
-				conversationService.On("Reply", "Let me explain how to use the API.").Return(nil)
+				conversationService.On("Reply", "Let me explain how to use the API.", false).Return(nil)
 			},
 			expectedError: nil,
 			disableRAG:    true,
@@ -96,7 +96,7 @@ func TestQuestionAnswerUsecase_Execute(t *testing.T) {
 			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, ragCorpus *MockRAGCorpus) {
 				conversationService.On("MarkEyes").Return(nil).Once()
 				conversationService.On("RemoveEyes").Return(nil).Once()
-				conversationService.On("Reply", "Let me explain how to use the API.").Return(errors.New("failed to reply"))
+				conversationService.On("Reply", "Let me explain how to use the API.", false).Return(errors.New("failed to reply"))
 
 				ragCorpus.On("Query", mock.Anything, "How do I use the API?", int32(10), float64(0.5)).Return([]port.RAGDocument{
 					{

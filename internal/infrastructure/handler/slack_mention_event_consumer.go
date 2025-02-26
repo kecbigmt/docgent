@@ -56,7 +56,7 @@ func (c *SlackMentionEventConsumer) ConsumeEvent(event slackevents.EventsAPIInne
 
 	// 会話サービスを初期化
 	ref := slack.NewConversationRef(workspace.SlackWorkspaceID, appMentionEvent.Channel, threadTimestamp, sourceMessageTimestamp)
-	conversationService := c.slackServiceProvider.NewConversationService(ref)
+	conversationService := c.slackServiceProvider.NewConversationService(ref, appMentionEvent.User)
 
 	var options []application.NewQuestionAnswerUsecaseOption
 	// If VertexAICorpusID is set, use RAG corpus
@@ -74,7 +74,7 @@ func (c *SlackMentionEventConsumer) ConsumeEvent(event slackevents.EventsAPIInne
 	err := questionAnswerUsecase.Execute(question)
 	if err != nil {
 		c.log.Error("Failed to execute question answer usecase", zap.Error(err))
-		conversationService.Reply(":warning: エラー: 質問への回答に失敗しました")
+		conversationService.Reply(":warning: エラー: 質問への回答に失敗しました", false)
 		return
 	}
 }
