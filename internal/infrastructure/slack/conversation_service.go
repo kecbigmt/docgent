@@ -12,20 +12,30 @@ type ConversationService struct {
 	slackAPI    *API
 	ref         *ConversationRef
 	userNameMap map[string]string
+	fromUserID  string
 }
 
-func NewConversationService(slackAPI *API, ref *ConversationRef) port.ConversationService {
+func NewConversationService(slackAPI *API, ref *ConversationRef, fromUserID string) port.ConversationService {
 	return &ConversationService{
 		slackAPI:    slackAPI,
 		ref:         ref,
 		userNameMap: make(map[string]string),
+		fromUserID:  fromUserID,
 	}
 }
 
-func (s *ConversationService) Reply(input string) error {
+func (s *ConversationService) Reply(input string, withMention bool) error {
 	slackClient := s.slackAPI.GetClient()
 
-	slackClient.PostMessage(s.ref.ChannelID(), slack.MsgOptionText(input, false), slack.MsgOptionTS(s.ref.ThreadTimestamp()))
+	message := input
+	if withMention && s.fromUserID != "" {
+		message = fmt.Sprintf("<@%s>\n%s", s.fromUserID, input)
+	}
+
+	_, _, err := slackClient.PostMessage(s.ref.ChannelID(), slack.MsgOptionText(message, false), slack.MsgOptionTS(s.ref.ThreadTimestamp()))
+	if err != nil {
+		return fmt.Errorf("failed to post message: %w", err)
+	}
 
 	return nil
 }

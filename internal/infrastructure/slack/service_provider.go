@@ -14,8 +14,8 @@ func NewServiceProvider(slackAPI *API) *ServiceProvider {
 	}
 }
 
-func (s *ServiceProvider) NewConversationService(uri *ConversationRef) port.ConversationService {
-	return NewConversationService(s.slackAPI, uri)
+func (s *ServiceProvider) NewConversationService(ref *ConversationRef, fromUserID string) port.ConversationService {
+	return NewConversationService(s.slackAPI, ref, fromUserID)
 }
 
 func (s *ServiceProvider) NewSourceRepository() *SourceRepository {
