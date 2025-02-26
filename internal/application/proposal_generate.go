@@ -61,8 +61,6 @@ func (w *ProposalGenerateUsecase) Execute(ctx context.Context) (domain.ProposalH
 	go w.conversationService.MarkEyes()
 	defer w.conversationService.RemoveEyes()
 
-	conversationURI := w.conversationService.URI()
-
 	chatHistory, err := w.conversationService.GetHistory()
 	if err != nil {
 		return domain.ProposalHandle{}, fmt.Errorf("failed to get chat history: %w", err)
@@ -113,11 +111,7 @@ func (w *ProposalGenerateUsecase) Execute(ctx context.Context) (domain.ProposalH
 	task.WriteString("<task>\n")
 	task.WriteString("Create a new proposal by following the proposal generation workflow.\n")
 	task.WriteString("</task>\n")
-	task.WriteString(fmt.Sprintf("<conversation uri=%q>\n", conversationURI.String()))
-	for _, msg := range chatHistory {
-		task.WriteString(fmt.Sprintf("<message author=%q>\n%s\n</message>\n", msg.Author, msg.Content))
-	}
-	task.WriteString("</conversation>\n")
+	task.WriteString(chatHistory.ToXML())
 
 	err = agent.InitiateTaskLoop(ctx, task.String(), w.remainingStepCount)
 	if err != nil {

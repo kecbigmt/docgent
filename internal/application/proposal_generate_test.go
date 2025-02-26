@@ -54,9 +54,9 @@ func (m *MockConversationService) URI() *data.URI {
 	return args.Get(0).(*data.URI)
 }
 
-func (m *MockConversationService) GetHistory() ([]port.ConversationMessage, error) {
+func (m *MockConversationService) GetHistory() (port.ConversationHistory, error) {
 	args := m.Called()
-	return args.Get(0).([]port.ConversationMessage), args.Error(1)
+	return args.Get(0).(port.ConversationHistory), args.Error(1)
 }
 
 func (m *MockConversationService) MarkEyes() error {
@@ -178,12 +178,13 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileRepository *MockFileRepository, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus) {
 				conversationService.On("MarkEyes").Return(nil).Once()
 				conversationService.On("RemoveEyes").Return(nil).Once()
-				conversationService.On("URI").Return(data.NewURIUnsafe("https://app.slack.com/client/T00000000/C00000000/thread/T00000000-00000000")).Once()
-
-				conversationService.On("GetHistory").Return([]port.ConversationMessage{
-					{Author: "user", Content: "APIの仕様書を作成してください"},
-					{Author: "assistant", Content: "承知しました。どのような内容を含めるべきでしょうか？"},
-					{Author: "user", Content: "エンドポイント、リクエスト、レスポンスの形式を含めてください"},
+				conversationService.On("GetHistory").Return(port.ConversationHistory{
+					URI: data.NewURIUnsafe("https://app.slack.com/client/T00000000/C00000000/thread/T00000000-00000000"),
+					Messages: []port.ConversationMessage{
+						{Author: "user", Content: "APIの仕様書を作成してください"},
+						{Author: "docgent", Content: "承知しました。どのような内容を含めるべきでしょうか？", IsYou: true},
+						{Author: "user", Content: "エンドポイント、リクエスト、レスポンスの形式を含めてください"},
+					},
 				}, nil)
 
 				fileQueryService.On("GetTree", mock.Anything, mock.AnythingOfType("[]port.GetTreeOption")).Return([]port.TreeMetadata{
@@ -228,11 +229,13 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileRepository *MockFileRepository, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus) {
 				conversationService.On("MarkEyes").Return(nil).Once()
 				conversationService.On("RemoveEyes").Return(nil).Once()
-				conversationService.On("URI").Return(data.NewURIUnsafe("https://app.slack.com/client/T00000000/C00000000/thread/T00000000-00000000")).Once()
-				conversationService.On("GetHistory").Return([]port.ConversationMessage{
-					{Author: "user", Content: "APIの仕様書を作成してください"},
-					{Author: "assistant", Content: "承知しました。どのような内容を含めるべきでしょうか？"},
-					{Author: "user", Content: "エンドポイント、リクエスト、レスポンスの形式を含めてください"},
+				conversationService.On("GetHistory").Return(port.ConversationHistory{
+					URI: data.NewURIUnsafe("https://app.slack.com/client/T00000000/C00000000/thread/T00000000-00000000"),
+					Messages: []port.ConversationMessage{
+						{Author: "user", Content: "APIの仕様書を作成してください"},
+						{Author: "docgent", Content: "承知しました。どのような内容を含めるべきでしょうか？", IsYou: true},
+						{Author: "user", Content: "エンドポイント、リクエスト、レスポンスの形式を含めてください"},
+					},
 				}, nil)
 				fileQueryService.On("GetTree", mock.Anything, mock.AnythingOfType("[]port.GetTreeOption")).Return([]port.TreeMetadata{
 					{Path: "docs/api.md", Type: port.NodeTypeFile, Size: 100},
@@ -249,12 +252,13 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileRepository *MockFileRepository, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus) {
 				conversationService.On("MarkEyes").Return(nil).Once()
 				conversationService.On("RemoveEyes").Return(nil).Once()
-				conversationService.On("URI").Return(data.NewURIUnsafe("https://app.slack.com/client/T00000000/C00000000/thread/T00000000-00000000")).Once()
-
-				conversationService.On("GetHistory").Return([]port.ConversationMessage{
-					{Author: "user", Content: "APIの仕様書を作成してください"},
-					{Author: "assistant", Content: "承知しました。どのような内容を含めるべきでしょうか？"},
-					{Author: "user", Content: "エンドポイント、リクエスト、レスポンスの形式を含めてください"},
+				conversationService.On("GetHistory").Return(port.ConversationHistory{
+					URI: data.NewURIUnsafe("https://app.slack.com/client/T00000000/C00000000/thread/T00000000-00000000"),
+					Messages: []port.ConversationMessage{
+						{Author: "user", Content: "APIの仕様書を作成してください"},
+						{Author: "docgent", Content: "承知しました。どのような内容を含めるべきでしょうか？", IsYou: true},
+						{Author: "user", Content: "エンドポイント、リクエスト、レスポンスの形式を含めてください"},
+					},
 				}, nil)
 				fileQueryService.On("GetTree", mock.Anything, mock.AnythingOfType("[]port.GetTreeOption")).Return([]port.TreeMetadata{
 					{Path: "docs/api.md", Type: port.NodeTypeFile, Size: 100},
