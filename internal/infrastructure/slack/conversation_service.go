@@ -4,23 +4,22 @@ import (
 	"docgent/internal/application/port"
 	"docgent/internal/domain/data"
 	"fmt"
+	"strings"
 
 	"github.com/slack-go/slack"
 )
 
 type ConversationService struct {
-	slackAPI    *API
-	ref         *ConversationRef
-	userNameMap map[string]string
-	fromUserID  string
+	slackAPI   *API
+	ref        *ConversationRef
+	fromUserID string
 }
 
 func NewConversationService(slackAPI *API, ref *ConversationRef, fromUserID string) port.ConversationService {
 	return &ConversationService{
-		slackAPI:    slackAPI,
-		ref:         ref,
-		userNameMap: make(map[string]string),
-		fromUserID:  fromUserID,
+		slackAPI:   slackAPI,
+		ref:        ref,
+		fromUserID: fromUserID,
 	}
 }
 
@@ -44,7 +43,7 @@ func (s *ConversationService) URI() *data.URI {
 	return s.ref.ToURI()
 }
 
-func (s *ConversationService) GetHistory() ([]port.ConversationMessage, error) {
+func (s *ConversationService) GetHistory() (port.ConversationHistory, error) {
 	client := s.slackAPI.GetClient()
 
 	messages, _, _, err := client.GetConversationReplies(&slack.GetConversationRepliesParameters{
@@ -52,23 +51,29 @@ func (s *ConversationService) GetHistory() ([]port.ConversationMessage, error) {
 		Timestamp: s.ref.ThreadTimestamp(),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get thread messages: %w", err)
+		return port.ConversationHistory{}, fmt.Errorf("failed to get thread messages: %w", err)
 	}
+
+	authTest, err := client.AuthTest()
+	if err != nil {
+		return port.ConversationHistory{}, fmt.Errorf("failed to auth test: %w", err)
+	}
+	currentUserID := authTest.UserID
 
 	conversationMessages := make([]port.ConversationMessage, 0, len(messages))
 	for _, message := range messages {
-		author, err := s.getAuthorName(&message)
-		if err != nil {
-			return nil, err
-		}
-
 		conversationMessages = append(conversationMessages, port.ConversationMessage{
-			Author:  author,
-			Content: message.Text,
+			Author:       message.User,
+			Content:      message.Text,
+			YouMentioned: strings.Contains(message.Text, fmt.Sprintf("@%s", currentUserID)),
+			IsYou:        message.User == currentUserID,
 		})
 	}
 
-	return conversationMessages, nil
+	return port.ConversationHistory{
+		URI:      s.ref.ToURI(),
+		Messages: conversationMessages,
+	}, nil
 }
 
 func (s *ConversationService) MarkEyes() error {
@@ -93,31 +98,4 @@ func (s *ConversationService) RemoveEyes() error {
 		return fmt.Errorf("failed to remove eyes reaction: %w", err)
 	}
 	return nil
-}
-
-func (s *ConversationService) getAuthorName(message *slack.Message) (string, error) {
-	// Username is only available in bot messages
-	if message.Username != "" {
-		return message.Username, nil
-	}
-
-	// if it's not a bot message, use the user name cache
-	_, exists := s.userNameMap[message.User]
-	if exists {
-		return s.userNameMap[message.User], nil
-	}
-
-	// if the user name is not in the cache, get the user info
-	userInfo, err := s.slackAPI.GetClient().GetUserInfo(message.User)
-	if err != nil {
-		return "", fmt.Errorf("failed to get user info: %w", err)
-	}
-
-	// if the display name is set, use it
-	if userInfo.Profile.DisplayName != "" {
-		return userInfo.Profile.DisplayName, nil
-	}
-
-	// if the real name is set, use it
-	return userInfo.Profile.RealName, nil
 }
