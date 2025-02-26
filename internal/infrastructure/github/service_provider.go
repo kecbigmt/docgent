@@ -43,11 +43,6 @@ func (p *ServiceProvider) NewFileQueryService(installationID int64, owner, repo,
 	return NewFileQueryService(p.api.NewClient(installationID), owner, repo, branch)
 }
 
-// NewFileChangeService creates a file change service with the proper context
-func (p *ServiceProvider) NewFileChangeService(installationID int64, owner, repo, branch string) port.FileChangeService {
-	return NewFileChangeService(p.api.NewClient(installationID), owner, repo, branch)
-}
-
 // NewFileRepository creates a file repository with the proper context
 func (p *ServiceProvider) NewFileRepository(installationID int64, owner, repo, branch string) *FileRepository {
 	return NewFileRepository(p.api.NewClient(installationID), owner, repo, branch)
