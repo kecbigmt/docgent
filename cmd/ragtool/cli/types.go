@@ -32,6 +32,7 @@ type CLI struct {
 		Upload struct {
 			File        string `arg:"" help:"Path to the file to upload" type:"path"`
 			CorpusID    string `required:"" help:"ID of the RAG corpus"`
+			DisplayName string `help:"Display name for the file (defaults to file name if not specified)"`
 			Description string `help:"Description of the file"`
 			ChunkSize   int    `help:"Size of each chunk" default:"1000"`
 			Overlap     int    `help:"Overlap between chunks" default:"100"`

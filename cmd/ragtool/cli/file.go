@@ -26,7 +26,13 @@ func HandleFileUpload(ctx context.Context, cli *CLI, client *lib.Client) error {
 
 	fileName := filepath.Base(cli.File.Upload.File)
 
-	createdFile, err := client.UploadFile(ctx, corpusID, file, fileName, func(o *lib.UploadFileOptions) {
+	// DisplayNameが指定されていればそれを使用し、なければファイル名を使用
+	displayName := fileName
+	if cli.File.Upload.DisplayName != "" {
+		displayName = cli.File.Upload.DisplayName
+	}
+
+	createdFile, err := client.UploadFile(ctx, corpusID, file, displayName, func(o *lib.UploadFileOptions) {
 		if cli.File.Upload.Description != "" {
 			o.Description = cli.File.Upload.Description
 		}
