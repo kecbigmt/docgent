@@ -5,6 +5,7 @@ import (
 	"docgent/internal/application/port"
 	"docgent/internal/domain/data"
 	"fmt"
+	"strings"
 
 	"github.com/google/go-github/v68/github"
 )
@@ -24,22 +25,33 @@ func NewIssueCommentConversationService(client *github.Client, ref *IssueComment
 	}
 }
 
-func (s *IssueCommentConversationService) GetHistory() ([]port.ConversationMessage, error) {
+func (s *IssueCommentConversationService) GetHistory() (port.ConversationHistory, error) {
 	ctx := context.Background()
 	comments, _, err := s.client.PullRequests.ListComments(ctx, s.ref.Owner(), s.ref.Repo(), s.ref.PRNumber(), nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to list review comments: %w", err)
+		return port.ConversationHistory{}, fmt.Errorf("failed to list review comments: %w", err)
 	}
+
+	user, _, err := s.client.Users.Get(ctx, "")
+	if err != nil {
+		return port.ConversationHistory{}, fmt.Errorf("failed to get user: %w", err)
+	}
+	currentUserID := user.GetLogin()
 
 	conversationMessages := make([]port.ConversationMessage, 0, len(comments))
 	for _, comment := range comments {
 		conversationMessages = append(conversationMessages, port.ConversationMessage{
-			Author:  *comment.User.Login,
-			Content: *comment.Body,
+			Author:       *comment.User.Login,
+			Content:      *comment.Body,
+			YouMentioned: strings.Contains(*comment.Body, fmt.Sprintf("@%s", currentUserID)),
+			IsYou:        *comment.User.Login == currentUserID,
 		})
 	}
 
-	return conversationMessages, nil
+	return port.ConversationHistory{
+		URI:      s.ref.ToURI(),
+		Messages: conversationMessages,
+	}, nil
 }
 
 func (s *IssueCommentConversationService) URI() *data.URI {

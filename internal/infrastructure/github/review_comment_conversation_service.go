@@ -30,7 +30,7 @@ func NewReviewCommentConversationService(client *github.Client, owner, repo stri
 	}
 }
 
-func (s *ReviewCommentConversationService) GetHistory() ([]port.ConversationMessage, error) {
+func (s *ReviewCommentConversationService) GetHistory() (port.ConversationHistory, error) {
 	panic("not implemented")
 }
 
