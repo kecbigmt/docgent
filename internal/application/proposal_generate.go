@@ -21,6 +21,7 @@ type ProposalGenerateUsecase struct {
 	sourceRepositories  []port.SourceRepository
 	proposalRepository  domain.ProposalRepository
 	ragCorpus           port.RAGCorpus
+	responseFormatter   port.ResponseFormatter
 	remainingStepCount  int
 }
 
@@ -39,6 +40,7 @@ func NewProposalGenerateUsecase(
 	fileRepository data.FileRepository,
 	sourceRepositories []port.SourceRepository,
 	proposalRepository domain.ProposalRepository,
+	responseFormatter port.ResponseFormatter,
 	options ...NewProposalGenerateUsecaseOption,
 ) *ProposalGenerateUsecase {
 	workflow := &ProposalGenerateUsecase{
@@ -47,6 +49,7 @@ func NewProposalGenerateUsecase(
 		fileQueryService:    fileQueryService,
 		fileRepository:      fileRepository,
 		proposalRepository:  proposalRepository,
+		responseFormatter:   responseFormatter,
 		remainingStepCount:  10,
 	}
 
@@ -82,7 +85,7 @@ func (w *ProposalGenerateUsecase) Execute(ctx context.Context) (domain.ProposalH
 	var fileChanged bool
 
 	// ハンドラーの初期化
-	attemptCompleteHandler := tooluse.NewAttemptCompleteHandler(w.conversationService)
+	attemptCompleteHandler := tooluse.NewAttemptCompleteHandler(w.conversationService, w.responseFormatter)
 	findFileHandler := tooluse.NewFindFileHandler(ctx, w.fileQueryService)
 	fileChangeHandler := tooluse.NewFileChangeHandler(ctx, w.fileRepository, &fileChanged)
 	queryRAGHandler := tooluse.NewQueryRAGHandler(ctx, w.ragCorpus)

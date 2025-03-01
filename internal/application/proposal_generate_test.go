@@ -169,13 +169,13 @@ func (m *MockRAGCorpus) DeleteFile(ctx context.Context, fileID int64) error {
 func TestProposalGenerateUsecase_Execute(t *testing.T) {
 	tests := []struct {
 		name           string
-		setupMocks     func(*MockChatModel, *MockChatSession, *MockConversationService, *MockFileQueryService, *MockFileRepository, *MockProposalRepository, *MockRAGCorpus)
+		setupMocks     func(*MockChatModel, *MockChatSession, *MockConversationService, *MockFileQueryService, *MockFileRepository, *MockProposalRepository, *MockRAGCorpus, *MockResponseFormatter)
 		expectedHandle domain.ProposalHandle
 		expectedError  error
 	}{
 		{
 			name: "正常系：RAGを使用して提案が正常に生成される",
-			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileRepository *MockFileRepository, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus) {
+			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileRepository *MockFileRepository, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus, responseFormatter *MockResponseFormatter) {
 				conversationService.On("MarkEyes").Return(nil).Once()
 				conversationService.On("RemoveEyes").Return(nil).Once()
 				conversationService.On("GetHistory").Return(port.ConversationHistory{
@@ -219,6 +219,7 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 
 				// 4回目のメッセージ：タスクを完了
 				chatSession.On("SendMessage", mock.Anything, mock.Anything).Return(`<attempt_complete><message>提案を作成しました</message></attempt_complete>`, nil).Once()
+				responseFormatter.On("FormatResponse", mock.Anything).Return("提案を作成しました", nil)
 				conversationService.On("Reply", "提案を作成しました", true).Return(nil)
 			},
 			expectedHandle: domain.NewProposalHandle("github", "123"),
@@ -226,7 +227,7 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 		},
 		{
 			name: "エラー系：エージェントの実行に失敗する",
-			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileRepository *MockFileRepository, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus) {
+			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileRepository *MockFileRepository, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus, responseFormatter *MockResponseFormatter) {
 				conversationService.On("MarkEyes").Return(nil).Once()
 				conversationService.On("RemoveEyes").Return(nil).Once()
 				conversationService.On("GetHistory").Return(port.ConversationHistory{
@@ -249,7 +250,7 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 		},
 		{
 			name: "エラー系：提案の作成に失敗する",
-			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileRepository *MockFileRepository, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus) {
+			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileRepository *MockFileRepository, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus, responseFormatter *MockResponseFormatter) {
 				conversationService.On("MarkEyes").Return(nil).Once()
 				conversationService.On("RemoveEyes").Return(nil).Once()
 				conversationService.On("GetHistory").Return(port.ConversationHistory{
@@ -293,8 +294,9 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 			fileRepository := new(MockFileRepository)
 			proposalRepository := new(MockProposalRepository)
 			ragCorpus := new(MockRAGCorpus)
+			responseFormatter := new(MockResponseFormatter)
 
-			tt.setupMocks(chatModel, chatSession, conversationService, fileQueryService, fileRepository, proposalRepository, ragCorpus)
+			tt.setupMocks(chatModel, chatSession, conversationService, fileQueryService, fileRepository, proposalRepository, ragCorpus, responseFormatter)
 
 			// ワークフローの作成
 			workflow := NewProposalGenerateUsecase(
@@ -304,6 +306,7 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 				fileRepository,
 				[]port.SourceRepository{},
 				proposalRepository,
+				responseFormatter,
 				WithProposalGenerateRAGCorpus(ragCorpus),
 			)
 
@@ -328,6 +331,7 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 			fileRepository.AssertExpectations(t)
 			proposalRepository.AssertExpectations(t)
 			ragCorpus.AssertExpectations(t)
+			responseFormatter.AssertExpectations(t)
 		})
 	}
 }

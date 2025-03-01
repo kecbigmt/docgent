@@ -19,6 +19,7 @@ type ProposalRefineUsecase struct {
 	fileRepository      data.FileRepository
 	sourceRepositories  []port.SourceRepository
 	proposalRepository  domain.ProposalRepository
+	responseFormatter   port.ResponseFormatter
 	ragCorpus           port.RAGCorpus
 	remainingStepCount  int
 }
@@ -38,6 +39,7 @@ func NewProposalRefineUsecase(
 	fileRepository data.FileRepository,
 	sourceRepositories []port.SourceRepository,
 	proposalRepository domain.ProposalRepository,
+	responseFormatter port.ResponseFormatter,
 	options ...NewProposalRefineUsecaseOption,
 ) *ProposalRefineUsecase {
 	workflow := &ProposalRefineUsecase{
@@ -47,6 +49,7 @@ func NewProposalRefineUsecase(
 		fileRepository:      fileRepository,
 		sourceRepositories:  sourceRepositories,
 		proposalRepository:  proposalRepository,
+		responseFormatter:   responseFormatter,
 		remainingStepCount:  10,
 	}
 
@@ -93,7 +96,7 @@ func (w *ProposalRefineUsecase) Refine(proposalHandle domain.ProposalHandle, use
 	var fileChanged bool
 
 	// ハンドラーの初期化
-	attemptCompleteHandler := tooluse.NewAttemptCompleteHandler(w.conversationService)
+	attemptCompleteHandler := tooluse.NewAttemptCompleteHandler(w.conversationService, w.responseFormatter)
 	findFileHandler := tooluse.NewFindFileHandler(ctx, w.fileQueryService)
 	fileChangeHandler := tooluse.NewFileChangeHandler(ctx, w.fileRepository, &fileChanged)
 	queryRAGHandler := tooluse.NewQueryRAGHandler(ctx, w.ragCorpus)

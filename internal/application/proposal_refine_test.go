@@ -19,14 +19,14 @@ func TestProposalRefineUsecase_Refine(t *testing.T) {
 		name           string
 		proposalHandle domain.ProposalHandle
 		userFeedback   string
-		setupMocks     func(*MockChatModel, *MockChatSession, *MockConversationService, *MockFileQueryService, *MockFileRepository, *MockProposalRepository, *MockRAGCorpus)
+		setupMocks     func(*MockChatModel, *MockChatSession, *MockConversationService, *MockFileQueryService, *MockFileRepository, *MockProposalRepository, *MockRAGCorpus, *MockResponseFormatter)
 		expectedError  error
 	}{
 		{
 			name:           "正常系：RAGを使用して提案が正常に更新される",
 			proposalHandle: domain.NewProposalHandle("github", "123"),
 			userFeedback:   "エンドポイントの説明をもう少し詳しくしてください",
-			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileRepository *MockFileRepository, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus) {
+			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileRepository *MockFileRepository, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus, responseFormatter *MockResponseFormatter) {
 				conversationService.On("MarkEyes").Return(nil).Once()
 				conversationService.On("RemoveEyes").Return(nil).Once()
 				conversationService.On("URI").Return(data.NewURIUnsafe("https://github.com/123/456/pull/123")).Once()
@@ -68,6 +68,7 @@ func TestProposalRefineUsecase_Refine(t *testing.T) {
 
 				// 3回目のメッセージ：タスクを完了
 				chatSession.On("SendMessage", mock.Anything, mock.Anything).Return(`<attempt_complete><message>提案を更新しました</message></attempt_complete>`, nil).Once()
+				responseFormatter.On("FormatResponse", mock.Anything).Return("提案を更新しました", nil).Once()
 				conversationService.On("Reply", "提案を更新しました", true).Return(nil)
 
 			},
@@ -77,7 +78,7 @@ func TestProposalRefineUsecase_Refine(t *testing.T) {
 			name:           "エラー系：エージェントの実行に失敗する",
 			proposalHandle: domain.NewProposalHandle("github", "123"),
 			userFeedback:   "エンドポイントの説明をもう少し詳しくしてください",
-			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileRepository *MockFileRepository, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus) {
+			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileRepository *MockFileRepository, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus, responseFormatter *MockResponseFormatter) {
 				conversationService.On("MarkEyes").Return(nil).Once()
 				conversationService.On("RemoveEyes").Return(nil).Once()
 				conversationService.On("URI").Return(data.NewURIUnsafe("https://github.com/123/456/pull/123")).Once()
@@ -114,8 +115,9 @@ func TestProposalRefineUsecase_Refine(t *testing.T) {
 			fileRepository := new(MockFileRepository)
 			proposalRepository := new(MockProposalRepository)
 			ragCorpus := new(MockRAGCorpus)
+			responseFormatter := new(MockResponseFormatter)
 
-			tt.setupMocks(chatModel, chatSession, conversationService, fileQueryService, fileRepository, proposalRepository, ragCorpus)
+			tt.setupMocks(chatModel, chatSession, conversationService, fileQueryService, fileRepository, proposalRepository, ragCorpus, responseFormatter)
 
 			// ワークフローの作成
 			workflow := NewProposalRefineUsecase(
@@ -125,6 +127,7 @@ func TestProposalRefineUsecase_Refine(t *testing.T) {
 				fileRepository,
 				[]port.SourceRepository{},
 				proposalRepository,
+				responseFormatter,
 				WithProposalRefineRAGCorpus(ragCorpus),
 			)
 

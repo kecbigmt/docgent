@@ -34,13 +34,13 @@ func (m *MockSourceRepository) Find(ctx context.Context, uri *data.URI) (*data.S
 func TestConversationUsecase_Execute(t *testing.T) {
 	tests := []struct {
 		name          string
-		setupMocks    func(*MockChatModel, *MockChatSession, *MockConversationService, *MockFileQueryService, *MockSourceRepository, *MockRAGCorpus)
+		setupMocks    func(*MockChatModel, *MockChatSession, *MockConversationService, *MockFileQueryService, *MockSourceRepository, *MockRAGCorpus, *MockResponseFormatter)
 		expectedError error
 		disableRAG    bool
 	}{
 		{
 			name: "正常系：基本的な会話が成功する",
-			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, sourceRepository *MockSourceRepository, ragCorpus *MockRAGCorpus) {
+			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, sourceRepository *MockSourceRepository, ragCorpus *MockRAGCorpus, responseFormatter *MockResponseFormatter) {
 				conversationService.On("MarkEyes").Return(nil).Once()
 				conversationService.On("RemoveEyes").Return(nil).Once()
 
@@ -84,6 +84,9 @@ func TestConversationUsecase_Execute(t *testing.T) {
 APIの使い方について説明します。ドキュメントによると、このAPIは複数のエンドポイントを提供しており...
 </attempt_complete>`, nil).Once()
 
+				// ResponseFormatterのモック設定
+				responseFormatter.On("FormatResponse", mock.Anything).Return("APIの使い方について説明します。ドキュメントによると、このAPIは複数のエンドポイントを提供しており...", nil).Once()
+
 				// 回答を返す
 				conversationService.On("Reply", mock.Anything, true).Return(nil).Once()
 			},
@@ -91,7 +94,7 @@ APIの使い方について説明します。ドキュメントによると、�
 		},
 		{
 			name: "正常系：RAGなしで会話が成功する",
-			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, sourceRepository *MockSourceRepository, ragCorpus *MockRAGCorpus) {
+			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, sourceRepository *MockSourceRepository, ragCorpus *MockRAGCorpus, responseFormatter *MockResponseFormatter) {
 				conversationService.On("MarkEyes").Return(nil).Once()
 				conversationService.On("RemoveEyes").Return(nil).Once()
 
@@ -113,6 +116,9 @@ APIの使い方について説明します。ドキュメントによると、�
 こんにちは！私は元気です。あなたはどうですか？
 </attempt_complete>`, nil).Once()
 
+				// ResponseFormatterのモック設定
+				responseFormatter.On("FormatResponse", mock.Anything).Return("こんにちは！私は元気です。あなたはどうですか？", nil).Once()
+
 				// 回答を返す
 				conversationService.On("Reply", mock.Anything, true).Return(nil).Once()
 			},
@@ -121,7 +127,7 @@ APIの使い方について説明します。ドキュメントによると、�
 		},
 		{
 			name: "エラー系：会話履歴の取得に失敗する",
-			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, sourceRepository *MockSourceRepository, ragCorpus *MockRAGCorpus) {
+			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, sourceRepository *MockSourceRepository, ragCorpus *MockRAGCorpus, responseFormatter *MockResponseFormatter) {
 				conversationService.On("MarkEyes").Return(nil).Once()
 				conversationService.On("RemoveEyes").Return(nil).Once()
 
@@ -132,7 +138,7 @@ APIの使い方について説明します。ドキュメントによると、�
 		},
 		{
 			name: "エラー系：タスク実行ループでエラーが発生する",
-			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, sourceRepository *MockSourceRepository, ragCorpus *MockRAGCorpus) {
+			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, sourceRepository *MockSourceRepository, ragCorpus *MockRAGCorpus, responseFormatter *MockResponseFormatter) {
 				conversationService.On("MarkEyes").Return(nil).Once()
 				conversationService.On("RemoveEyes").Return(nil).Once()
 
@@ -169,7 +175,8 @@ APIの使い方について説明します。ドキュメントによると、�
 			ragCorpus := new(MockRAGCorpus)
 
 			// モックの設定
-			tt.setupMocks(chatModel, chatSession, conversationService, fileQueryService, sourceRepository, ragCorpus)
+			responseFormatter := new(MockResponseFormatter)
+			tt.setupMocks(chatModel, chatSession, conversationService, fileQueryService, sourceRepository, ragCorpus, responseFormatter)
 
 			// ConversationUsecaseの作成
 			var usecase *ConversationUsecase
@@ -179,6 +186,7 @@ APIの使い方について説明します。ドキュメントによると、�
 					conversationService,
 					fileQueryService,
 					[]port.SourceRepository{sourceRepository},
+					responseFormatter,
 				)
 			} else {
 				usecase = NewConversationUsecase(
@@ -186,6 +194,7 @@ APIの使い方について説明します。ドキュメントによると、�
 					conversationService,
 					fileQueryService,
 					[]port.SourceRepository{sourceRepository},
+					responseFormatter,
 					WithConversationRAGCorpus(ragCorpus),
 				)
 			}
