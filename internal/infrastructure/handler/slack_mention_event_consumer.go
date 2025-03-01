@@ -76,12 +76,16 @@ func (c *SlackMentionEventConsumer) ConsumeEvent(event slackevents.EventsAPIInne
 	}
 	fileQueryService := c.githubServiceProvider.NewFileQueryService(workspace.GitHubInstallationID, workspace.GitHubOwner, workspace.GitHubRepo, workspace.GitHubDefaultBranch)
 
+	// ResponseFormatterを初期化
+	responseFormatter := c.slackServiceProvider.NewResponseFormatter()
+
 	// ConversationUsecaseを初期化
 	conversationUsecase := application.NewConversationUsecase(
 		c.chatModel,
 		conversationService,
 		fileQueryService,
 		sourceRepositories,
+		responseFormatter,
 		options...,
 	)
 

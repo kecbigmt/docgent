@@ -139,6 +139,9 @@ func (c *GitHubIssueCommentEventConsumer) ConsumeEvent(event interface{}) {
 		options = append(options, application.WithProposalRefineRAGCorpus(c.ragService.GetCorpus(workspace.VertexAICorpusID)))
 	}
 
+	// Create response formatter
+	responseFormatter := c.githubServiceProvider.NewResponseFormatter()
+
 	// Create workflow instance
 	workflow := application.NewProposalRefineUsecase(
 		c.chatModel,         // AI interaction
@@ -146,7 +149,8 @@ func (c *GitHubIssueCommentEventConsumer) ConsumeEvent(event interface{}) {
 		fileQueryService,    // File operations
 		fileRepository,      // File operations
 		sourceRepositories,
-		proposalService, // PR management
+		proposalService,   // PR management
+		responseFormatter, // Response formatting
 		options...,
 	)
 

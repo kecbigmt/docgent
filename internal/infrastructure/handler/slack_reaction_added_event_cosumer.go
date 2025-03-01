@@ -99,6 +99,9 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 		options = append(options, application.WithProposalGenerateRAGCorpus(h.ragService.GetCorpus(workspace.VertexAICorpusID)))
 	}
 
+	// Slackのレスポンスフォーマッターを取得
+	responseFormatter := h.slackServiceProvider.NewResponseFormatter()
+
 	// ドキュメントを生成
 	proposalGenerateUsecase := application.NewProposalGenerateUsecase(
 		h.chatModel,
@@ -107,6 +110,7 @@ func (h *SlackReactionAddedEventConsumer) ConsumeEvent(event slackevents.EventsA
 		fileRepository,
 		sourceRepositories,
 		githubPullRequestAPI,
+		responseFormatter,
 		options...,
 	)
 	proposalHandle, err := proposalGenerateUsecase.Execute(ctx)
