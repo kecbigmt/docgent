@@ -39,7 +39,7 @@
 - ⬜ Advanced conversation history analysis
 
 ### Technical Improvements
-- ⬜ Refactor AttemptCompleteHandler to move Slack-specific logic to infrastructure layer
+- ✅ Refactor AttemptCompleteHandler to move Slack-specific logic to infrastructure layer
 - ⬜ Migration of RAG corpus to use GitHub permalinks as displayName
 - ⬜ Comprehensive test coverage
 - ⬜ Performance optimizations for RAG queries
@@ -48,7 +48,7 @@
 
 ## Current Status
 
-The project is in MVP (Minimum Viable Product) stage with core functionality implemented. Recent development has focused on enhancing the citation system to show sources of information when answering questions, and improving the agent's autonomy in determining its workflow.
+The project is in MVP (Minimum Viable Product) stage with core functionality implemented. Recent development has focused on enhancing the citation system to show sources of information when answering questions, improving the agent's autonomy in determining its workflow, and refactoring the architecture to better adhere to clean architecture principles.
 
 The system can currently:
 1. Monitor Slack conversations
@@ -63,10 +63,8 @@ The team is currently implementing the user story "Enable verification of citati
 
 1. **Source URI Formatting**: The current URI format for sources is not directly usable as URLs and needs to be improved. RAG corpus entries use file paths as displayName, which doesn't allow direct access to the source documents.
 
-2. **Architectural Concern - Slack Dependency in Application Layer**: The `AttemptCompleteHandler` currently contains Slack-specific message formatting logic, which violates clean architecture principles. The Slack-specific presentation logic needs to be moved to the infrastructure layer.
+2. **Context Management**: There may be limitations in how much context the agent can effectively manage, potentially affecting the quality of generated documentation or answers.
 
-3. **Context Management**: There may be limitations in how much context the agent can effectively manage, potentially affecting the quality of generated documentation or answers.
+3. **Integration Edge Cases**: There may be edge cases in the interactions between Slack, GitHub, and Vertex AI that haven't been fully addressed.
 
-4. **Integration Edge Cases**: There may be edge cases in the interactions between Slack, GitHub, and Vertex AI that haven't been fully addressed.
-
-5. **Error Recovery**: While basic error handling is in place, more sophisticated recovery mechanisms may be needed for production use.
+4. **Error Recovery**: While basic error handling is in place, more sophisticated recovery mechanisms may be needed for production use.

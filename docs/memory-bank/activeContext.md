@@ -10,24 +10,30 @@ The team is currently implementing the user story "Enable verification of citati
 
 ## Recent Changes
 
-Recent development has focused on enhancing the citation system:
+Recent development has focused on enhancing the citation system and improving architecture:
 
 1. **Enhanced Citation System**: The system has been updated to show the sources of information used when answering questions. This was implemented by:
    - Modifying the `AttemptComplete` tool structure to support multiple messages with source references
    - Enhancing the `AttemptCompleteHandler` to format responses with proper citations
    - Implementing parsing logic to generate user-friendly messages in Slack with source references
 
-2. **Autonomous Agent Behavior**: Instead of following a fixed workflow for RAG-based question answering, the agent now has more autonomy to determine its behavior, similar to the document creation process.
+2. **Presenter Pattern Implementation**: Implemented the Presenter Pattern to abstract presentation logic:
+   - Created a `ResponseFormatter` interface in the application/port package
+   - Implemented concrete formatters in the infrastructure/slack and infrastructure/github packages
+   - Updated the `AttemptCompleteHandler` to use the formatter
+   - Updated the `ConversationUsecase` and `ProposalRefineUsecase` to accept and use the formatter
+   - Updated the `ProposalGenerateUsecase` to use the ResponseFormatter
+   - Updated the service providers to create formatters
 
-3. **Conversation Management**: Replaced the dedicated `QuestionAnswerUsecase` with a more general `ConversationUsecase` that can handle various types of interactions and maintain conversation history.
+3. **Autonomous Agent Behavior**: Instead of following a fixed workflow for RAG-based question answering, the agent now has more autonomy to determine its behavior, similar to the document creation process.
 
-4. **Enhanced History Retrieval**: Updated both GitHub and Slack conversation services to return structured conversation history and include user mention checks.
+4. **Conversation Management**: Replaced the dedicated `QuestionAnswerUsecase` with a more general `ConversationUsecase` that can handle various types of interactions and maintain conversation history.
+
+5. **Enhanced History Retrieval**: Updated both GitHub and Slack conversation services to return structured conversation history and include user mention checks.
 
 ## Next Steps
 
-1. **Refactor AttemptCompleteHandler**: Move Slack-specific presentation logic from the application layer to the infrastructure layer by defining an appropriate interface and moving the implementation.
-
-2. **Implement GitHub Permalink Integration**: Update the RAG corpus file registration to use GitHub permalinks as displayName instead of file paths.
+1. **Implement GitHub Permalink Integration**: Update the RAG corpus file registration to use GitHub permalinks as displayName instead of file paths.
 
 3. **Migrate Existing RAG Corpus**: Remove all files currently registered in the RAG corpus and re-register them with the new permalink-based displayName format.
 
