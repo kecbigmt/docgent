@@ -1,6 +1,5 @@
 .env
 .env.*
-.clinerules
 .cursorrules
 /docs/tmp
 config.json

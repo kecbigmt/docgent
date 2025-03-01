@@ -1,0 +1,82 @@
+# Docgent Project Rules
+
+## Code Organization
+
+1. **Hybrid Architecture**: The project follows a hybrid architecture combining elements of Hexagonal, Clean, and Onion architectures with three main layers:
+   - Domain: Core business logic, entities, and domain-specific interfaces
+   - Application: Use cases that orchestrate domain logic and define application-specific ports
+   - Infrastructure: External service integrations and adapter implementations
+
+2. **Dependency Direction**: Dependencies always point inward. Infrastructure depends on Application and Domain. Application depends on Domain. Domain never depends on outer layers.
+
+3. **Interface Definitions**: Interfaces are defined in both domain and application layers:
+   - Domain interfaces (e.g., `FileRepository`, `SourceRepository` in `domain/data`) focus on core domain operations
+   - Application interfaces (e.g., ports in the `application/port` package) focus on external service integration
+
+## Domain Modeling
+
+1. **Service Independence**: Domain concepts are designed to be independent of specific external services (like Slack or GitHub) to ensure long-term flexibility.
+
+2. **Domain-Specific Terminology**: The project uses domain-specific terms rather than platform-specific ones:
+   - "Proposal" instead of "Pull Request"
+   - "Conversation" instead of "Thread" or "Issue Comment"
+   - "Source" instead of "Repository" or "Channel"
+
+3. **Abstraction Layers**: External service-specific concepts are abstracted away in the infrastructure layer, allowing the domain layer to remain pure and focused on business logic.
+
+4. **Future-Proofing**: This approach ensures that if integrations with Slack, GitHub, or other services change in the future, the core domain logic remains stable.
+
+## Naming Conventions
+
+1. **File Naming**: Files are named according to their primary responsibility (e.g., `slack_api.go`, `conversation.go`).
+
+2. **Interface Naming**: Service interfaces typically end with "Service" (e.g., `ConversationService`).
+
+3. **Implementation Naming**: Following Go conventions for brevity:
+   - Implementation names are often the same as the interface they implement when in a specific package (e.g., `ConversationService` in the `slack` package)
+   - More specific names are used when needed for clarity (e.g., `IssueCommentConversationService`)
+   - Package qualification avoids redundancy (e.g., `slack.ConversationService` instead of `slack.SlackConversationService`)
+
+4. **Use Case Naming**: Use cases end with "Usecase" (e.g., `ConversationUsecase`).
+
+## Tool Use Pattern
+
+1. **XML Format**: The agent communicates with tools using a structured XML format.
+
+2. **Tool Definition**: Each tool has a clear usage definition with name, description, parameters, and example.
+
+3. **Tool Matching**: Tools implement a `Match` method that delegates to the appropriate handler in the provided cases.
+
+4. **Handler Pattern**: Tool handlers follow a consistent pattern, returning a message, completion status, and error.
+
+## Error Handling
+
+1. **Error Wrapping**: Errors are wrapped with context using `fmt.Errorf("context: %w", err)`.
+
+2. **Error Types**: Domain-specific errors are defined in dedicated error.go files.
+
+3. **User-Facing Errors**: Generic, user-friendly error messages are sent to users when internal errors occur.
+
+## Testing Approach
+
+1. **Unit Testing**: Business logic is tested with unit tests, mocking external dependencies.
+
+2. **Test Naming**: Test functions follow the pattern `Test{FunctionName}_{Scenario}`.
+
+3. **Test Organization**: Tests are organized in the same package as the code they test.
+
+## Development Workflow
+
+1. **Feature Branches**: New features are developed in dedicated branches (e.g., `feat/issue-7-citation`).
+
+2. **Commit Messages**: Commit messages follow a conventional format with type, scope, and description.
+
+3. **Pull Requests**: Changes are integrated through pull requests with appropriate reviews.
+
+## Configuration Management
+
+1. **Environment Variables**: Configuration is primarily managed through environment variables.
+
+2. **Development Config**: Local development uses `.env.development` for configuration.
+
+3. **Dependency Injection**: Configuration is injected into components using Uber's fx library.
