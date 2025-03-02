@@ -40,7 +40,7 @@
 
 ### Technical Improvements
 - ✅ Refactor AttemptCompleteHandler to move Slack-specific logic to infrastructure layer
-- ⬜ Migration of RAG corpus to use GitHub permalinks as displayName
+- ✅ Migration of RAG corpus to use GitHub permalinks as displayName
 - ⬜ Comprehensive test coverage
   - ✅ Enhanced unit tests for ResponseFormatter integration
   - ✅ Added argument verification in handler tests
@@ -64,7 +64,7 @@ The team is currently implementing the user story "Enable verification of citati
 
 ## Known Issues
 
-1. **Source URI Formatting**: The current URI format for sources is not directly usable as URLs and needs to be improved. RAG corpus entries use file paths as displayName, which doesn't allow direct access to the source documents.
+1. **Source URI Formatting**: 🔄 This issue is partially resolved. The code changes to use GitHub permalinks as displayName in RAG corpus entries have been implemented, but the migration of existing entries is still pending.
 
 2. **Context Management**: There may be limitations in how much context the agent can effectively manage, potentially affecting the quality of generated documentation or answers.
 

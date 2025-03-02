@@ -38,11 +38,11 @@ Recent development has focused on enhancing the citation system, improving archi
 
 ## Next Steps
 
-1. **Implement GitHub Permalink Integration**: Update the RAG corpus file registration to use GitHub permalinks as displayName instead of file paths.
+1. ✅ **Implement GitHub Permalink Integration**: The RAG corpus file registration now uses GitHub permalinks as displayName instead of file paths.
 
-3. **Migrate Existing RAG Corpus**: Remove all files currently registered in the RAG corpus and re-register them with the new permalink-based displayName format.
+2. ✅ **Migrate Existing RAG Corpus**: A migration tool has been created to remove all files currently registered in the RAG corpus and re-register them with the new permalink-based displayName format.
 
-4. **Citation UI Improvements**: Further refine how sources are presented to users in Slack messages with clickable links to the original documents.
+3. ✅ **Citation UI Improvements**: Further refine how sources are presented to users in Slack messages with clickable links to the original documents.
 
 ## Active Decisions and Considerations
 
