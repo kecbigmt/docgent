@@ -31,7 +31,8 @@ func TestRagFileSyncUsecase_Execute(t *testing.T) {
 					Path:    "docs/new.md",
 					Content: "新規ファイルの内容",
 				}, nil)
-				ragCorpus.On("UploadFile", mock.Anything, mock.Anything, "docs/new.md", mock.Anything).Return(nil)
+				fileQueryService.On("GetURI", mock.Anything, "docs/new.md").Return("https://github.com/owner/repo/blob/abc123/docs/new.md", nil)
+				ragCorpus.On("UploadFile", mock.Anything, mock.Anything, data.NewURIUnsafe("https://github.com/owner/repo/blob/abc123/docs/new.md"), mock.Anything).Return(nil)
 			},
 			expectedError: nil,
 		},
@@ -42,13 +43,15 @@ func TestRagFileSyncUsecase_Execute(t *testing.T) {
 			deletedFiles:  []string{},
 			setupMocks: func(ragCorpus *MockRAGCorpus, fileQueryService *MockFileQueryService) {
 				ragCorpus.On("ListFiles", mock.Anything).Return([]port.RAGFile{
-					{ID: 1, FileName: "docs/modified.md"},
+					{ID: 1, URI: data.NewURIUnsafe("https://github.com/owner/repo/blob/xyz789/docs/modified.md")},
 				}, nil)
 				fileQueryService.On("FindFile", mock.Anything, "docs/modified.md").Return(data.File{
 					Path:    "docs/modified.md",
 					Content: "更新されたファイルの内容",
 				}, nil)
-				ragCorpus.On("UploadFile", mock.Anything, mock.Anything, "docs/modified.md", mock.Anything).Return(nil)
+				fileQueryService.On("GetFilePath", mock.Anything).Return("docs/modified.md", nil)
+				fileQueryService.On("GetURI", mock.Anything, "docs/modified.md").Return("https://github.com/owner/repo/blob/abc123/docs/modified.md", nil)
+				ragCorpus.On("UploadFile", mock.Anything, mock.Anything, data.NewURIUnsafe("https://github.com/owner/repo/blob/abc123/docs/modified.md"), mock.Anything).Return(nil)
 				ragCorpus.On("DeleteFile", mock.Anything, int64(1)).Return(nil)
 			},
 			expectedError: nil,
@@ -60,9 +63,10 @@ func TestRagFileSyncUsecase_Execute(t *testing.T) {
 			deletedFiles:  []string{"docs/deleted.md"},
 			setupMocks: func(ragCorpus *MockRAGCorpus, fileQueryService *MockFileQueryService) {
 				ragCorpus.On("ListFiles", mock.Anything).Return([]port.RAGFile{
-					{ID: 1, FileName: "docs/deleted.md"},
+					{ID: 1, URI: data.NewURIUnsafe("https://github.com/owner/repo/blob/xyz789/docs/deleted.md")},
 				}, nil)
 				ragCorpus.On("DeleteFile", mock.Anything, int64(1)).Return(nil)
+				fileQueryService.On("GetFilePath", mock.Anything).Return("docs/deleted.md", nil)
 			},
 			expectedError: nil,
 		},
@@ -88,6 +92,21 @@ func TestRagFileSyncUsecase_Execute(t *testing.T) {
 			expectedError: errors.New("failed to find file"),
 		},
 		{
+			name:          "エラー系：GetURIに失敗",
+			newFiles:      []string{"docs/new.md"},
+			modifiedFiles: []string{},
+			deletedFiles:  []string{},
+			setupMocks: func(ragCorpus *MockRAGCorpus, fileQueryService *MockFileQueryService) {
+				ragCorpus.On("ListFiles", mock.Anything).Return([]port.RAGFile{}, nil)
+				fileQueryService.On("FindFile", mock.Anything, "docs/new.md").Return(data.File{
+					Path:    "docs/new.md",
+					Content: "新規ファイルの内容",
+				}, nil)
+				fileQueryService.On("GetURI", mock.Anything, "docs/new.md").Return("", errors.New("failed to get URI"))
+			},
+			expectedError: errors.New("failed to get URI"),
+		},
+		{
 			name:          "エラー系：UploadFileに失敗",
 			newFiles:      []string{"docs/new.md"},
 			modifiedFiles: []string{},
@@ -98,7 +117,8 @@ func TestRagFileSyncUsecase_Execute(t *testing.T) {
 					Path:    "docs/new.md",
 					Content: "新規ファイルの内容",
 				}, nil)
-				ragCorpus.On("UploadFile", mock.Anything, mock.Anything, "docs/new.md", mock.Anything).Return(errors.New("failed to upload file"))
+				fileQueryService.On("GetURI", mock.Anything, "docs/new.md").Return("https://github.com/owner/repo/blob/abc123/docs/new.md", nil)
+				ragCorpus.On("UploadFile", mock.Anything, mock.Anything, data.NewURIUnsafe("https://github.com/owner/repo/blob/abc123/docs/new.md"), mock.Anything).Return(errors.New("failed to upload file"))
 			},
 			expectedError: errors.New("failed to upload file"),
 		},
@@ -109,9 +129,10 @@ func TestRagFileSyncUsecase_Execute(t *testing.T) {
 			deletedFiles:  []string{"docs/deleted.md"},
 			setupMocks: func(ragCorpus *MockRAGCorpus, fileQueryService *MockFileQueryService) {
 				ragCorpus.On("ListFiles", mock.Anything).Return([]port.RAGFile{
-					{ID: 1, FileName: "docs/deleted.md"},
+					{ID: 1, URI: data.NewURIUnsafe("https://github.com/owner/repo/blob/xyz789/docs/deleted.md")},
 				}, nil)
 				ragCorpus.On("DeleteFile", mock.Anything, int64(1)).Return(errors.New("failed to delete file"))
+				fileQueryService.On("GetFilePath", mock.Anything).Return("docs/deleted.md", nil)
 			},
 			expectedError: errors.New("failed to delete file"),
 		},
