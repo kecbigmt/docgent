@@ -10,7 +10,7 @@ The team is currently implementing the user story "Enable verification of citati
 
 ## Recent Changes
 
-Recent development has focused on enhancing the citation system and improving architecture:
+Recent development has focused on enhancing the citation system, improving architecture, and strengthening test coverage:
 
 1. **Enhanced Citation System**: The system has been updated to show the sources of information used when answering questions. This was implemented by:
    - Modifying the `AttemptComplete` tool structure to support multiple messages with source references
@@ -25,11 +25,16 @@ Recent development has focused on enhancing the citation system and improving ar
    - Updated the `ProposalGenerateUsecase` to use the ResponseFormatter
    - Updated the service providers to create formatters
 
-3. **Autonomous Agent Behavior**: Instead of following a fixed workflow for RAG-based question answering, the agent now has more autonomy to determine its behavior, similar to the document creation process.
+3. **Improved Test Coverage**: Enhanced unit tests for the ResponseFormatter integration:
+   - Added argument verification in `AttemptCompleteHandler_Handle` tests to ensure the correct `AttemptComplete` object is passed to the formatter
+   - Updated `ConversationUsecase`, `ProposalRefineUsecase`, and `ProposalGenerateUsecase` tests to verify the arguments passed to the formatter
+   - Fixed compatibility issues between expected and actual objects in tests by using `nil` for empty source arrays
 
-4. **Conversation Management**: Replaced the dedicated `QuestionAnswerUsecase` with a more general `ConversationUsecase` that can handle various types of interactions and maintain conversation history.
+4. **Autonomous Agent Behavior**: Instead of following a fixed workflow for RAG-based question answering, the agent now has more autonomy to determine its behavior, similar to the document creation process.
 
-5. **Enhanced History Retrieval**: Updated both GitHub and Slack conversation services to return structured conversation history and include user mention checks.
+5. **Conversation Management**: Replaced the dedicated `QuestionAnswerUsecase` with a more general `ConversationUsecase` that can handle various types of interactions and maintain conversation history.
+
+6. **Enhanced History Retrieval**: Updated both GitHub and Slack conversation services to return structured conversation history and include user mention checks.
 
 ## Next Steps
 

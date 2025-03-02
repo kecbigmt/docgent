@@ -42,6 +42,9 @@
 - ✅ Refactor AttemptCompleteHandler to move Slack-specific logic to infrastructure layer
 - ⬜ Migration of RAG corpus to use GitHub permalinks as displayName
 - ⬜ Comprehensive test coverage
+  - ✅ Enhanced unit tests for ResponseFormatter integration
+  - ✅ Added argument verification in handler tests
+  - ⬜ Additional test coverage for other components
 - ⬜ Performance optimizations for RAG queries
 - ⬜ Enhanced monitoring and logging
 - ⬜ Improved error handling and recovery
