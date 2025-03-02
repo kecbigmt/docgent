@@ -8,6 +8,7 @@ import (
 
 	"docgent/internal/application/port"
 	"docgent/internal/domain/data"
+	"docgent/internal/domain/tooluse"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -81,11 +82,21 @@ func TestConversationUsecase_Execute(t *testing.T) {
 
 				// 3回目のメッセージ：解答を生成
 				chatSession.On("SendMessage", mock.Anything, mock.Anything).Return(`<attempt_complete>
-APIの使い方について説明します。ドキュメントによると、このAPIは複数のエンドポイントを提供しており...
+<message>APIの使い方について説明します。ドキュメントによると、このAPIは複数のエンドポイントを提供しており...</message>
 </attempt_complete>`, nil).Once()
 
+				// 期待されるAttemptCompleteオブジェクト
+				expectedToolUse := tooluse.NewAttemptComplete(
+					[]tooluse.Message{
+						tooluse.NewMessage("APIの使い方について説明します。ドキュメントによると、このAPIは複数のエンドポイントを提供しており..."),
+					},
+					nil,
+				)
+
 				// ResponseFormatterのモック設定
-				responseFormatter.On("FormatResponse", mock.Anything).Return("APIの使い方について説明します。ドキュメントによると、このAPIは複数のエンドポイントを提供しており...", nil).Once()
+				responseFormatter.On("FormatResponse", mock.MatchedBy(func(toolUse tooluse.AttemptComplete) bool {
+					return assert.Equal(t, expectedToolUse, toolUse, "FormatResponseに渡された引数が期待値と一致すること")
+				})).Return("APIの使い方について説明します。ドキュメントによると、このAPIは複数のエンドポイントを提供しており...", nil).Once()
 
 				// 回答を返す
 				conversationService.On("Reply", mock.Anything, true).Return(nil).Once()

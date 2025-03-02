@@ -11,6 +11,7 @@ import (
 	"docgent/internal/application/port"
 	"docgent/internal/domain"
 	"docgent/internal/domain/data"
+	"docgent/internal/domain/tooluse"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -219,7 +220,19 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 
 				// 4回目のメッセージ：タスクを完了
 				chatSession.On("SendMessage", mock.Anything, mock.Anything).Return(`<attempt_complete><message>提案を作成しました</message></attempt_complete>`, nil).Once()
-				responseFormatter.On("FormatResponse", mock.Anything).Return("提案を作成しました", nil)
+
+				// 期待されるAttemptCompleteオブジェクト
+				expectedToolUse := tooluse.NewAttemptComplete(
+					[]tooluse.Message{
+						tooluse.NewMessage("提案を作成しました"),
+					},
+					nil,
+				)
+
+				responseFormatter.On("FormatResponse", mock.MatchedBy(func(toolUse tooluse.AttemptComplete) bool {
+					return assert.Equal(t, expectedToolUse, toolUse, "FormatResponseに渡された引数が期待値と一致すること")
+				})).Return("提案を作成しました", nil)
+
 				conversationService.On("Reply", "提案を作成しました", true).Return(nil)
 			},
 			expectedHandle: domain.NewProposalHandle("github", "123"),

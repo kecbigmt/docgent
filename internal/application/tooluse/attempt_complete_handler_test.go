@@ -144,6 +144,9 @@ func TestAttemptCompleteHandler_Handle(t *testing.T) {
 			// Verify mocks
 			conversationService.AssertExpectations(t)
 			responseFormatter.AssertExpectations(t)
+
+			// Verify exact arguments passed to FormatResponse
+			responseFormatter.AssertCalled(t, "FormatResponse", tt.toolUse)
 		})
 	}
 }

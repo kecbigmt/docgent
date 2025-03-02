@@ -9,6 +9,7 @@ import (
 	"docgent/internal/application/port"
 	"docgent/internal/domain"
 	"docgent/internal/domain/data"
+	"docgent/internal/domain/tooluse"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -68,7 +69,19 @@ func TestProposalRefineUsecase_Refine(t *testing.T) {
 
 				// 3回目のメッセージ：タスクを完了
 				chatSession.On("SendMessage", mock.Anything, mock.Anything).Return(`<attempt_complete><message>提案を更新しました</message></attempt_complete>`, nil).Once()
-				responseFormatter.On("FormatResponse", mock.Anything).Return("提案を更新しました", nil).Once()
+
+				// 期待されるAttemptCompleteオブジェクト
+				expectedToolUse := tooluse.NewAttemptComplete(
+					[]tooluse.Message{
+						tooluse.NewMessage("提案を更新しました"),
+					},
+					nil,
+				)
+
+				responseFormatter.On("FormatResponse", mock.MatchedBy(func(toolUse tooluse.AttemptComplete) bool {
+					return assert.Equal(t, expectedToolUse, toolUse, "FormatResponseに渡された引数が期待値と一致すること")
+				})).Return("提案を更新しました", nil).Once()
+
 				conversationService.On("Reply", "提案を更新しました", true).Return(nil)
 
 			},
