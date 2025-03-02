@@ -34,8 +34,8 @@ func (f *ResponseFormatter) FormatResponse(toolUse tooluse.AttemptComplete) (str
 	if len(toolUse.Sources) > 0 {
 		builder.WriteString("\n")
 		for _, s := range toolUse.Sources {
-			// TODO: Update to use GitHub permalinks when available
-			builder.WriteString(fmt.Sprintf("[^%s]: %s\n", s.ID, s.URI))
+			// Format: [^ID]: [Name](URI)
+			builder.WriteString(fmt.Sprintf("[^%s]: [%s](%s)\n", s.ID, s.Name, s.URI))
 		}
 	}
 
