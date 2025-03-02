@@ -75,3 +75,8 @@ func (p *ServiceProvider) GetPullRequestHeadBranch(ctx context.Context, installa
 	}
 	return pr.Head.GetRef(), nil
 }
+
+// NewResponseFormatter creates a response formatter for GitHub
+func (p *ServiceProvider) NewResponseFormatter() port.ResponseFormatter {
+	return NewResponseFormatter()
+}

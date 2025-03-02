@@ -2,8 +2,9 @@ package port
 
 import (
 	"context"
-	"docgent/internal/domain/data"
 	"errors"
+
+	"docgent/internal/domain/data"
 )
 
 var (
@@ -27,6 +28,10 @@ const (
 type FileQueryService interface {
 	FindFile(ctx context.Context, path string) (data.File, error)
 	GetTree(ctx context.Context, options ...GetTreeOption) ([]TreeMetadata, error)
+	// GetURI returns a URI for the given file path, typically a GitHub permalink
+	GetURI(ctx context.Context, path string) (*data.URI, error)
+	// GetFilePath returns the file path for the given URI
+	GetFilePath(uri *data.URI) (string, error)
 }
 
 type GetTreeOption func(*GetTreeOptions)

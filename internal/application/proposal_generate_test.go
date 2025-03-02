@@ -11,6 +11,7 @@ import (
 	"docgent/internal/application/port"
 	"docgent/internal/domain"
 	"docgent/internal/domain/data"
+	"docgent/internal/domain/tooluse"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -68,20 +69,6 @@ func (m *MockConversationService) MarkEyes() error {
 func (m *MockConversationService) RemoveEyes() error {
 	args := m.Called()
 	return args.Error(0)
-}
-
-type MockFileQueryService struct {
-	mock.Mock
-}
-
-func (m *MockFileQueryService) FindFile(ctx context.Context, path string) (data.File, error) {
-	args := m.Called(ctx, path)
-	return args.Get(0).(data.File), args.Error(1)
-}
-
-func (m *MockFileQueryService) GetTree(ctx context.Context, options ...port.GetTreeOption) ([]port.TreeMetadata, error) {
-	args := m.Called(ctx, options)
-	return args.Get(0).([]port.TreeMetadata), args.Error(1)
 }
 
 type MockFileRepository struct {
@@ -151,8 +138,8 @@ func (m *MockRAGCorpus) Query(ctx context.Context, query string, similarityTopK 
 	return args.Get(0).([]port.RAGDocument), args.Error(1)
 }
 
-func (m *MockRAGCorpus) UploadFile(ctx context.Context, file io.Reader, fileName string, options ...port.RAGCorpusUploadFileOption) error {
-	args := m.Called(ctx, file, fileName, options)
+func (m *MockRAGCorpus) UploadFile(ctx context.Context, file io.Reader, uri *data.URI, options ...port.RAGCorpusUploadFileOption) error {
+	args := m.Called(ctx, file, uri, options)
 	return args.Error(0)
 }
 
@@ -169,13 +156,13 @@ func (m *MockRAGCorpus) DeleteFile(ctx context.Context, fileID int64) error {
 func TestProposalGenerateUsecase_Execute(t *testing.T) {
 	tests := []struct {
 		name           string
-		setupMocks     func(*MockChatModel, *MockChatSession, *MockConversationService, *MockFileQueryService, *MockFileRepository, *MockProposalRepository, *MockRAGCorpus)
+		setupMocks     func(*MockChatModel, *MockChatSession, *MockConversationService, *MockFileQueryService, *MockFileRepository, *MockProposalRepository, *MockRAGCorpus, *MockResponseFormatter)
 		expectedHandle domain.ProposalHandle
 		expectedError  error
 	}{
 		{
 			name: "正常系：RAGを使用して提案が正常に生成される",
-			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileRepository *MockFileRepository, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus) {
+			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileRepository *MockFileRepository, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus, responseFormatter *MockResponseFormatter) {
 				conversationService.On("MarkEyes").Return(nil).Once()
 				conversationService.On("RemoveEyes").Return(nil).Once()
 				conversationService.On("GetHistory").Return(port.ConversationHistory{
@@ -219,6 +206,19 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 
 				// 4回目のメッセージ：タスクを完了
 				chatSession.On("SendMessage", mock.Anything, mock.Anything).Return(`<attempt_complete><message>提案を作成しました</message></attempt_complete>`, nil).Once()
+
+				// 期待されるAttemptCompleteオブジェクト
+				expectedToolUse := tooluse.NewAttemptComplete(
+					[]tooluse.Message{
+						tooluse.NewMessage("提案を作成しました"),
+					},
+					nil,
+				)
+
+				responseFormatter.On("FormatResponse", mock.MatchedBy(func(toolUse tooluse.AttemptComplete) bool {
+					return assert.Equal(t, expectedToolUse, toolUse, "FormatResponseに渡された引数が期待値と一致すること")
+				})).Return("提案を作成しました", nil)
+
 				conversationService.On("Reply", "提案を作成しました", true).Return(nil)
 			},
 			expectedHandle: domain.NewProposalHandle("github", "123"),
@@ -226,7 +226,7 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 		},
 		{
 			name: "エラー系：エージェントの実行に失敗する",
-			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileRepository *MockFileRepository, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus) {
+			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileRepository *MockFileRepository, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus, responseFormatter *MockResponseFormatter) {
 				conversationService.On("MarkEyes").Return(nil).Once()
 				conversationService.On("RemoveEyes").Return(nil).Once()
 				conversationService.On("GetHistory").Return(port.ConversationHistory{
@@ -249,7 +249,7 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 		},
 		{
 			name: "エラー系：提案の作成に失敗する",
-			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileRepository *MockFileRepository, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus) {
+			setupMocks: func(chatModel *MockChatModel, chatSession *MockChatSession, conversationService *MockConversationService, fileQueryService *MockFileQueryService, fileRepository *MockFileRepository, proposalRepository *MockProposalRepository, ragCorpus *MockRAGCorpus, responseFormatter *MockResponseFormatter) {
 				conversationService.On("MarkEyes").Return(nil).Once()
 				conversationService.On("RemoveEyes").Return(nil).Once()
 				conversationService.On("GetHistory").Return(port.ConversationHistory{
@@ -293,8 +293,9 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 			fileRepository := new(MockFileRepository)
 			proposalRepository := new(MockProposalRepository)
 			ragCorpus := new(MockRAGCorpus)
+			responseFormatter := new(MockResponseFormatter)
 
-			tt.setupMocks(chatModel, chatSession, conversationService, fileQueryService, fileRepository, proposalRepository, ragCorpus)
+			tt.setupMocks(chatModel, chatSession, conversationService, fileQueryService, fileRepository, proposalRepository, ragCorpus, responseFormatter)
 
 			// ワークフローの作成
 			workflow := NewProposalGenerateUsecase(
@@ -304,6 +305,7 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 				fileRepository,
 				[]port.SourceRepository{},
 				proposalRepository,
+				responseFormatter,
 				WithProposalGenerateRAGCorpus(ragCorpus),
 			)
 
@@ -328,6 +330,7 @@ func TestProposalGenerateUsecase_Execute(t *testing.T) {
 			fileRepository.AssertExpectations(t)
 			proposalRepository.AssertExpectations(t)
 			ragCorpus.AssertExpectations(t)
+			responseFormatter.AssertExpectations(t)
 		})
 	}
 }

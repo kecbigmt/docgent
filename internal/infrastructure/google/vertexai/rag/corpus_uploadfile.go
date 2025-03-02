@@ -5,16 +5,17 @@ import (
 	"io"
 
 	"docgent/internal/application/port"
+	"docgent/internal/domain/data"
 	"docgent/internal/infrastructure/google/vertexai/rag/lib"
 )
 
-func (c *Corpus) UploadFile(ctx context.Context, file io.Reader, fileName string, options ...port.RAGCorpusUploadFileOption) error {
+func (c *Corpus) UploadFile(ctx context.Context, file io.Reader, uri *data.URI, options ...port.RAGCorpusUploadFileOption) error {
 	uploadFileOptions := &port.RAGCorpusUploadFileOptions{}
 	for _, option := range options {
 		option(uploadFileOptions)
 	}
 
-	_, err := c.client.UploadFile(ctx, c.corpusId, file, fileName, func(o *lib.UploadFileOptions) {
+	_, err := c.client.UploadFile(ctx, c.corpusId, file, uri.String(), func(o *lib.UploadFileOptions) {
 		if uploadFileOptions.Description != "" {
 			o.Description = uploadFileOptions.Description
 		}

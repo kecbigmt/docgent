@@ -21,3 +21,7 @@ func (s *ServiceProvider) NewConversationService(ref *ConversationRef, fromUserI
 func (s *ServiceProvider) NewSourceRepository() *SourceRepository {
 	return NewSourceRepository(s.slackAPI)
 }
+
+func (s *ServiceProvider) NewResponseFormatter() port.ResponseFormatter {
+	return NewResponseFormatter()
+}

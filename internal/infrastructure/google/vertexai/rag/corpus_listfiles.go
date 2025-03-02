@@ -3,6 +3,7 @@ package rag
 import (
 	"context"
 	"docgent/internal/application/port"
+	"docgent/internal/domain/data"
 	"fmt"
 	"strconv"
 	"strings"
@@ -32,9 +33,14 @@ func (c *Corpus) ListFiles(ctx context.Context) ([]port.RAGFile, error) {
 			if err != nil {
 				return nil, fmt.Errorf("failed to parse file ID: %w", err)
 			}
+			uri, err := data.NewURI(file.DisplayName)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create URI: %w", err)
+			}
+
 			ragFiles = append(ragFiles, port.RAGFile{
 				ID:          id,
-				FileName:    file.Name,
+				URI:         uri,
 				Description: file.Description,
 			})
 		}

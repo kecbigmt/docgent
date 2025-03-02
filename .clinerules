@@ -39,6 +39,8 @@
 
 4. **Use Case Naming**: Use cases end with "Usecase" (e.g., `ConversationUsecase`).
 
+5. **Language**: All code comments and test names must be written in English, regardless of the primary language used in discussions or documentation.
+
 ## Tool Use Pattern
 
 1. **XML Format**: The agent communicates with tools using a structured XML format.

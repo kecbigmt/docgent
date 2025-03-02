@@ -17,6 +17,7 @@ type ConversationUsecase struct {
 	fileQueryService    port.FileQueryService
 	sourceRepositories  []port.SourceRepository
 	ragCorpus           port.RAGCorpus
+	responseFormatter   port.ResponseFormatter
 	remainingStepCount  int
 }
 
@@ -36,6 +37,7 @@ func NewConversationUsecase(
 	conversationService port.ConversationService,
 	fileQueryService port.FileQueryService,
 	sourceRepositories []port.SourceRepository,
+	responseFormatter port.ResponseFormatter,
 	options ...NewConversationUsecaseOption,
 ) *ConversationUsecase {
 	u := &ConversationUsecase{
@@ -43,6 +45,7 @@ func NewConversationUsecase(
 		conversationService: conversationService,
 		fileQueryService:    fileQueryService,
 		sourceRepositories:  sourceRepositories,
+		responseFormatter:   responseFormatter,
 		remainingStepCount:  10, // デフォルトのステップ数
 	}
 
@@ -68,7 +71,7 @@ func (u *ConversationUsecase) Execute(ctx context.Context) error {
 	sourceRepositoryManager := port.NewSourceRepositoryManager(u.sourceRepositories)
 
 	// ハンドラーの初期化
-	attemptCompleteHandler := tooluse.NewAttemptCompleteHandler(u.conversationService)
+	attemptCompleteHandler := tooluse.NewAttemptCompleteHandler(u.conversationService, u.responseFormatter)
 	findFileHandler := tooluse.NewFindFileHandler(ctx, u.fileQueryService)
 	queryRAGHandler := tooluse.NewQueryRAGHandler(ctx, u.ragCorpus)
 	findSourceHandler := tooluse.NewFindSourceHandler(ctx, sourceRepositoryManager)

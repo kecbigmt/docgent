@@ -236,3 +236,7 @@ sequenceDiagram
 - Mock external dependencies for isolation
 - Tests are organized in the same package as the code they test
 - Test functions follow the pattern `Test{FunctionName}_{Scenario}`
+- Mock verification for interface implementations:
+  - Using `mock.MatchedBy` with `assert.Equal` to verify complex objects
+  - Verifying both method calls and argument values with `AssertCalled`
+  - Handling nil vs. empty slice differences in test expectations
