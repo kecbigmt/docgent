@@ -3,6 +3,8 @@ package port
 import (
 	"context"
 	"io"
+
+	"docgent/internal/domain/data"
 )
 
 type RAGService interface {
@@ -15,7 +17,7 @@ type RAGCorpus interface {
 	// It returns up to 10 documents in order of relevance to the query.
 	Query(ctx context.Context, query string, similarityTopK int32, vectorDistanceThreshold float64) ([]RAGDocument, error)
 
-	UploadFile(ctx context.Context, file io.Reader, fileName string, options ...RAGCorpusUploadFileOption) error
+	UploadFile(ctx context.Context, file io.Reader, uri *data.URI, options ...RAGCorpusUploadFileOption) error
 
 	ListFiles(ctx context.Context) ([]RAGFile, error)
 
@@ -62,6 +64,6 @@ type RAGDocument struct {
 
 type RAGFile struct {
 	ID          int64
-	FileName    string
+	URI         *data.URI
 	Description string
 }
