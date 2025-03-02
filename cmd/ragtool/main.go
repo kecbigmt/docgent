@@ -43,6 +43,8 @@ func main() {
 		cmdErr = cli.HandleCorpusDelete(ctx, &CLI, client)
 	case "corpus retrieve <corpus-id>":
 		cmdErr = cli.HandleCorpusRetrieve(ctx, &CLI, client)
+	case "corpus migrate <corpus-id>":
+		cmdErr = cli.HandleCorpusMigrate(ctx, &CLI, client)
 	default:
 		fmt.Printf("invalid command: %s\n", kongCtx.Command())
 		os.Exit(1)

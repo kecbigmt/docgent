@@ -26,6 +26,14 @@ type CLI struct {
 			TopK                    int32   `help:"Number of top results to return" default:"5"`
 			VectorDistanceThreshold float64 `help:"Threshold for vector distance matching" default:"0.7"`
 		} `cmd:"" help:"Search in a RAG corpus"`
+
+		Migrate struct {
+			CorpusID    string `arg:"" required:"" help:"ID of the RAG corpus to migrate"`
+			Owner       string `required:"" help:"GitHub repository owner"`
+			Repo        string `required:"" help:"GitHub repository name"`
+			Branch      string `help:"GitHub repository branch" default:"main"`
+			GithubToken string `required:"" help:"GitHub personal access token"`
+		} `cmd:"" help:"Migrate RAG corpus to use GitHub permalinks"`
 	} `cmd:"" help:"Manage RAG corpus"`
 
 	File struct {
